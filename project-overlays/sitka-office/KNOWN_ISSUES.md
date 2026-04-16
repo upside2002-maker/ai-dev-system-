@@ -68,6 +68,39 @@ Task 0.3 сменил JSON-формат `DisqualifyReason`, `RejectReason`, `Can
 **Влияние:** никакого на текущей стадии (нет production клиентов API). Frontend в Task 0.4/0.5 должен использовать новый формат.
 **Запись-маркер** для истории — если в будущем придётся восстанавливать совместимость со старыми хранилищами.
 
+### Issue #11: Domain records — dead code вне Engine.Marketing
+
+`Domain.Marketing.{ChannelAccount, Campaign, Listing}`, `Domain.Marketing.Spend.SpendEntry`, `Domain.Marketing.Attribution.SourceTouch`, `Domain.Conversation.ConversationThread`, `Domain.Deal.Deal` — **запись-типы** нигде не конструируются кроме `Engine.Marketing` и его тестов. Все API-хендлеры работают напрямую с `Db.*` Persistent-записями.
+
+Это создаёт "mapper gap": Task 1.2 должен будет написать конвертеры `Db.X → Domain.X` (~100 строк plumbing) чтобы скормить Engine реальные данные. Engine был спроектирован агентом-аналитиком вокруг Domain-типов ради "чистоты слоёв"; pragmatic-ценность этой чистоты низка на текущем масштабе.
+
+**Файлы:** `src/Domain/Marketing.hs`, `src/Domain/Marketing/*.hs`, `src/Domain/Conversation.hs`, `src/Domain/Deal.hs` (Deal record), `src/Engine/Marketing.hs`
+
+**Опции:**
+1. **Принять и написать мапперы в Task 1.2** (рекомендую — следует спецификации, чистая layering, ~60 строк)
+2. Переписать Engine вокруг `Db.*` типов — проще, но Engine импортирует Persistent
+3. Удалить Domain record-ы, в Engine определить свои "query shape" типы с нужным подмножеством полей
+
+**Когда решать:** в начале Task 1.2. Рекомендация — Option 1.
+
+### Issue #12: Conversations API — без consumer-а
+
+5 endpoints (`POST/GET /api/conversations`, `link-deal`, `link-client`) добавлены в Task 0.3 как foundation для Phase 2 Inbox. Сейчас **никто** их не вызывает — ни фронт (нет Inbox UI), ни services (нет sync-job). Surface живёт только для интеграционных тестов.
+
+**Риск:** shape DTO может разойтись с реальными требованиями Phase 2 Avito-sync. Но на сегодня compile-testable foundation лучше чем пустое место.
+
+**Файлы:** `src/Api/Conversations.hs`, тесты в `ApiSpec.hs`
+
+**Когда ревизить:** в начале Phase 2, после выбора Avito-провайдера (API / scraper / hybrid) — возможно нужно добавить поля для webhook signatures, message_id, pagination cursor.
+
+### Issue #13: Funnel-аналитика не учитывает историю переходов
+
+`Engine.Marketing.aggregateFunnel` смотрит только на `dealStatus` (текущий). Сделка прошедшая через `Approved` и отменённая в `Cancelled` не попадёт в `fbdApproved`, только в `fbdCancelled`. Это может недооценивать воронку при анализе "сколько доходило до одобрения".
+
+Для правильной аналитики нужно join с `deal_event` table (события `status_changed:*`) и взять max(stage_index). Это требует передачи `[DealEvent]` в Engine или отдельного helper.
+
+**Когда чинить:** когда первый пользователь аналитики спросит "почему в отчёте Q2 меньше approved-сделок чем я помню". Ориентировочно Phase 1.5 / Phase 2.
+
 ### Issue #10: Нет отдельного marketing-event stream
 
 `spend_recorded`, `listing_created`, `campaign_created` сейчас **не** записываются в `deal_event` — они не привязаны к Deal. На Phase 0 это было осознанным решением (commit `5100d69`), чтобы не засорять `DealEvent` несвязанными событиями. В результате audit-trail для маркетинговых мутаций отсутствует.
