@@ -1,85 +1,56 @@
 # Sitka Office — Known Issues
 
-Дата: 2026-04-14
+Дата: 2026-04-15
 
-Найденные при аудите проблемы, которые нужно решить.
-Упорядочены по критичности для type safety и code quality.
+## Открытые
 
-## BLOCKING: Type Safety Gaps
+### Issue #1: Smart constructors не реализованы
 
-### Issue #1: Raw Double в DB Schema
+Конструкторы USD, RUB, Percent, ExchangeRate экспортируются открыто.
+Percent может быть 999. USD может быть отрицательным.
 
-**Файл**: `sitka-core/src/Db/Schema.hs`
+**Файлы:** `src/Domain/Types.hs`
+**Решение:** Не экспортировать конструкторы, добавить mkPercent, mkUSD, mkRUB, mkExchangeRate с валидацией.
 
-DB хранит денежные поля как `Double`, хотя domain model использует `USD`/`RUB` newtypes:
-```
-Deal
-  maxPriceRub Double        -- должно быть RUB
-  plannedCost Double        -- должно быть USD
-  quotedPrice Double        -- должно быть USD
-  actualCost Double         -- должно быть USD
-  actualRevenue Double      -- должно быть RUB
-  plannedMargin Double      -- должно быть USD
-  actualMargin Double       -- должно быть USD
-```
+### Issue #2: riskFlags хранится как Text
 
-**Решение**: PersistField instances для USD и RUB. См. `.claude/corrections.md` Correction #1.
+Сериализованный список в текстовом поле. Нет нормализации, нет queryability.
 
-### Issue #2: ADT как Text в DB
+**Файл:** `src/Db/Schema.hs`
+**Решение:** JSONB или junction table.
 
-**Файл**: `sitka-core/src/Db/Schema.hs`
+### Issue #3: eventType и actor в DealEvent — plain Text
 
-```
-Deal
-  status Text               -- должно быть DealStatus
-  riskFlags Text            -- должно быть [RiskFlag]
+Не ADT, нет compile-time проверки. Новый тип события добавляется без ошибки компиляции.
 
-DealEvent
-  eventType Text            -- должно быть EventType
-```
+**Файл:** `src/Db/Schema.hs`, `src/Domain/Event.hs`
+**Решение:** ADT EventType, ADT Actor, PersistField instances.
 
-**Решение**: PersistField instances с exhaustive pattern matching. См. `.claude/corrections.md` Correction #2.
+### Issue #4: Setting.valueNum — raw Double
 
-### Issue #3: Raw Double в API Types
+Единственное место с raw Double. Конвертируется при загрузке в PricingParams, но в DB без типизации.
 
-**Файл**: `sitka-core/src/Api/Types.hs`
-
-Transport types используют `Double` вместо `USD`/`RUB`:
-```haskell
-data CreateDealReq = CreateDealReq
-  { cdrMaxPriceRub :: Maybe Double  -- должно быть Maybe RUB
-  , ...
-  }
-```
-
-**Решение**: Использовать domain newtypes + JSON instances.
-
-## WARNING: Code Quality
-
-### Issue #4: Дублированный fetch-or-404
-
-**Файлы**: `Api/Clients.hs`, `Api/Deals.hs` (минимум 2 места)
-
-Паттерн `get key >>= maybe (throwError err404) pure` повторяется.
-
-**Решение**: Выделить `fetchOr404` в `Api/Helpers.hs`. См. `.claude/corrections.md` Correction #3.
+**Файл:** `src/Db/Schema.hs`
 
 ### Issue #5: Минимальные тесты
 
-**Файл**: `sitka-core/test/Spec.hs`
+12 тестов для core (SM + pricing). Нет тестов для:
+- Risk engine
+- API endpoints (integration)
+- Edge cases pricing (нулевая цена, максимальный buffer)
+- Telegram bot
+- Notification system
 
-Тесты существуют, но покрытие минимальное. Pricing engine и state machine — чистые функции, тестировать тривиально.
+### Issue #6: Redis не используется
 
-### Issue #6: Event sourcing не подключён
+Сконфигурирован в docker-compose и config.py, но не подключён. Будет нужен для очередей/кеша.
 
-Таблица `DealEvent` есть в schema, но handlers не пишут events. Инфраструктура готова, wiring отсутствует.
+## Закрытые (решено)
 
-## NOT AN ISSUE (уже хорошо)
-
-- State machine полностью pure ✓
-- Pricing engine полностью pure ✓
-- Servant API composition на уровне типов ✓
-- Transport types отделены от domain types ✓
-- Services не принимают бизнес-решений ✓
-- Health endpoint проверяет зависимости ✓
-- Mock отделён от реального парсера ✓
+- ~~PersistField instances для USD/RUB~~ → реализованы в Domain/Types.hs
+- ~~fetchOr404 дублируется~~ → выделен в Api/AppM.hs
+- ~~API Types используют raw Double~~ → используют newtypes
+- ~~DB Schema хранит raw Double для денег~~ → хранит newtypes
+- ~~Нет CI~~ → GitHub Actions
+- ~~Нет auth~~ → bearer token
+- ~~CLAUDE.md устарел~~ → обновлён 2026-04-15

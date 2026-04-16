@@ -1,47 +1,34 @@
 # Sitka Office — Next Actions
 
-Дата: 2026-04-14
+Дата: 2026-04-15
 
-## Приоритет 0: Техдолг type safety (блокирует рост)
+## Приоритет 0: Оставшийся техдолг
 
-Без этого каждый новый модуль будет наследовать дыры.
+1. **Smart constructors** — mkPercent (0-100), mkUSD (≥0), mkRUB (≥0), mkExchangeRate (>0). Core agent, 2-3ч.
+2. **ADT для eventType/actor** — sealed types вместо Text. Core agent, 1-2ч.
+3. **Больше тестов** — SM edge cases, pricing boundaries, risk engine. Core agent, 4-6ч.
 
-1. **PersistField instances для USD, RUB** — `Db/Schema.hs` + `Domain/Types.hs`.
-2. **PersistField instance для DealStatus** — exhaustive, `-Wincomplete-patterns`.
-3. **PersistField instance для RiskFlag, EventType** — аналогично.
-4. **fetchOr404 helper** — `Api/Helpers.hs`, заменить дублирование в Clients и Deals.
-5. **Заменить Double на domain types в Api/Types.hs** — transport types тоже должны быть типизированы.
+## Приоритет 1: Production deployment
 
-Все 5 пунктов — задачи для Core Agent, один слой, одна сессия.
+4. **Первый деплой на VPS** — docker-compose.prod.yml + nginx + SSL. Уже подготовлено (scripts/, deploy/).
+5. **Manual DB migrations** — перейти с auto-migration на versioned SQL files перед production.
+6. **Staging environment** — dev → staging → prod pipeline.
 
-## Приоритет 1: Операторский workflow (ценность для бизнеса)
+## Приоритет 2: Бизнес-ценность
 
-6. **Доступ к PricingSettingsPanel** — сейчас панель существует, но неочевидно как до неё добраться. Иконка gear или пункт меню.
-7. **Создание клиента из "Новый запрос"** — сейчас flow: inbox → создать клиента → создать deal. Упростить.
-8. **Re-search из карточки сделки** — повторный sourcing без пересоздания deal.
-9. **Явный next action в DealWorkspace** — UI должен показывать что делать, а не всё что можно.
+7. **Telegram bot доработка** — бот уже работает, но может потребовать доработок по UX.
+8. **Outbound actions** — отправка КП клиенту из workspace.
+9. **Мобильная адаптация** — responsive CSS для операторов в полях.
 
-Пункты 6-8 — Frontend Agent. Пункт 9 — архитектурный, затрагивает и frontend и возможно core.
+## Приоритет 3: Масштабирование
 
-## Приоритет 2: Коммуникационный слой
+10. **Redis** — подключить для кеша/очередей когда будет нагрузка.
+11. **riskFlags нормализация** — JSONB или junction table.
+12. **Event sourcing wiring** — handlers начинают использовать DealEvent полноценно.
 
-10. **Telegram бот** — уведомления о новых лидах + калькулятор цен.
-11. **Outbound из UI** — отправка КП клиенту прямо из workspace.
+## Не делать
 
-Telegram: Services Agent (bot wiring) + Core Agent (notification events). Outbound: все три слоя.
-
-## Приоритет 3: Качество кода
-
-12. **Тесты для Pricing.hs** — чистая функция, тестировать тривиально.
-13. **Тесты для StateMachine.hs** — allowed и forbidden transitions.
-14. **Подключить event sourcing** — handlers начинают писать DealEvents.
-15. **Удалить мёртвый CSS** — ~300 строк.
-16. **Мобильная адаптация** — базовый responsive.
-
-## Что НЕ делать сейчас
-
-- Не переписывать архитектуру.
-- Не тащить core-логику в Python.
-- Не добавлять auth/CI/CD (явно отложено в CLAUDE.md).
-- Не расширять UI вниз бесконечными блоками.
-- Не подключать Redis пока нет реальной потребности в очередях.
+- Не переписывать архитектуру
+- Не добавлять Kubernetes
+- Не добавлять email/SMS
+- Не тащить business logic в Python
