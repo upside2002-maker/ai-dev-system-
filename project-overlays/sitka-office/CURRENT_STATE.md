@@ -1,74 +1,143 @@
 # Sitka Office — Current State
 
-Дата: 2026-04-15
+Дата: 2026-04-21
+Snapshot commit: `679b188`
+Repo: `/Users/ilya/Projects/sitka-office`
+
+## TL;DR
+
+`sitka-office` больше не находится в Phase 0 / раннем Phase 1.
+Текущая форма проекта — **post-Phase-DM, mid DM-6.2.5**:
+
+- Lead-first flow уже включён и является единственным живым write-path
+- Person / ContactPoint / Lead / Treasury / Conversations уже в ядре
+- legacy Client-first создание сделки из runtime вырезано
+- UI уже разделён на `Входящие` и `Сделки`
+- message inbox и Avito-messenger слой уже в работе
+
+Это важно: старые документы про `NewRequest -> Sourcing -> QuoteReady`
+нужно читать только как историю.
 
 ## Архитектура
 
-Три слоя, все работают:
+Система по-прежнему трёхслойная:
 
-- `sitka-core` — Haskell (Servant + Persistent + Warp), порт 8080
-- `sitka-services` — Python (FastAPI + Uvicorn + Telegram bot), порт 8081
-- `sitka-web` — React 19 + TypeScript + Vite, порт 5173
+- `sitka-core` — Haskell (Servant + Persistent + Warp), `:8080`
+- `sitka-services` — Python (FastAPI + Telegram + crons + Avito tasks), `:8081`
+- `sitka-web` — React 19 + TypeScript + Vite, `:5173`
 - PostgreSQL 16 + Redis 7 через docker-compose
-- CI: GitHub Actions (build + test + lint)
-- Auth: bearer token (CORE_API_TOKEN / SITKA_API_TOKEN)
+- CI: 7 обязательных проверок
+- миграции: `dbmate`, без auto-migration
 
-## Core (2,193 строк Haskell)
+## Текущий бизнес-flow
 
-- 6 newtypes с PersistField instances: USD, RUB, Percent, ExchangeRate, Money, EntityId
-- DealStatus ADT: 13 конструкторов (New → Completed/Rejected/Cancelled)
-- RiskFlag ADT: 6 конструкторов
-- Pure state machine: 12 типов переходов, canTransition/transition/allowedTransitions
-- Pure pricing engine: calculateCost, calculateQuotePrice, calculateMargin, calculateClientSavings
-- Risk engine: Engine/RiskFlags.hs
-- 8 DB таблиц через Persistent TH
-- 15 API endpoints (Servant type-level composition)
-- Extracted helpers: fetchOr404, runDb, recordEvent, validateOr400 (в Api/AppM.hs)
-- GHC flags: -Wall -Werror -Wincomplete-patterns -Wunused-imports
-- Тесты: 12 (state machine + pricing)
+Источник правды по состоянию домена теперь такой:
 
-## Services (3,156 строк Python)
+```
+incoming signal
+  -> person resolve
+  -> lead create
+  -> offers + quote attach to lead
+  -> create-deal-from-lead
+  -> Deal.AwaitingPayment
+  -> ConfirmPrepayment
+  -> Deal.Confirmed + Client materialised + Treasury row
+  -> Purchased -> logistics chain -> Completed
+```
 
-- Sourcing pipeline: 16 US-магазинов + Avito (Playwright)
-- Avito parser (stealth mode) + mock fallback
-- Core client (HTTP к Haskell, timeout + retry)
-- **Telegram bot** (5 модулей, 1100+ строк): deal creation flow, manager commands, inline keyboards, callbacks
-- **Notifications**: event watcher + notifier
-- **Exchange rate**: auto-update от CBR API
-- Webhook routes
-- Auth middleware
-- Pydantic Settings
+Ключевая граница:
 
-## Web (6,766 строк TypeScript/CSS)
+- pre-sale живёт на `Person + Lead`
+- post-payment execution живёт на `Deal`
+- `Client` создаётся только при первой оплате
 
-- Workspace layout: InboxSidebar → DealWorkspace → ContextPanel
-- Step-based workflow: NewRequest → Sourcing → ReviewOffers → QuoteReady → Fulfillment → Completed
-- PricingSettingsPanel
-- AnalyticsDashboard + DealStatsWidget
-- useAppState hook (extracted state management, 515 строк)
-- WorkspaceContext (React context)
-- useEventStream hook (SSE)
-- E2E тесты: 3 Playwright specs
-- API client с typed endpoints
+## Core (Haskell)
 
-## Infra
+### Доменные сущности
 
-- Docker Compose: dev + prod profiles
-- Production: docker-compose.prod.yml с migrations, JSON logging, SSL/certbot, daily backups
-- nginx: deploy/nginx-prod.conf
-- Scripts: init-letsencrypt.sh, backup-pg.sh
-- CI: .github/workflows/ci.yml
-- Makefile: 23 targets
+В активной модели уже есть:
 
-## Self-learning
+- `Person`, `ContactPoint`, `Lead`, `Lead.Event`
+- `Deal`, `Quote`, `Offer`, `Reason`
+- `Conversation`
+- `Marketing` + attribution
+- `Transaction` (treasury ledger)
 
-- CLAUDE.md: 12 правил + what exists + what not to do (обновлён 2026-04-15)
-- .claude/corrections.md: 7 записей
-- .claude/review-checklist.md: 29 строк
-- .claude/reference-snippets/: 3 Haskell эталона
-- .claude/prompts/task-splitting.md: шаблоны задач
-- sitka-core/.hlint.yaml: errors + warnings + suggestions
+### API surface
 
-## Git
+В кодовой базе уже есть отдельные модули:
 
-7 коммитов на master. Working directory чистый.
+- `Api.Persons`
+- `Api.Leads`
+- `Api.Deals`
+- `Api.Treasury`
+- `Api.Marketing`
+- `Api.MarketingAnalytics`
+- `Api.Conversations`
+- `Api.Messages`
+- `Api.PricingSettings`
+- `Api.ServiceState`
+
+### Важная оговорка
+
+Legacy-конструкторы `DealStatus` и старые `Transition` ещё
+компилируются как мёртвая поверхность, но текущий runtime-path их не
+создаёт. Они остались ради совместимости внутренних helper-ов и
+аналитических mapping-ов.
+
+## Services (Python)
+
+Слой services уже тоже ушёл далеко от описания "Phase 0":
+
+- Telegram bot переведён на lead-first создание
+- есть `deal_expiration.py` для TTL / auto-expire
+- есть Avito poller / sender tasks
+- есть канальный Avito client
+- старый create-deal-from-sourcing путь уже вырезан
+
+Важно: часть Avito-функций остаётся credentials-gated и по умолчанию
+может no-op'иться, пока не заданы реальные ключи/настройки.
+
+## Web (React)
+
+Фронт уже не является только legacy workspace.
+
+Актуальная форма UI:
+
+- вкладка `Входящие` — Lead Inbox
+- вкладка `Сделки` — post-Confirmed deal workspace
+- отдельный `Message Inbox` под сообщения / треды
+- marketing settings + analytics всё ещё на месте
+
+То есть операторский интерфейс уже реально разделён по фазам процесса,
+а не крутится вокруг одной legacy карточки сделки.
+
+## Quality / safety
+
+- в Haskell-ядре — сотни тестов
+- в Python — десятки test files
+- во фронте — `12` E2E spec files + unit tests
+- CI жёстко прогоняет formatter / import rules / migration drift /
+  Haskell / Python / frontend
+
+Отдельный источник правды по инвариантам:
+
+- `/Users/ilya/Projects/sitka-office/CLAUDE.md`
+- `/Users/ilya/Projects/sitka-office/.claude/architecture-invariants.md`
+
+## Git snapshot
+
+На момент синхронизации overlay:
+
+- HEAD: `679b188`
+- в рабочем дереве был замечен локальный backup-файл
+  `sitka-services/.env.bak`, то есть состояние repo не абсолютно
+  идеально-чистое
+
+## Что читать дальше
+
+1. `README.md` в этом overlay
+2. `KNOWN_ISSUES.md`
+3. `NEXT_ACTIONS.md`
+4. `PROJECT_MAP.md`
+5. Для глубины: `DOMAIN_V3.md`, `PHASE_DM_TASKS.md`, `ARCHITECTURE_V2.md`

@@ -1,127 +1,164 @@
 # Sitka Office — Project Map
 
 Путь: `/Users/ilya/Projects/sitka-office`
+Актуальность: snapshot `679b188` от `2026-04-21`
 
-## Core (sitka-core/) — Haskell, Servant, Persistent, Warp :8080
+Это не полная распечатка дерева, а карта тех зон, в которые сейчас
+реально приходится заходить агентам.
 
-```
-src/Domain/Types.hs              ← USD, RUB, Percent, ExchangeRate + PersistField
-src/Domain/Client.hs             ← Client record
-src/Domain/Deal.hs               ← DealStatus (13), RiskFlag (6), Deal record (22 поля)
-src/Domain/Deal/StateMachine.hs  ← Pure: 12 transitions, canTransition, allowedTransitions
-src/Domain/Quote.hs              ← Quote, CostBreakdown
-src/Domain/Offer.hs              ← UsaOffer
-src/Domain/Event.hs              ← Domain events
-src/Domain/Order.hs              ← Order tracking
-src/Domain/Payment.hs            ← Payments
-src/Domain/Shipment.hs           ← Shipments
+## Core (`sitka-core/`) — Haskell / Servant / Persistent / Warp
 
-src/Engine/Pricing.hs            ← Pure: calculateCost, calculateQuotePrice, calculateMargin
-src/Engine/RiskFlags.hs          ← Risk assessment logic
-
-src/Db/Schema.hs                 ← 8 Persistent tables
-src/Db/Indexes.hs                ← DB indexes
-
-src/Api/AppM.hs                  ← fetchOr404, runDb, recordEvent, validateOr400
-src/Api/Types.hs                 ← Transport types (request/response records)
-src/Api/Server.hs                ← Servant API composition + CORS
-src/Api/Health.hs                ← Health check
-src/Api/Clients.hs               ← Client CRUD
-src/Api/Deals.hs                 ← Deal CRUD + transitions + offers + stats
-src/Api/Quotes.hs                ← Quotes + pricing settings
-
-app/Main.hs                      ← Entry point
-test/Spec.hs                     ← Tests (12)
-```
-
-## Services (sitka-services/) — Python, FastAPI, Uvicorn :8081
+### Домен
 
 ```
-app/main.py                      ← FastAPI app, CORS, lifespan
-app/config.py                    ← Pydantic Settings
-app/deps.py                      ← Dependency injection
-app/logging_config.py            ← Structured logging
-
-app/routes/parsing.py            ← Sourcing endpoints
-app/routes/webhooks.py           ← Webhook handlers
-
-app/core_client/client.py        ← HTTP client к core
-
-app/parsers/avito.py             ← Playwright Avito parser
-app/parsers/avito_mock.py        ← Mock fallback
-app/parsers/avito_classify.py    ← Classification
-app/parsers/inventory_v2.py      ← US store parser factory
-
-app/bot/telegram_bot.py          ← Bot initialization
-app/bot/formatters.py            ← Message formatting
-app/bot/manager/__init__.py      ← Bot manager orchestration
-app/bot/manager/handlers.py      ← Command handlers
-app/bot/manager/callbacks.py     ← Callback query handlers
-app/bot/manager/cards.py         ← Inline keyboard builders
-app/bot/manager/create_flow.py   ← Deal creation conversation
-app/bot/manager/auth.py          ← Bot authentication
-
-app/notifications/notifier.py    ← Notification dispatch
-app/notifications/event_watcher.py ← Event stream consumer
-
-app/tasks/exchange_rate.py       ← CBR exchange rate updater
+src/Domain/Types.hs               ← money types, ids, shared newtypes
+src/Domain/Person.hs              ← Person
+src/Domain/ContactPoint.hs        ← channel identity
+src/Domain/Lead.hs                ← pre-sale record
+src/Domain/Lead/Event.hs          ← lead event log
+src/Domain/Deal.hs                ← post-conversion deal model
+src/Domain/Deal/StateMachine.hs   ← allowed deal transitions
+src/Domain/Client.hs              ← paid subset of Person
+src/Domain/Offer.hs               ← sourcing offers
+src/Domain/Quote.hs               ← quotes / pricing output
+src/Domain/Conversation.hs        ← thread metadata + send status
+src/Domain/Transaction.hs         ← treasury ledger
+src/Domain/Marketing.hs           ← channels / campaigns / listings
+src/Domain/Marketing/Attribution.hs
+src/Domain/Marketing/Spend.hs
+src/Domain/Reason.hs              ← typed reject/cancel/disqualify reasons
 ```
 
-## Web (sitka-web/) — React 19, TypeScript, Vite :5173
+### Engines
 
 ```
-src/App.tsx                       ← Root (17 строк, thin)
-src/AppLayout.tsx                 ← Layout wrapper
-src/api/types.ts                  ← TypeScript types (зеркало Haskell)
-src/api/client.ts                 ← API client (core + services)
-src/hooks/useAppState.ts          ← Global state (515 строк)
-src/hooks/useEventStream.ts       ← SSE hook
-src/contexts/WorkspaceContext.tsx  ← React context
+src/Engine/IdentityResolution.hs  ← ContactPoint -> Person matching
+src/Engine/LeadStatus.hs          ← derive Lead status from events
+src/Engine/Pricing.hs             ← pricing engine
+src/Engine/RiskFlags.hs           ← risk assessment
+src/Engine/Marketing.hs           ← funnel / attribution helpers
+src/Engine/Treasury.hs            ← ledger analytics
+```
 
-src/components/InboxSidebar.tsx
-src/components/DealWorkspace.tsx
-src/components/ContextPanel.tsx
-src/components/PricingSettingsPanel.tsx
+### API
+
+```
+src/Api/AppM.hs                   ← fetchOr404 / runDb / recordEvent
+src/Api/Types.hs                  ← transport DTOs
+src/Api/Server.hs                 ← route composition
+src/Api/Health.hs
+src/Api/Persons.hs                ← Person + ContactPoint CRUD / resolve
+src/Api/Leads.hs                  ← Lead CRUD + offers + quotes + create-deal
+src/Api/Deals.hs                  ← AwaitingPayment+ lifecycle + logistics
+src/Api/Treasury.hs               ← transactions / balance / cashflow
+src/Api/Marketing.hs              ← settings-side marketing CRUD
+src/Api/MarketingAnalytics.hs     ← dashboards / metrics
+src/Api/Conversations.hs          ← thread metadata
+src/Api/Messages.hs               ← message ingest / outbox / history
+src/Api/PricingSettings.hs
+src/Api/ServiceState.hs
+```
+
+### Persistence / tests
+
+```
+src/Db/Schema.hs                  ← Persistent schema
+src/Db/Indexes.hs                 ← index definitions
+src/Db/Dm7MigrationLegacy.hs      ← one-shot legacy migration helper
+migrations/                       ← dbmate migrations
+test/                             ← Haskell tests (core + API + invariants)
+```
+
+## Services (`sitka-services/`) — FastAPI / bot / background tasks
+
+```
+app/main.py                       ← app startup + periodic tasks
+app/config.py                     ← env / feature toggles
+app/core_client/client.py         ← HTTP client to core
+
+app/routes/parsing.py             ← sourcing/search endpoints
+app/routes/webhooks.py            ← inbound hooks
+
+app/bot/telegram_bot.py
+app/bot/manager/__init__.py       ← manager commands wiring
+app/bot/manager/create_flow.py    ← lead-first /new flow
+app/bot/manager/handlers.py       ← read-side bot commands
+
+app/channels/avito/client.py      ← Avito developer API client
+
+app/tasks/deal_expiration.py      ← AwaitingPayment TTL sweeper
+app/tasks/avito_poller.py         ← inbound message poller
+app/tasks/avito_sender.py         ← outbound sender
+app/tasks/exchange_rate.py        ← FX updater
+
+tests/                            ← Python tests
+```
+
+## Web (`sitka-web/`) — React / TypeScript / Vite
+
+### Core shells / hooks
+
+```
+src/App.tsx
+src/AppLayout.tsx
+src/api/types.ts                  ← TS mirror of backend DTOs
+src/api/client.ts                 ← frontend client
+src/hooks/useAppState.ts          ← deal-side shell state
+src/hooks/useLeadInbox.ts         ← pre-sale lead journey
+src/hooks/useMessageInbox.ts      ← message inbox state
+src/hooks/useEventStream.ts       ← SSE
+```
+
+### Operator views
+
+```
+src/components/lead-inbox/        ← "Входящие"
+  LeadInbox.tsx
+  LeadInboxSidebar.tsx
+  LeadDetailPanel.tsx
+  LeadJourneySections.tsx
+  CreateLeadModal.tsx
+
+src/components/DealWorkspace.tsx  ← "Сделки" (post-Confirmed path)
+src/components/workspace/         ← fulfillment / completed / stage pieces
+
+src/components/message-inbox/     ← message inbox
+  MessageInbox.tsx
+  MessageInboxSidebar.tsx
+  ThreadDetail.tsx
+  ReplyForm.tsx
+
+src/components/settings/          ← marketing settings managers
 src/components/AnalyticsDashboard.tsx
-src/components/DealStatsWidget.tsx
-src/components/ErrorBoundary.tsx
+src/components/MarketingAnalyticsSection.tsx
+src/components/PricingSettingsPanel.tsx
+```
 
-src/components/workspace/
-  NewRequestStep.tsx
-  SourcingStep.tsx
-  ReviewOffersStep.tsx
-  QuoteReadyStep.tsx
-  FulfillmentStep.tsx
-  CompletedStep.tsx
-  StageIndicator.tsx
-  ClientBanner.tsx
-  helpers.ts
+### Tests / constants
 
-src/constants/stores.ts           ← 16 US stores
-src/constants/statuses.ts         ← Status display config
-src/constants/formatters.ts       ← Number/date formatters
-
-e2e/                              ← Playwright E2E tests
+```
+src/constants/statuses.ts
+src/constants/stores.ts
+e2e/                              ← Playwright specs
 ```
 
 ## Infra
 
 ```
-Makefile                          ← 23 targets
-docker-compose.yml                ← dev (postgres + redis + apps)
-docker-compose.prod.yml           ← production overrides
-deploy/nginx-prod.conf            ← nginx reverse proxy
-scripts/init-letsencrypt.sh       ← SSL setup
-scripts/backup-pg.sh              ← DB backup
-.github/workflows/ci.yml          ← CI pipeline
-.env.example                      ← Environment template
+Makefile
+docker-compose.yml
+docker-compose.prod.yml
+deploy/
+scripts/
+.github/workflows/ci.yml
+.env.example
 ```
 
-## Self-learning (.claude/)
+## Reading shortcuts
 
-```
-corrections.md                    ← 7 anti-pattern records
-review-checklist.md               ← Pre-commit checks
-reference-snippets/               ← 3 Haskell etalons
-prompts/task-splitting.md         ← Task templates
-```
+- если задача про pre-sale flow: `Domain.Person` + `Domain.Lead` +
+  `Api.Leads` + `sitka-web/src/components/lead-inbox/`
+- если задача про оплату / деньги: `Domain.Transaction` +
+  `Api.Treasury` + `DealWorkspace`
+- если задача про сообщения: `Domain.Conversation` + `Api.Messages` +
+  `app/tasks/avito_*` + `src/components/message-inbox/`

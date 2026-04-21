@@ -7,4 +7,5 @@ __pycache__/
 .mypy_cache/
 .idea/
 .vscode/
-
+.claude/worktrees/
+**/.DS_Store

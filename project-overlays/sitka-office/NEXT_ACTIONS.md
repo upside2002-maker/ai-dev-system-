@@ -1,108 +1,79 @@
 # Sitka Office — Next Actions
 
-Дата: 2026-04-16 (после закрытия Phase 0)
+Дата: 2026-04-21
+Основано на snapshot `679b188`
 
-## Phase 1 — Marketing Analytics MVP (приоритет 0)
+Ниже не исторический Phase 1 план, а ближайшие практические шаги после
+закрытия Phase DM и включения lead-first flow.
 
-Самая бизнес-значимая задача. Foundation в Phase 0 уже заложен.
+## Приоритет 0 — держать overlay в синхроне с repo
 
-**Цель:** менеджер открывает Marketing dashboard → видит spend / leads / deals / revenue / margin per channel за выбранный период.
+Это не продуктовая фича, но сейчас это обязательный шаг:
 
-**Длительность:** 2 недели.
+- после каждого заметного milestone обновлять `CURRENT_STATE`,
+  `NEXT_ACTIONS`, `PROJECT_MAP`
+- не использовать старые `PHASE_0/1` документы как текущую картину мира
+- фиксировать snapshot commit в overlay
 
-### Подзадачи
+Иначе `ai-dev-system` перестаёт быть системой разработки и снова
+становится набором отставших markdown-файлов.
 
-1. **Engine.Marketing** (Haskell, pure):
-   - `aggregateSpend :: Period -> [SpendEntry] -> SpendByChannel`
-   - `funnelByChannel :: Period -> [Deal] -> [SourceTouch] -> FunnelByChannel`
-   - `calculateCPL`, `calculateCPD`, `calculateROI` per channel/listing/campaign
-   - Loss reasons aggregation (DisqualifyReason / RejectReason / CancelReason breakdown)
+## Приоритет 1 — стабилизация DM-6.2.5 message loop
 
-2. **API endpoints** (расширение Api.Marketing):
-   - `GET /api/marketing/dashboard?from=&to=&channel=`
-   - `GET /api/marketing/funnel?from=&to=&groupBy=channel|listing|campaign`
-   - `GET /api/marketing/listings?from=&to=` (performance per listing)
-   - `GET /api/marketing/losses?from=&to=` (breakdown by reason)
+Новая зона проекта уже не `marketing setup`, а операторский цикл
+`message -> lead -> deal`.
 
-3. **Web — Marketing Dashboard**:
-   - KPI cards (spend, leads, deals, revenue, margin, ROI/ROMI)
-   - Funnel chart per channel
-   - Listings performance table
-   - Loss reasons pie chart
-   - Period selector (today / week / month / custom)
+Практический фокус:
 
-4. **Тесты:** unit для aggregations + property tests для edge cases (нет spend, нет deals, all losses)
+1. Довести Avito message path до спокойного операционного состояния:
+   - poller
+   - ingest
+   - outbound sender
+   - retry / failed / pending сценарии
+2. Проверить, как message inbox входит в ежедневный workflow оператора
+3. Не размывать это новыми крупными сущностями, пока message loop не
+   обкатан руками
 
-## Phase 2 — Avito Inbox + Conversations (приоритет 1)
+## Приоритет 2 — убрать очевидный legacy debt
 
-Решает проблему "WhatsApp leak" + автоматизирует ввод диалогов в CRM.
+После DM-6.4 часть legacy surface уже мертва в runtime, но ещё видна в
+типах и helper-ах.
 
-**Длительность:** 3 недели.
+Ближайший cleanup-кандидат:
 
-### Подзадачи
+- dead `DealStatus` / `Transition` constructors, которые остались только
+  ради старых stage-mapping helper-ов
+- устаревшие комментарии и docs, где процесс всё ещё описан как
+  `Client -> Deal -> Sourcing -> QuoteReady`
 
-1. **Services**: `sitka-services/app/conversations/` — ConversationProvider abstraction + AvitoProvider
-2. **Background sync**: каждые 15 минут (per ARCHITECTURE_V2 решение)
-3. **conversation_messages таблица в Postgres** (тело сообщений в services БД)
-4. **Inbox UI** в web (Layout 5.2 из ARCHITECTURE_V2)
-5. **SLA индикаторы**: Avito 30 минут (жёсткий красный алерт), Telegram/WA 4 часа (мягкий)
-6. **Cursor pagination** для Conversations API (закрывает технический долг #2 Phase 0)
+Это делать только после того, как не пострадает текущий analytics/read-side.
 
-## Phase 3 — Telegram + WhatsApp adapters (приоритет 2)
+## Приоритет 3 — production-safety backlog
 
-**Длительность:** 2-3 недели.
+В `architecture-invariants.md` уже перечислен реальный safety backlog.
+Самые практичные вещи оттуда:
 
-- Расширение Telegram bot для роли ConversationProvider
-- TelegramProvider implementation
-- WhatsAppProvider (зависит от выбора: WA Business API / Wati / Twilio)
+1. более явный audit trail вне `deal_event`
+2. contract / golden tests для DTO
+3. backup + restore drill
+4. единый audit env / secrets
 
-## Phase 4 — Knowledge / Decisions Hub (приоритет 2)
+Это даёт больший ROI, чем новые большие сущности "на будущее".
 
-**Длительность:** 1-2 недели.
+## Приоритет 4 — знания и операторские ассистенты
 
-- Note + Decision entities в Core
-- Telegram bot команды: `/note`, `/save`, `/decide`, `/notes`, `/decisions`
-- Реакция на 📌 emoji в общем чате (опционально)
-- Web UI с поиском и тегами
+После стабилизации message loop уже можно безопасно двигать:
 
-## Phase 5 — Avito Spend Auto-Sync (приоритет 3)
+- базу знаний по моделям
+- внутреннего помощника для оператора
+- структурированную product knowledge
+- аккуратные инструменты поиска по CRM + knowledge base
 
-**Длительность:** 1 неделя.
-
-- AvitoSpendSync background job (раз в день pull spend report)
-- Reconciliation manual vs API spend
-- Alerts при расхождениях
-
-## Технический долг (накопленный)
-
-| # | Долг | Когда чинить |
-|---|------|--------------|
-| 1 | ApiSpec test harness использует `runMigration` (не dbmate) | При рефакторинге test infra |
-| 2 | Conversations API: limit 200 без cursor pagination | Phase 2 (нужно для inbox) |
-| 3 | Marketing event stream отсутствует — spend/listing events не аудируются | Phase 1/2 если нужна аналитика по событиям |
-| 4 | ~~Auth middleware на Marketing/Conversations endpoints~~ | ✅ Проверено: `authMiddleware` в `Api/Server.hs` оборачивает `serve apiProxy` целиком — все роутеры защищены автоматически; `isPublic` открывает только `/health` |
-
-## Параллельная операционная работа (НЕ код)
-
-Из аудита `MY_AVITO_AUDIT.md` — то что владелец делает руками:
-
-| # | Действие | Статус |
-|---|----------|--------|
-| 1 | Пополнить CPA-аванс (минимум 1 000 ₽) | 🚨 БЛОКЕР |
-| 2 | Установить дневной лимит трат 300-500 ₽ | TODO |
-| 3 | Поставить ставку 7-10 ₽ на активные | TODO |
-| 4 | Заменить условные цены в названиях ("5 000 ₽") на реальные | TODO |
-| 5 | Опубликовать 2-3 готовых из 15 неопубликованных | TODO |
-| 6 | Добавить SLA "5-15 минут" в описания | TODO |
-| 7 | Переименовать профиль: "Илья — эксперт по Sitka & Kuiu" | TODO |
-| 8 | Подключить максимальный тариф Avito (для Phase 2 API) | TODO |
+Но это следующий слой, а не то, на чём стоит снова переписывать core.
 
 ## Не делать
 
-- Не переписывать архитектуру
-- Не добавлять Kubernetes
-- Не добавлять email/SMS — только Telegram
-- Не тащить business logic в Python
-- Не строить Growth Lab / A/B testing infrastructure (нет статпов на 30 сделках/месяц)
-- Не делать multi-touch attribution (single-touch достаточно)
-- Не хранить тело сообщений в Haskell core (только метаданные ConversationThread)
+- не возвращать Client-first flow
+- не плодить новые большие подсистемы до стабилизации message loop
+- не тащить knowledge / assistant прямо в runtime core без ясной границы
+- не считать старые Phase 0 / Phase 1 документы текущим roadmap'ом
