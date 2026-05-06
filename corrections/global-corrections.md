@@ -77,6 +77,100 @@
 
 ---
 
+## Correction 006: Не тащить операционные данные в Core
+
+**BAD:**
+- Note (заметки), Decision (решения), ConversationMessage (тело сообщений) описаны как Haskell entity в Core с PersistField и tagged JSON;
+- "положу в Core потому что это бизнес-важно" / "там надёжнее";
+- catalog of products, listings inventory, message logs — всё в Haskell core.
+
+**GOOD:**
+- Operational data → Services (Python + Postgres):
+  - Note, Decision, ConversationMessage, raw payloads, message attachments, search indices;
+  - всё что часто меняется, не имеет инвариантов, накапливается логом.
+- Core хранит только references и audit markers:
+  - `NoteAdded` event type в EventType ADT — да;
+  - `Note` entity с body+tags+author — нет, это в Services.
+- Аналогия: ConversationThread (метаданные с FK к Deal) → Core; ConversationMessage (тело) → Services. Точно так же: Note attachment к Deal → ссылка/event в Core, само тело Note → Services.
+
+**WHY:**
+- У operational data нет бизнес-инвариантов, которые надо охранять типами.
+- Type safety на уровне Haskell не даёт ценности для плоского текста с автором и тегами.
+- Каждое поле в Core требует миграции, ADT, PersistField, JSON instance, тестов. Для логов и заметок это лишние 100+ строк кода без бизнес-выгоды.
+- Свобода добавлять поля (теги, attachments, summary, FTS) без касания Core.
+- Поиск/индексация настраиваются в Services специализированными инструментами (Postgres FTS, Elasticsearch).
+
+**Тест себя:** "У этой entity есть бизнес-инвариант который должен быть проверен на компиляции?" Если нет — операционные данные → Services.
+
+---
+
+## Correction 007: Внешние правки overlay требуют контекста
+
+**BAD:**
+- Коммит "refresh sitka overlay" удаляет нумерованные issues.
+- В commit message не объяснено что это рефакторинг и какие issues закрыты / устарели / переформулированы.
+- Следующий аудит-агент видит "потерю данных" и предлагает откат.
+
+**GOOD:**
+- Commit message кратко объясняет что и почему изменилось.
+- Если issues закрыты — пометить какие и почему.
+- Если переформулированы — указать что объединено.
+- Audit-агенты могут доверять рефакторингу, а не реконструировать намерение.
+
+**WHY:** Overlay читают много агентов. Без контекста изменений каждый новый агент тратит время на "это потеря или намерение?". Дешевле один раз объяснить в commit, чем N раз отвечать "это намеренно".
+
+---
+
+## Correction 008: Worker не двигает Status TASK после HANDOFF
+
+**BAD:**
+- Worker subagent заканчивает работу: пишет HANDOFF файл через `make new-handoff`, заполняет body (Summary/Done/Remaining/Artifacts/Conflicts/Next step), но **не трогает Status в TASK файле**.
+- TASK остаётся `Status: open` (или `in-progress`).
+- TL пытается `make accept-task` — Phase A lifecycle gate refuses (`Status must be 'review'`).
+- TL вынужден ручным edit'ом перевести Status: open → review перед accept-task.
+
+**GOOD:**
+- Worker, закончив работу и записав HANDOFF, **сам же** делает финальный edit TASK: `Status: in-progress` → `Status: review`.
+- Либо есть отдельный helper `scripts/submit-task.sh` который Worker вызывает в конце (`make submit-task FILE=...`) — bumps Status и оставляет HANDOFF open.
+- TL после accept-handoff делает только `make accept-task` без preceding manual edit.
+
+**WHY:** Lifecycle gate в `accept-task.sh` требует Status=review. Пока Worker этого не делает, каждый accept требует ручного шага TL — это шум, скрывающий реальные ошибки. Либо Worker инструкции должны явно требовать bump, либо helper'ы должны взять это на себя.
+
+---
+
+## Correction 009: Reviewer возвращает отчёт через stdout, не через файл
+
+**BAD:**
+- Reviewer subagent (`.claude/agents/sitka-reviewer.md`) проверяет diff и возвращает отчёт **через subagent return value** (текстом в stdout).
+- Никакого файла `HANDOFFS/<date>-reviewer-to-tl-*.md` не создаётся.
+- TL видит отчёт только в текущей сессии; через час/день/новую сессию — нет следа что review произошёл.
+- Audit history теряется. Невозможно ответить "а кто и когда review'ил TASK X?".
+
+**GOOD:**
+- Reviewer subagent в конце работы создаёт HANDOFF файл через `make new-handoff` с From: reviewer / To: tl, заполняет body отчётом (verdict / findings / blockers / recommendations).
+- Stdout-возврат — короткое summary с ссылкой на созданный файл.
+- TL `make accept-handoff` закрывает review-handoff явно.
+
+**WHY:** HANDOFF — единственный механизм audit trail между ролями. Stdout исчезает с концом сессии. Без файла Reviewer pass — это invisible step, который проблематично доказать постфактум при конфликте/ретроспективе.
+
+---
+
+## Correction 010: PR/commit даты — только из git log, никогда из памяти
+
+**BAD:**
+- Worker (или любой агент) в HANDOFF / docs пишет даты PR'ов "по памяти" из контекста сессии: `PR #74–#78 (2026-04-29 → 2026-05-04)`.
+- Реальные merge-даты другие: `git log --grep='#74\|#78'` показывает 2026-05-01 → 2026-05-02.
+- Ошибка проползает в design doc / status file / public docs. Со временем становится "канон" — другие агенты доверяют доку, drift накапливается.
+
+**GOOD:**
+- Любая дата PR / commit / merge в HANDOFF, design docs, overlay status — выводится **только** через `git log --oneline --grep='#NN' --pretty=format:'%h %ad' --date=short` или `gh pr view NN --json mergedAt`.
+- Если у агента нет доступа к git/gh — пишет "TBD" / "see git log" вместо угадывания.
+- TL/Reviewer при проверке HANDOFF spot-check'ает даты против `git log`.
+
+**WHY:** Даты — facts, а не opinions. Confabulated даты ломают audit trail и хуже того — становятся source-of-truth в design docs, заражая будущие сессии. Стоимость проверки одной даты `git log --grep` — 1 секунда. Стоимость найти и поправить drift через месяц — часы.
+
+---
+
 ## Как добавлять новые записи
 
 Формат:

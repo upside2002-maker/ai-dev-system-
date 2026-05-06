@@ -5,9 +5,10 @@ ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
 required_root_files=(
   "README.md"
+  "START_HERE.md"
   "CLAUDE_GLOBAL.md"
-  "AGENT_OPERATING_MODEL.md"
-  "AGENT_ONBOARDING.md"
+  "ROLE_MODEL.md"
+  "guides/LAYER_RESPONSIBILITIES.md"
   "corrections/global-corrections.md"
   ".claude/README.md"
 )
@@ -36,8 +37,8 @@ for file in "${required_sitka_overlay_files[@]}"; do
   [[ -f "${SITKA_OVERLAY}/${file}" ]] || fail "missing sitka overlay file: ${file}"
 done
 
-grep -q 'project-overlays/\[slug\]/README.md' "${ROOT_DIR}/AGENT_ONBOARDING.md" \
-  || fail "AGENT_ONBOARDING.md no longer points to overlay README"
+grep -q 'project-overlays/sitka-office/starts/' "${ROOT_DIR}/START_HERE.md" \
+  || fail "START_HERE.md no longer points to sitka entrypoints"
 
 grep -q 'project-overlays/<slug>/README.md' "${ROOT_DIR}/README.md" \
   || fail "README.md no longer documents overlay README entrypoint"

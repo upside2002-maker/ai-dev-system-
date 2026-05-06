@@ -1,7 +1,7 @@
 # Sitka Office — Known Issues
 
-Дата: 2026-04-21
-Snapshot commit: `679b188`
+Дата: 2026-05-02
+Snapshot commit: `b58e5fb`
 
 Ниже не список phase-0 долгов, а только те проблемы, которые остаются
 актуальными после перехода на lead-first flow.

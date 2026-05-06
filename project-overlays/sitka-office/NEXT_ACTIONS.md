@@ -1,10 +1,10 @@
 # Sitka Office — Next Actions
 
-Дата: 2026-04-21
-Основано на snapshot `679b188`
+Дата: 2026-05-02
+Основано на snapshot `b58e5fb`
 
 Ниже не исторический Phase 1 план, а ближайшие практические шаги после
-закрытия Phase DM и включения lead-first flow.
+закрытия DM-7 Phase B и включения cashbox.
 
 ## Приоритет 0 — держать overlay в синхроне с repo
 
@@ -18,21 +18,18 @@
 Иначе `ai-dev-system` перестаёт быть системой разработки и снова
 становится набором отставших markdown-файлов.
 
-## Приоритет 1 — стабилизация DM-6.2.5 message loop
+## Приоритет 1 — DM-7 Phase C/D + post-Phase-B стабилизация
 
-Новая зона проекта уже не `marketing setup`, а операторский цикл
-`message -> lead -> deal`.
+DM-6.2.5 message loop теперь в operationally-stable состоянии (буквы
+m/n/o/r закрыли inbox bugs; PR #69 закрыл cold-cache parser UX).
+DM-7 Phase A и Phase B закрыты целиком (PR #63–#66 + live-smoke
+фиксы #68–#70).
 
 Практический фокус:
 
-1. Довести Avito message path до спокойного операционного состояния:
-   - poller
-   - ingest
-   - outbound sender
-   - retry / failed / pending сценарии
-2. Проверить, как message inbox входит в ежедневный workflow оператора
-3. Не размывать это новыми крупными сущностями, пока message loop не
-   обкатан руками
+1. **Phase C/D DM-7** — содержание в `/Users/ilya/Projects/sitka-office/docs/DM-7-cashbox.md`. Первая итерация требует приоритизации у TL; в overlay пока не зафиксировано.
+2. **Post-Phase-B стабилизация** — собрать operator feedback на полный cashbox flow (foundation + ConfirmPurchase + shipping-expense + ReservationOverrun + FulfillmentStep) перед стартом Phase C.
+3. **Realistic fixture coverage** — три бага PR #68–#70 поймались только на live local smoke, не unit-тестами. При новых engine/risk модулях добавлять golden tests с realistic non-round numbers и slow-network timing, а не только happy-path round-numbers.
 
 ## Приоритет 2 — убрать очевидный legacy debt
 
