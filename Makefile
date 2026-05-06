@@ -1,4 +1,4 @@
-.PHONY: check check-structure check-sitka-overlay check-astro-overlay status accept-handoff accept-task reject-task new-task new-handoff
+.PHONY: check check-structure check-sitka-overlay check-astro-overlay status submit-task accept-handoff accept-task reject-task new-task new-handoff
 
 check: check-structure check-sitka-overlay check-astro-overlay
 
@@ -22,6 +22,14 @@ check-astro-overlay:
 SLUG ?= sitka-office
 status:
 	@bash scripts/status.sh $(SLUG)
+
+# Submit a TASK for review: bump Status: open|in-progress → review.
+# Worker (or whichever role finished execution) calls this AFTER writing
+# the HANDOFF file and BEFORE TL runs accept-task. Replaces the manual
+# "TL edits Status by hand" step that v0.1 smoke surfaced as a gap.
+# Usage: make submit-task FILE=project-overlays/sitka-office/TASKS/<file>.md
+submit-task:
+	@bash scripts/submit-task.sh $(FILE)
 
 # Accept a HANDOFF: bump Status: closed + move to archive/. Atomic, defensive.
 # Usage: make accept-handoff FILE=project-overlays/sitka-office/HANDOFFS/<file>.md

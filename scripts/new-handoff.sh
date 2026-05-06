@@ -174,10 +174,19 @@ cat > "${TARGET}" <<EOF
 
 ## Artifacts
 
-- branch:    <!-- git branch / worktree -->
-- commit(s): <!-- SHA(s) -->
-- PR:        <!-- ссылка если есть -->
-- tests:     <!-- counts: 539/539 green; что было red; что новое -->
+- branch:               <!-- git branch / worktree -->
+- commit(s):            <!-- SHA(s) -->
+- PR:                   <!-- ссылка если есть; формат: PR #NN (YYYY-MM-DD, <short-hash>) -->
+- tests:                <!-- counts: 539/539 green; что было red; что новое -->
+- Product repo status:  <!-- ОБЯЗАТЕЛЬНО, выбрать ОДНО:
+                             committed                              — закоммичено, branch указан выше
+                             intentionally uncommitted (Tier C docs) — Tier C, working tree edit достаточен
+                             not applicable                         — TASK ничего не трогал в product repo
+                             dirty (см. Conflicts/risks)            — что-то висит, объяснить ниже -->
+
+<!-- Evidence rule: любая ссылка на PR # / merge-дату — с git short hash
+     из `git log --grep` или `gh pr view`. Никогда "из памяти".
+     Формат: `PR #74 (2026-05-01, b58e5fb)`. См. Correction 010. -->
 
 ## Conflicts / risks
 

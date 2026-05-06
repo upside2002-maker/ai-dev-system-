@@ -30,6 +30,9 @@
 - ссылки на новые/изменённые файлы
 - commit SHA если есть
 - ссылки на PR / branch
+- **Product repo status (обязательно):** `committed` / `intentionally uncommitted (Tier C docs)` / `not applicable` / `dirty (см. Conflicts)` — состояние working tree в продуктовом repo на момент HANDOFF. Без этого поля cross-repo state machine непрозрачна: AI Dev System может говорить "done", а git product repo — "не сохранено".
+
+**Evidence rule (даты PR/commit, обязательно):** любая ссылка на PR # или merge-дату в HANDOFF / design doc / overlay сопровождается git short hash из `git log --grep='#NN' --pretty=format:'%h %ad' --date=short` или `gh pr view NN --json mergedAt`. Формат: `PR #74 (2026-05-01, b58e5fb)`. Никогда не пишем даты "из памяти" / "из контекста сессии". Это закрывает Correction 010.
 
 ### Конфликты / открытые вопросы
 
