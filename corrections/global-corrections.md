@@ -171,6 +171,25 @@
 
 ---
 
+## Correction 011: Same-session role switching for product-code tasks weakens isolation
+
+**BAD:**
+- TL пишет TASK для Tier B/A product-code, и **в той же сессии** играет Worker'а: читает grounding, делает edit'ы, гоняет тесты, оформляет HANDOFF.
+- В той же сессии (или следующим turn'ом, не из cold-start) играет Reviewer'а: "проверяет" свой же diff и подтверждает что всё хорошо.
+- HANDOFF выглядит правильно, lifecycle gates прошли, audit trail формально есть. Но independent second look отсутствует — это была одна и та же модель, в одном контексте, с одинаковыми anchoring biases.
+- Регрессия в core/math/visual invariants проползает в commit, потому что reviewer-self не увидел того, что worker-self не учёл.
+
+**GOOD:**
+- Tier B (с core/math/visual/user-facing invariants) и Tier A — **отдельный Worker subagent по умолчанию** (cold-start, без session memory). TL отправляет subagent'у TASK файл и role definition; subagent работает не зная контекста TL-сессии.
+- Tier A — **дополнительно отдельный Reviewer subagent** в отдельной сессии. Reviewer видит только финальный артефакт (TASK + diff + HANDOFF), не промежуточные мысли Worker'а.
+- Tier C mechanical product write — same-session разрешён, но TASK содержит body-marker `Execution isolation: same-session TL inline accepted (Tier C mechanical)`, чтобы выбор был зафиксирован, а не молчаливо принят.
+- docs-only / recon — same-session по умолчанию OK.
+- Если TL не может обеспечить требуемую изоляцию (нет харнеса для subagent'а, нет модели для Reviewer'а) — **останавливается и спрашивает пользователя**. Не тихо понижает tier "чтобы сделать сейчас".
+
+**WHY:** Multi-role модель имеет смысл только если роли действительно независимы. Same-session switching ломает три механизма одновременно: anchoring (Worker уже принял решения, reviewer-self их инстинктивно защищает), pattern-completion (та же модель рекомбинирует те же образцы, без свежего взгляда), audit trail (HANDOFF внутри одной сессии — запись, не передача; ошибки "у обоих" одновременно). Cost spawn'а subagent'а — секунды; cost регрессии в Tier A — часы или сутки. Default policy — изоляция, см. [`ROLE_MODEL.md` § Role isolation by risk tier](../ROLE_MODEL.md).
+
+---
+
 ## Как добавлять новые записи
 
 Формат:

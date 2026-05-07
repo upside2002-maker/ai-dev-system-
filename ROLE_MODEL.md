@@ -248,6 +248,53 @@ Role mode:     Tech Lead | Business Analyst | Reviewer | Worker | Admin
 
 **Не параллельно** с Claude Worker по тем же файлам. Это снимает merge-конфликты и неотличимые stylistic divergences.
 
+## Role isolation by risk tier
+
+Default policy на тему: **когда роли можно играть из одной сессии, а когда обязательно разводить**. Расширяет [Codex Worker isolation rule](#codex-worker-isolation-rule) на любые комбинации моделей и рисков; Codex-rule остаётся как specific case.
+
+Risk tier определяется в TASK по обычным правилам проекта (`.claude/risk-tiers.md` в sitka-office; аналогичная классификация в astro когда дойдёт до Phase 0+). Layer (`docs` / `core` / `services` / `web` / `infra` / `mixed`) сам по себе не определяет tier — `infra` change может быть Tier A, а изменение в `core` может быть Tier C если это comment-only refactor.
+
+### Матрица политики
+
+| Тип TASK | Worker | Reviewer | Same-session разрешён? |
+|----------|--------|----------|------------------------|
+| **docs-only / recon** (read-only анализ, обновление overlay markdown, BA research, audit reports) | TL может исполнять inline | опционально, по усмотрению TL | **да** |
+| **Tier C mechanical product write** (rename, comment-only, generated-code update, formatting, низкорисковые fixture-добавления) | TL может исполнять inline **только если TASK содержит body-marker** `Execution isolation: same-session TL inline accepted (Tier C mechanical)` | опционально | **только если в TASK явно прописано** |
+| **Tier B product-code** (бизнес-логика без core/math/visual invariants, типичные feature changes, новые endpoint'ы без изменения схемы) | **отдельный Worker subagent по умолчанию** (cold-start, без session memory) | **обязателен**, если задача затрагивает core / math / visual / user-facing invariants; иначе по усмотрению TL | **нет**, кроме явного исключения с риск-обоснованием |
+| **Tier A product-code** (миграции, money-flow, security boundaries, изменения схемы БД, ledger, auth, payment, любой код с явным invariant в `architecture-invariants.md`) | **отдельный Worker subagent обязательно** | **отдельный Reviewer subagent обязательно** (cold-start, не та же сессия что Worker) | **нет** |
+
+### Что значит "отдельный subagent"
+
+- **Cold-start**: без памяти текущей TL-сессии. Обычно через `Agent` tool с `subagent_type` или через явный re-invoke в новой сессии.
+- **Self-contained prompt**: subagent читает TASK файл и role definition (`.claude/agents/<role>.md`), не получает контекст разговора TL'я.
+- **Один Worker subagent ≠ один Reviewer subagent**: для Tier A это **два разных субагента** в двух разных сессиях. Reviewer не должен видеть Worker'ов промежуточные мысли — только финальный артефакт (TASK + diff + HANDOFF).
+
+### Если требуемая изоляция не обеспечивается
+
+Если TL понимает, что не может предоставить нужный уровень изоляции (например, harness не поддерживает spawn субагента, или не хватает модели на Reviewer-сторону), он **останавливается и спрашивает пользователя/TL уровня выше**. Альтернативы:
+
+1. **Понизить tier** — но только если TL может обосновать, что задача действительно проще, чем казалась (с фиксацией обоснования в TASK или HANDOFF). Не trick "поставлю Tier C чтобы сделать в одной сессии".
+2. **Разбить TASK** — выделить рискованную часть в отдельный TASK с правильной изоляцией, остальное оставить как есть.
+3. **Отложить** — если изоляция не достижима сейчас.
+
+**Молча играть Worker'а или Reviewer'а из той же сессии на Tier B/A — запрещено.** Это снимает основную ценность multi-role модели: независимый second look. См. [Correction 011](corrections/global-corrections.md) — same-session role switching weakens isolation.
+
+### Почему default — изоляция, а не наоборот
+
+Same-session role switching кажется быстрее (не надо подымать subagent), но даёт три скрытых дефекта:
+
+1. **Anchoring**: Worker уже принял решения, Reviewer-self инстинктивно их защищает.
+2. **Pattern-completion**: TL прочитал код во время написания TASK; когда играет Worker — те же образцы рекомбинирует, не привнося свежей точки зрения.
+3. **Audit trail**: HANDOFF между TL и Worker внутри одной сессии — это запись, не передача. Ошибки у "обоих" одновременно.
+
+Cost subagent spawn — секунды, cost регрессии в Tier A — часы или сутки. Default стоит на стороне изоляции.
+
+### Enforcement
+
+**Сейчас (после v0.1):** policy фиксируется здесь и в Correction 011, но **не enforced** скриптами. TL применяет правило при создании TASK; Worker subagent при чтении инструкций видит ожидание; Reviewer при review проверяет, что изоляция была.
+
+После 1–2 реальных прогонов (Tier B и Tier A) — оценка нужно ли добавить enforcement gate в `scripts/accept-task.sh` (например, отказ принимать Tier A TASK без зафиксированного `Reviewer: <separate session/subagent ID>` в HANDOFF). Решение по enforcement — отдельный PR, не этот.
+
 ## Что переходное
 
 Этот документ создан в Фазе 1 миграции на новую модель ролей. Состояние на 2026-04-28:
