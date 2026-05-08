@@ -4,18 +4,23 @@
 # the lifecycle, removing manual template copy-paste.
 #
 # Usage:
-#   bash scripts/new-task.sh SLUG TASK_SLUG LAYER TIER
+#   bash scripts/new-task.sh SLUG TASK_SLUG LAYER TIER MODE
 # or via make:
-#   make new-task SLUG=sitka-office TASK_SLUG=dm7-d-widget-copy LAYER=web TIER=C
+#   make new-task SLUG=sitka-office TASK_SLUG=dm7-d-widget-copy LAYER=web TIER=C MODE=normal
 #
 # Refuses on:
-#   - any of the 4 args missing or empty
+#   - any of the 5 args missing or empty
 #   - TASK_SLUG not matching ^[a-z0-9]+(-[a-z0-9]+)*$
 #     (lowercase + digits + single hyphens, no leading/trailing/double hyphens)
 #   - LAYER not in {docs, core, services, web, infra, mixed}
 #   - TIER not in {A, B, C}
+#   - MODE not in {light, normal, strict, preview}
 #   - overlay directory project-overlays/<SLUG>/ does not exist
 #   - target file already exists (no clobber)
+#
+# Note: MODE is selected explicitly by TL — no default. See policies/MODES.md
+# for the risk-tier→mode default table. Tier A without Mode=strict will be
+# refused by accept-task at acceptance time (lifecycle gate).
 
 set -euo pipefail
 
@@ -23,20 +28,22 @@ ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
 usage() {
   cat >&2 <<EOF
-Usage: $0 SLUG TASK_SLUG LAYER TIER
+Usage: $0 SLUG TASK_SLUG LAYER TIER MODE
   SLUG       — project overlay slug, must exist as project-overlays/<SLUG>/
   TASK_SLUG  — lowercase letters/digits/hyphens (e.g. dm7-d-widget-copy)
   LAYER      — one of: docs, core, services, web, infra, mixed
   TIER       — one of: A, B, C
+  MODE       — one of: light, normal, strict, preview
+               (see policies/MODES.md for the risk-tier→mode default table)
 
 Example:
-  $0 sitka-office dm7-d-widget-copy web C
+  $0 sitka-office dm7-d-widget-copy web C light
 EOF
 }
 
 # --- arg validation ----------------------------------------------------------
-if [[ $# -lt 4 ]]; then
-  echo "ERROR: need 4 args (got $#): SLUG TASK_SLUG LAYER TIER" >&2
+if [[ $# -lt 5 ]]; then
+  echo "ERROR: need 5 args (got $#): SLUG TASK_SLUG LAYER TIER MODE" >&2
   usage
   exit 64  # EX_USAGE
 fi
@@ -45,8 +52,9 @@ SLUG="${1:-}"
 TASK_SLUG="${2:-}"
 LAYER="${3:-}"
 TIER="${4:-}"
+MODE="${5:-}"
 
-for var_name in SLUG TASK_SLUG LAYER TIER; do
+for var_name in SLUG TASK_SLUG LAYER TIER MODE; do
   if [[ -z "${!var_name}" ]]; then
     echo "ERROR: ${var_name} is empty" >&2
     usage
@@ -82,6 +90,17 @@ case "${TIER}" in
     ;;
 esac
 
+# MODE whitelist.
+case "${MODE}" in
+  light|normal|strict|preview) ;;
+  *)
+    echo "ERROR: MODE must be one of: light, normal, strict, preview" >&2
+    echo "       (see policies/MODES.md for risk-tier→mode default table)" >&2
+    echo "  got: ${MODE}" >&2
+    exit 65
+    ;;
+esac
+
 # --- overlay & target path ---------------------------------------------------
 OVERLAY="${ROOT_DIR}/project-overlays/${SLUG}"
 if [[ ! -d "${OVERLAY}" ]]; then
@@ -113,6 +132,7 @@ cat > "${TARGET}" <<EOF
 - Risk tier: ${TIER}
 - Owner: Project Tech Lead
 - Worker model: TBD
+- Mode: ${MODE}
 
 ## Problem
 
@@ -152,7 +172,7 @@ RELATIVE_TARGET="${TARGET#"${ROOT_DIR}"/}"
 echo "OK: TASK scaffolded"
 echo "  path:  ${RELATIVE_TARGET}"
 echo "  status: open"
-echo "  layer: ${LAYER}  tier: ${TIER}"
+echo "  layer: ${LAYER}  tier: ${TIER}  mode: ${MODE}"
 echo
 echo "Дальше: TL заполняет Problem / Scope / Files / Do not touch / Acceptance / Test commands / Handoff requirements,"
 echo "потом передаёт TASK Worker'у. Не забудь добавить ссылку в OPERATING.md → 'Активные TASKS'."

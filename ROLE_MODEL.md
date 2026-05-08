@@ -295,6 +295,10 @@ Cost subagent spawn — секунды, cost регрессии в Tier A — ч
 
 После 1–2 реальных прогонов (Tier B и Tier A) — оценка нужно ли добавить enforcement gate в `scripts/accept-task.sh` (например, отказ принимать Tier A TASK без зафиксированного `Reviewer: <separate session/subagent ID>` в HANDOFF). Решение по enforcement — отдельный PR, не этот.
 
+### Связь с режимами выполнения (Mode)
+
+Role isolation и Mode — две независимые оси. Эта секция отвечает на вопрос «кто играет роли при риске X». Поле `Mode:` в шапке TASK отвечает на вопрос «сколько ceremony нужно при риске X». Детали режимов и default по классу риска — `policies/MODES.md`. Tier A без `Mode: strict` отказывается `accept-task` гейтом (см. также Correction 012).
+
 ## Что переходное
 
 Этот документ создан в Фазе 1 миграции на новую модель ролей. Состояние на 2026-04-28:

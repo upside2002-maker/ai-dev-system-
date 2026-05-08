@@ -49,11 +49,12 @@ reject-task:
 	@bash scripts/reject-task.sh "$(FILE)" "$(REASON)"
 
 # Scaffold a new TASK file from skeleton with validated header.
-# Usage: make new-task SLUG=sitka-office TASK_SLUG=dm7-d-widget-copy LAYER=web TIER=C
+# Usage: make new-task SLUG=sitka-office TASK_SLUG=dm7-d-widget-copy LAYER=web TIER=C MODE=light
 #   LAYER ∈ {docs, core, services, web, infra, mixed}
 #   TIER  ∈ {A, B, C}
+#   MODE  ∈ {light, normal, strict, preview}    — см. policies/MODES.md
 new-task:
-	@bash scripts/new-task.sh "$(SLUG)" "$(TASK_SLUG)" "$(LAYER)" "$(TIER)"
+	@bash scripts/new-task.sh "$(SLUG)" "$(TASK_SLUG)" "$(LAYER)" "$(TIER)" "$(MODE)"
 
 # Scaffold a new HANDOFF file linked to a TASK.
 # Usage: make new-handoff SLUG=sitka-office TASK=path/to/<file>.md FROM=worker TO=tl

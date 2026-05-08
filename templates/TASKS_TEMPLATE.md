@@ -4,7 +4,7 @@
 
 Файл хранится по пути `project-overlays/<slug>/TASKS/<YYYY-MM-DD-short-slug>.md`. После закрытия — переносится в `TASKS/archive/`. ID задачи = basename файла (`<YYYY-MM-DD-short-slug>`).
 
-Создаётся через `make new-task SLUG=<slug> TASK_SLUG=<short-slug> LAYER=<layer> TIER=<tier>` — scaffold helper генерит шапку и skeleton автоматически.
+Создаётся через `make new-task SLUG=<slug> TASK_SLUG=<short-slug> LAYER=<layer> TIER=<tier> MODE=<mode>` — scaffold helper генерит шапку и skeleton автоматически.
 
 ## Title
 
@@ -32,6 +32,7 @@
 - `Risk tier:` — `A` | `B` | `C` (из проектного `.claude/risk-tiers.md`; tier D не используется)
 - `Owner:` — `Project Tech Lead` (на текущей итерации; в будущем — имя конкретного TL при multi-TL)
 - `Worker model:` — `Claude Code` | `Codex` | `TBD` (фиксируется TL'ом до старта Worker; `TBD` если ещё не назначен)
+- `Mode:` — `light` | `normal` | `strict` | `preview` (объём процесса; ось ортогональна `Risk tier:` — tier описывает техническую опасность, mode — объём ceremony). Default по классу риска: C → `light`, B → `normal`, A → `strict`, ad-hoc разведка → `preview`. Tier A без `Mode: strict` отказывается `accept-task` гейтом. Полные правила и таблица соответствия — `policies/MODES.md`.
 
 ## Секции тела
 
