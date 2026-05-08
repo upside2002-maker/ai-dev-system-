@@ -136,35 +136,27 @@ cat > "${TARGET}" <<EOF
 
 ## Problem
 
-<!-- Что хотим решить и почему. 2–5 предложений. Не bizdev — техническая или процессная формулировка. -->
-
-## Scope
-
-<!-- Граница: что входит, что не входит. Если scope пересекается с другим активным TASK — указать. -->
+<!-- Что делаем и почему. 2–5 предложений, технически. Без bizdev — это уже в TL decision / product brief. -->
 
 ## Files
 
 - new:    <!-- пути новых файлов -->
-- modify: <!-- пути изменяемых файлов -->
-- delete: <!-- если удаляем (редко) -->
+- modify: <!-- пути изменяемых -->
+- delete: <!-- редко -->
 
 ## Do not touch
 
-<!-- Явный список зон / файлов, которые Worker НЕ должен трогать. Worker возвращается в TL если задача требует выйти за этот периметр. -->
+<!-- TASK-specific исключения. Wider-scope policy — в starts/WORKER.md, не дублируем. -->
 
-## Acceptance criteria
+## Acceptance
 
-- [ ] <!-- конкретная проверка #1 -->
+- [ ] <!-- конкретная проверка #1 (команда / числовая метрика / файловый инвариант) -->
 - [ ] <!-- конкретная проверка #2 -->
-- [ ] <!-- тесты / билд / линт зелёные -->
 
-## Test commands
+## Context
 
-<!-- Конкретные команды: cabal test, pytest, npm test, make check, и т.п. -->
-
-## Handoff requirements
-
-<!-- Что Worker обязан зафиксировать в HANDOFF при сдаче: commit SHA, PR link, test counts, что не сделано. -->
+<!-- Ссылки на CURRENT_STATE / архитектурный документ / предшествующий HANDOFF / связанный TASK. -->
+<!-- Если выбран не-default Mode для tier — здесь обоснование одной строкой (см. policies/MODES.md). -->
 EOF
 
 # --- report ------------------------------------------------------------------
@@ -174,5 +166,5 @@ echo "  path:  ${RELATIVE_TARGET}"
 echo "  status: open"
 echo "  layer: ${LAYER}  tier: ${TIER}  mode: ${MODE}"
 echo
-echo "Дальше: TL заполняет Problem / Scope / Files / Do not touch / Acceptance / Test commands / Handoff requirements,"
+echo "Дальше: TL заполняет Problem / Files / Do not touch / Acceptance / Context,"
 echo "потом передаёт TASK Worker'у. Не забудь добавить ссылку в OPERATING.md → 'Активные TASKS'."

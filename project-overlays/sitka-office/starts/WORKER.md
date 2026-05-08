@@ -62,10 +62,10 @@ Reading order:
 - Если задача Tier A — отметить в handoff что нужен human review
 
 После завершения:
-- Создаю handoff в `project-overlays/sitka-office/HANDOFFS/` по шаблону `templates/HANDOFFS_TEMPLATE.md`
+- Создаю handoff: `make -C /Users/ilya/Projects/ai-dev-system new-handoff SLUG=sitka-office TASK=<task-path> FROM=worker TO=tl` (заполняю Summary / Done / Remaining / Artifacts с обязательным `Product repo status:` / Conflicts / Next step — детали в `templates/HANDOFFS_TEMPLATE.md`)
 - Адресат — Tech Lead
 - Не пушу в main без апрува TL
-- Меняю `Status` в моём TASK на `review`
+- Формальная сдача: `make -C /Users/ilya/Projects/ai-dev-system submit-task FILE=project-overlays/sitka-office/TASKS/<my-task>.md` — гейт переводит `Status: open|in-progress` → `review`. **Не редактирую Status вручную** (см. Correction 008). Без submit-task TL не сможет принять через `accept-task`.
 
 Что НЕ делаю:
 - не выхожу за "Файлы" / "Не трогать" из TASK

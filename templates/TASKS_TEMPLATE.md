@@ -2,9 +2,9 @@
 
 Канонический формат задачи от Project Tech Lead → Worker.
 
-Файл хранится по пути `project-overlays/<slug>/TASKS/<YYYY-MM-DD-short-slug>.md`. После закрытия — переносится в `TASKS/archive/`. ID задачи = basename файла (`<YYYY-MM-DD-short-slug>`).
+**Файл:** `project-overlays/<slug>/TASKS/<YYYY-MM-DD-short-slug>.md`. После acceptance — `make accept-task` переносит в `TASKS/archive/`. ID задачи = basename файла без `.md`.
 
-Создаётся через `make new-task SLUG=<slug> TASK_SLUG=<short-slug> LAYER=<layer> TIER=<tier> MODE=<mode>` — scaffold helper генерит шапку и skeleton автоматически.
+**Создаётся:** `make new-task SLUG=<slug> TASK_SLUG=<short-slug> LAYER=<layer> TIER=<tier> MODE=<mode>` — scaffold-helper генерит шапку и пустые секции тела по этому шаблону.
 
 ## Title
 
@@ -12,67 +12,60 @@
 # TASK: <task-slug>
 ```
 
-(`<task-slug>` — то же что в имени файла, без даты и `.md`.)
+`<task-slug>` совпадает с именем файла без даты-префикса и `.md`.
 
-## Поля шапки (обязательно, в этом порядке)
+## Header (9 полей, в этом порядке)
 
 - `Status:` — `open` | `in-progress` | `review` | `done` | `rejected` (lifecycle)
-- `Ready:` — `yes` | `no` (можно ли Worker-у начинать сейчас)
-  - `yes` — Worker может стартовать TASK как только `Status: open`
-  - `no` — TASK существует, но Worker НЕ стартует без явного TL go-сигнала и bump'а в `yes`. Используется для DRAFT / blocked / awaiting-prereq состояний (например ждём CI green, billing reset, merge зависимого PR)
-  - **Семантика разделена с `Status`** намеренно: `Status` = где в lifecycle, `Ready` = разрешено ли стартовать сейчас. Два независимых вопроса.
-  - Legacy TASK без поля `Ready:` (в archive до 2026-05-04) считается `Ready: yes` — не мигрируем
-- `Date:` — `YYYY-MM-DD` (когда TL поставил TASK)
-- `Project:` — slug overlay (`sitka-office`, `astro`, и т.д.)
-- `Layer:` — `docs` | `core` | `services` | `web` | `infra` | `mixed`
-  - `web` = frontend / UI layer (React, TS components, CSS, e2e)
-  - `infra` = Makefile, CI, docker, deploy, scripts
-  - `mixed` — задача затрагивает несколько слоёв неразделимо (редкое; обычно делить на отдельные TASKs)
-  - см. также `guides/LAYER_RESPONSIBILITIES.md`
+- `Ready:` — `yes` | `no`. `no` = DRAFT / blocked / awaits-prereq, Worker не стартует. Семантика отдельна от `Status`.
+- `Date:` — `YYYY-MM-DD` (когда TL поставил задачу)
+- `Project:` — overlay slug (`sitka-office`, `astro`, …)
+- `Layer:` — `docs` | `core` | `services` | `web` | `infra` | `mixed` (см. `guides/LAYER_RESPONSIBILITIES.md`)
 - `Risk tier:` — `A` | `B` | `C` (из проектного `.claude/risk-tiers.md`; tier D не используется)
-- `Owner:` — `Project Tech Lead` (на текущей итерации; в будущем — имя конкретного TL при multi-TL)
-- `Worker model:` — `Claude Code` | `Codex` | `TBD` (фиксируется TL'ом до старта Worker; `TBD` если ещё не назначен)
-- `Mode:` — `light` | `normal` | `strict` | `preview` (объём процесса; ось ортогональна `Risk tier:` — tier описывает техническую опасность, mode — объём ceremony). Default по классу риска: C → `light`, B → `normal`, A → `strict`, ad-hoc разведка → `preview`. Tier A без `Mode: strict` отказывается `accept-task` гейтом. Полные правила и таблица соответствия — `policies/MODES.md`.
+- `Owner:` — `Project Tech Lead`
+- `Worker model:` — `Claude Code` | `Codex` | `TBD` (фиксируется до старта Worker)
+- `Mode:` — `light` | `normal` | `strict` | `preview` (объём процесса; ось ортогональна `Risk tier:`). Default по tier'у: C → `light`, B → `normal`, A → `strict`. Tier A без `Mode: strict` отказывается `accept-task` гейтом. Полные правила — `policies/MODES.md`.
 
-## Секции тела
+## Body (5 обязательных секций)
 
-### Задача
+### Problem
 
-Что делать, в 2–5 предложениях. Без bizdev-обоснований; они уже в product brief от BA или решении TL.
+Что именно делаем и почему. 2–5 предложений, технически. Без bizdev-обоснований — они уже в product brief / TL decision.
 
-### Файлы
+### Files
 
-- `new:` — пути новых файлов
-- `modify:` — пути изменяемых
-- `delete:` — пути удаляемых (если есть)
+```
+- new:    <пути новых файлов>
+- modify: <пути изменяемых>
+- delete: <редко>
+```
 
-### Не трогать
+Список **исчерпывающий**: Worker не пишет ни в один файл вне этого списка. Если задача требует выйти за периметр — Worker возвращается в TL через HANDOFF, не делает молча.
 
-Явный список файлов или зон, которые не должны быть изменены. Worker не имеет права выходить за этот периметр без возврата в TL.
+### Do not touch
 
-### Критерии приёмки
+Явный список файлов или зон, в которые Worker НЕ должен заглядывать с правом записи (даже если они в `Files` других задач). Ширококонтекстные правила («не пиши в Tier A core без явного Files») живут в роли (`starts/WORKER.md`), здесь — TASK-specific исключения.
 
-Чек-лист конкретных проверок: тесты, билд, линт, миграция, smoke-test.
+### Acceptance
 
-### Контекст
+Конкретные проверки: команды (`make check`, `cabal test -- -p Treasury`, `pytest path -k test_x`), числовые/файловые инварианты (`wc -l < N`, no diff outside Files). Стандартные test-команды по слою (`cabal test`, `pytest`, `npm test`) — в `starts/WORKER.md`; здесь — только нестандартное и/или специфичное для задачи.
 
-Ссылки на CURRENT_STATE / архитектурные документы / предшествующий handoff / связанный TASK.
+### Context
 
-### Reviewer (опционально)
+Ссылки на CURRENT_STATE / архитектурный документ / предшествующий HANDOFF / связанный TASK. Если выбран **не-default Mode** для класса риска (`light` на B, `normal` на A — но A без strict не пройдёт gate, см. `policies/MODES.md`) — здесь обоснование одной строкой.
 
-Если TL запросил ревью: какая модель (`Claude` / `Codex`), что проверять отдельно.
+## Что НЕ дублируется в шаблоне
 
-## Правила
+| Концепция | Где живёт |
+|-----------|-----------|
+| Lifecycle переходов (open → review → done) | `scripts/submit-task.sh`, `scripts/accept-task.sh` |
+| Worker chain-of-custody, перед-стартовый reading order | `project-overlays/<slug>/starts/WORKER.md` + `.claude/agents/<slug>-worker.md` |
+| Reviewer flow и формат отчёта | `project-overlays/<slug>/starts/REVIEWER.md` + `.claude/agents/<slug>-reviewer.md` |
+| HANDOFF структура (Summary / Done / Artifacts / …) | `templates/HANDOFFS_TEMPLATE.md`, скелет в `scripts/new-handoff.sh` |
+| Test-команды по умолчанию для слоя | `project-overlays/<slug>/starts/WORKER.md` (project-specific) |
+| Mode → tier default + четыре режима | `policies/MODES.md` |
+| Role isolation matrix (кто играет роли при риске X) | `ROLE_MODEL.md` § Role isolation by risk tier |
+| Codex isolation rule (multi-model parallelism) | `project-overlays/<slug>/starts/WORKER.md` § Codex isolation |
+| Anti-patterns (`Mode misuse`, `evidence rule`, …) | `corrections/global-corrections.md` |
 
-- **Один TASK = один Worker = одна модель.**
-- **Codex Worker** → отдельная ветка/worktree, write-set явно перечислен в "Файлы".
-- Worker **не выходит** за пределы "Файлы" + "Не трогать". Если задача требует выйти — возвращает в TL, не делает молча.
-- Замечания Reviewer → TL → решение → новый TASK или дополнение к текущему. Worker не реагирует на Reviewer напрямую.
-
-## Lifecycle
-
-1. TL создаёт `TASKS/<id>.md` со `Status: open`
-2. Worker берёт → `Status: in-progress`
-3. Worker закрывает → пишет HANDOFF → `Status: review`
-4. TL принимает → `Status: done` → файл переносится в `TASKS/archive/`
-5. TL отклоняет → `Status: rejected` → или фикс, или archive с причиной
+Если что-то из этого «хочется» поднять в TASK — это сигнал, что задача либо нестандартная (тогда формулируется в `Context`), либо нужно править соответствующий source-of-truth, не шаблон.
