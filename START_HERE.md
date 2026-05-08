@@ -2,6 +2,13 @@
 
 Главная навигация `ai-dev-system`. Открой нужный entrypoint по контексту.
 
+## Для пользователя — статус проекта без английской терминологии
+
+- [`project-overlays/sitka-office/STATUS_RU.md`](project-overlays/sitka-office/STATUS_RU.md) — статус Sitka на простом русском (5 разделов: Сейчас / Ждёт твоего решения / Срочные риски / На очереди / Не делаем сейчас).
+- [`project-overlays/astro/STATUS_RU.md`](project-overlays/astro/STATUS_RU.md) — то же для Astro.
+
+Эти файлы — для тебя как заказчика, не для агентов. Читаются за 30 секунд, без слов «handoff», «task», «tier», «scope», «accept», «lifecycle». Технические артефакты для агентов — ниже.
+
 ## Я только начинаю / хочу понять систему
 
 - [`ROLE_MODEL.md`](ROLE_MODEL.md) — канонический источник правды по ролям (Project Tech Lead / Business Analyst / Reviewer / Worker / AI Dev System Admin), иерархия, координация, multi-model protocol.
