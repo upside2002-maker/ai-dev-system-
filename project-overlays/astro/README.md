@@ -45,16 +45,43 @@ Research-блок завершён, его выводы зафиксирован
 
 Переносимо: методология, anti-confabulation правила, подход к agent-driven разработке, tech-lead posture, принцип research → architecture → development.
 
+## Bootstrap risks
+
+Перед стартом любого Astro TASK нужно учесть состояние двух базовых рисков. Tech Lead сверяется с ними перед выдачей задач Worker'у. Risk #1 (git) закрыт 2026-05-06; risk #2 (architecture drift) остаётся открытым.
+
+### 1. ~~Продуктовый repo не под git~~ — resolved 2026-05-06
+
+`/Users/ilya/Projects/astro/` инициализирован как git repo 2026-05-06 в рамках TASK `git-bootstrap-execution` (overlay) после варианта решения local-only + local bare backup. Текущее состояние:
+
+- **Baseline commit:** `astro:4937c00` (`chore: initial local git import after AI Dev System bootstrap`), 161 файл, branch `main`.
+- **Remote topology:** только локальный bare backup `/Users/ilya/Backups/astro.git` (remote name `backup`). Публичного хостинга (GitHub/GitLab/Gitea) нет и не предполагается без отдельного go пользователя.
+- **PII / реальные БД исключены:** `data/`, `*.db`, `*.sqlite*`, `*.se1`, `.env*` зафиксированы в `.gitignore`. Pre-init backup БД сохранён вне репо: `/Users/ilya/Backups/astro-pre-git-2026-05-06-183746.db`.
+- **Evidence rule** из `templates/HANDOFFS_TEMPLATE.md` для Astro **применим начиная с `4937c00`**. Все новые HANDOFF используют git short hash; filesystem evidence (`ls`, `find`, mtime) для дат продукта больше не нужен.
+- **Поле `Product repo status:`** в HANDOFF заполняется обычным образом (`clean / dirty / commit:<short>`).
+- **Cross-repo state machine** (Correction 4 в `BASELINE.md`) для Astro действует полностью.
+- **Что всё ещё требует go пользователя:** добавление публичных remote (GitHub/GitLab/Gitea), force-push, history rewrite, любая операция кроме `git push backup`.
+
+### 2. Architecture drift между прескрипцией и реальностью
+
+`ARCHITECTURE/target-architecture.md` зафиксирована 2026-04-24 и описывает Phase 0 как минимальный vertical slice с базовым PDF-выводом без графики и интерпретации (§ 6). В период между этой датой и моментом написания этого файла продуктовый код в `/Users/ilya/Projects/astro/services/api-python/app/pdf/` прошёл серию фаз с нумерацией 0.5–0.10b (введена в продуктовых сессиях, в overlay не зафиксирована), включая SVG-колёса, расшифровки таблиц, theme-grouped synthesis и миграцию направлений на Solar Arc.
+
+Это **candidate drift**, не баг. TL не разрешает дрейф в одну сторону без отдельного шага: либо обновить overlay-документы (Architecture / migration-plan / PHASE_0_TASKS) под фактическое состояние, либо зафиксировать осознанное отклонение в `astro/.claude/corrections.md` с обоснованием. Кандидат на следующий TL TASK — «Architecture drift reconciliation», но не до явного go.
+
 ## Reading order
 
-Канонический источник правды по ролям — [`ai-dev-system/ROLE_MODEL.md`](../../ROLE_MODEL.md) (5 ролей: Project Tech Lead / Business Analyst / Reviewer / Worker / AI Dev System Admin); навигация по системным entrypoints — [`ai-dev-system/START_HERE.md`](../../START_HERE.md). Для astro проектные START-файлы по новой модели ещё не созданы (запланированы в Фазе 4 миграции `ROLE_MODEL`); сейчас reading order ниже подходит для роли **Worker** на astro.
+Канонический источник правды по ролям — [`ai-dev-system/ROLE_MODEL.md`](../../ROLE_MODEL.md) (5 ролей: Project Tech Lead / Business Analyst / Reviewer / Worker / AI Dev System Admin); навигация по системным entrypoints — [`ai-dev-system/START_HERE.md`](../../START_HERE.md). Для astro проектные START-файлы по новой модели создаются по мере необходимости — `TECH_LEAD.md` уже есть (см. ниже), `BUSINESS_ANALYST.md` / `REVIEWER.md` / `WORKER.md` создадутся в Фазе 4 миграции `ROLE_MODEL` или ad-hoc по требованию TL.
 
-**Для Worker (текущая фаза astro — Development Phase 0):**
+### Для Project Tech Lead
+
+См. [`starts/TECH_LEAD.md`](starts/TECH_LEAD.md) — главный entry-point, включает promпт, reading order, operational discipline, явный учёт обоих bootstrap risks выше и cписок 8 bright lines из `target-architecture.md § 11`. Для Astro этот START-файл — **обязательный** перед любой TL-сессией: без него TL пропустит факт отсутствия git и сделает невалидное HANDOFF-поле `Product repo status:`.
+
+### Для Worker (текущая фаза astro — Development Phase 0)
+
 1. [`ai-dev-system/ROLE_MODEL.md`](../../ROLE_MODEL.md) — роль и координация
 2. [`ai-dev-system/CLAUDE_GLOBAL.md`](../../CLAUDE_GLOBAL.md)
 3. [`ai-dev-system/corrections/global-corrections.md`](../../corrections/global-corrections.md)
 4. [`ai-dev-system/guides/LAYER_RESPONSIBILITIES.md`](../../guides/LAYER_RESPONSIBILITIES.md) — слои Worker-задачи (Core / Services / Frontend)
-5. `project-overlays/astro/README.md` (этот файл)
+5. `project-overlays/astro/README.md` (этот файл) — особое внимание секции «Bootstrap risks» выше
 6. `project-overlays/astro/ARCHITECTURE/target-architecture.md` — § 1-2 (треугольник + слои) и § 11 (bright lines).
 7. `project-overlays/astro/ARCHITECTURE/PHASE_0_TASKS.md` — конкретный таск.
 8. После создания в T-A.3: `astro/.claude/architecture-invariants.md` + `astro/.claude/corrections.md`.
