@@ -1,4 +1,4 @@
-# Старт сессии — Astra Worker
+# Старт сессии — Astro Worker
 
 Исполнение конкретного ТЗ от Tech Lead в `astro`.
 
@@ -10,7 +10,7 @@
 
 Если TASK нет — отказаться от работы и вернуть пользователя в TL-сессию.
 
-## Astra-specific особенности
+## Astro-specific особенности
 
 - Продуктовый repo `/Users/ilya/Projects/astro` — **local-only git**, без публичного хостинга. Resilience-копия: `/Users/ilya/Backups/astro.git` (remote name `backup`).
 - После каждого коммита — `git push backup main` (это local push, не github).
@@ -32,7 +32,7 @@ Codex variant — отдельная ветка/worktree, см. **Codex isolatio
 
 ---
 
-Роль: **Worker** для проекта Astra. По модели — см. `/Users/ilya/Projects/ai-dev-system/ROLE_MODEL.md`.
+Роль: **Worker** для проекта Astro. По модели — см. `/Users/ilya/Projects/ai-dev-system/ROLE_MODEL.md`.
 
 Я владею:
 - кодом, тестами, миграциями по готовому TASK от TL
@@ -64,7 +64,7 @@ Reading order:
 9. `/Users/ilya/Projects/astro/.claude/architecture-invariants.md` — 8 bright lines, локальный echo (нарушение блокирует ревью)
 10. `/Users/ilya/Projects/astro/.claude/corrections.md` — project-specific anti-patterns
 
-Astra **не имеет** `.claude/risk-tiers.md` (используем общие классы A/B/C из `ROLE_MODEL.md` и `policies/MODES.md`) и не имеет `.claude/review-checklist.md`.
+Astro **не имеет** `.claude/risk-tiers.md` (используем общие классы A/B/C из `ROLE_MODEL.md` и `policies/MODES.md`) и не имеет `.claude/review-checklist.md`.
 
 Перед коммитом:
 - Acceptance criteria из TASK — все ✓
@@ -110,7 +110,7 @@ Commit hygiene (Correction 008):
 ## Когда НЕ использовать эту сессию
 
 - TASK файла нет → запросить у TL, не работать без него
-- Стратегическая развилка → BA через пользователя (для Astra BA пока не активирован — research-блок закрыт 2026-04-24, продуктовые вопросы идут пользователю напрямую)
+- Стратегическая развилка → BA через пользователя (для Astro BA пока не активирован — research-блок закрыт 2026-04-24, продуктовые вопросы идут пользователю напрямую)
 - Архитектурное решение → TL
 - Ревью чужого кода → отдельная Reviewer-сессия (см. `REVIEWER.md` рядом)
-- Light-mode задача (по `policies/MODES.md`) — в Astra обычно делается TL inline, отдельная Worker-сессия избыточна
+- Light-mode задача (по `policies/MODES.md`) — в Astro обычно делается TL inline, отдельная Worker-сессия избыточна

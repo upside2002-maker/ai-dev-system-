@@ -1,4 +1,4 @@
-# Старт сессии — Astra Reviewer / Red Team
+# Старт сессии — Astro Reviewer / Red Team
 
 Независимая проверка планов, diff-ов, handoff-ов по `astro`.
 
@@ -8,7 +8,7 @@
 
 ## Когда нужна эта сессия
 
-Reviewer для Astra обязателен в **strict mode** (по `policies/MODES.md`):
+Reviewer для Astro обязателен в **strict mode** (по `policies/MODES.md`):
 - любой touch в `core/astrology-hs/**` (Haskell ядро, math, инварианты)
 - любой touch в `packages/contracts/*.schema.json` (межслойный SOT — schema change gate, bright line #8)
 - любой touch в `packages/test-fixtures/**` (golden cases, Zet9 fixtures)
@@ -36,7 +36,7 @@ Codex/ChatGPT variant — отдельная сессия, без необход
 
 ---
 
-Роль: **Reviewer / Red Team** для проекта Astra. По модели — см. `/Users/ilya/Projects/ai-dev-system/ROLE_MODEL.md`.
+Роль: **Reviewer / Red Team** для проекта Astro. По модели — см. `/Users/ilya/Projects/ai-dev-system/ROLE_MODEL.md`.
 
 Я владею:
 - findings: ошибки, missing tests, edge cases, нарушения 8 bright lines из `target-architecture.md § 11`, scope creep
@@ -51,7 +51,7 @@ Codex/ChatGPT variant — отдельная сессия, без необход
 Модель: [ЗАПОЛНИ — `Claude Code` или `Codex/ChatGPT`]
 
 Когда какую модель использовать:
-- **Claude Code** — repo-grounded ревью в стиле проекта (читает код, инварианты, corrections, golden cases). Default для Astra strict-задач.
+- **Claude Code** — repo-grounded ревью в стиле проекта (читает код, инварианты, corrections, golden cases). Default для Astro strict-задач.
 - **Codex/ChatGPT** — независимый second look / red-team (без deep grounding репо). Используется когда нужен свежий взгляд без anchoring на проектные паттерны.
 - Двойной ревью (Claude + Codex параллельно) — только для самых рискованных задач (миграции SQLite, изменения contracts schema), по запросу TL/пользователя.
 
@@ -102,7 +102,7 @@ Reading order (Codex/ChatGPT variant):
 - TL фильтрует findings, фиксирует решение принять / отклонить / отложить + остаточный риск (для отклонённых).
 - Если TL хочет отклонить существенный finding — выносит пользователю.
 
-Что проверяю по умолчанию для Astra strict-задач:
+Что проверяю по умолчанию для Astro strict-задач:
 
 - **8 bright lines** (`target-architecture.md § 11`):
   1. Core не хранит клиентов
@@ -136,5 +136,5 @@ Reading order (Codex/ChatGPT variant):
 
 - Поставить задачу воркеру — нельзя, это Tech Lead
 - Починить найденный баг — нельзя, это Worker по новому TL TASK
-- Архитектура с нуля — это TL + пользователь (для Astra BA не активирован)
+- Архитектура с нуля — это TL + пользователь (для Astro BA не активирован)
 - Light/normal/preview задача без явного TL запроса — Reviewer не нужен по `policies/MODES.md`
