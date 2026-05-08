@@ -366,7 +366,7 @@ CREATE TABLE charts_cache (
 );
 ```
 
-`InterpretationRule`, `Draft`, `Artifact` — **отсутствуют в Phase 0**. Правила живут у Марины в PDF на её стороне; draft и artifact — это просто `consultations.facts_json` + `consultations.pdf_path` в одной таблице.
+**Phase 0.8 evolved beyond this baseline.** К `consultations` таблице Phase 0.8 добавил отдельный editorial-overrides slot (`migrations/002_draft_overrides.sql`) — `facts_json` остаётся immutable после `compute`, ручные overrides через UI (`DraftEditor`, см. § 7.2) пишутся отдельной колонкой / связанной таблицей. `InterpretationRule` как **rules engine** по-прежнему **отсутствует** — closed-dictionary template-фразы в `services/api-python/app/pdf/*_themes.py` это **не** rules engine (см. § 6.1 ниже). `Artifact`-как-таблица отсутствует; PDF-путь по-прежнему `consultations.pdf_path`. См. `architecture-drift-recon.md` § 5.1.
 
 ### 5.3 Endpoints (API)
 
@@ -391,31 +391,60 @@ DELETE /api/v1/consultations/{id}         удалить
 
 ## 6. PDF layout — Phase 0
 
-Цель: PDF-отчёт, в который Марина смотрит как на **структурированные факты** и сверяет со своим PDF-справочником правил Дарагана/Седашева, на основе чего пишет интерпретацию для клиента.
+> **Эволюция scope (2026-05-06):** § 6 был зафиксирован 2026-04-24 как «структурированные факты без графики и интерпретации». Продуктовая итерация 2026-04-24 → 2026-05-06 расширила Phase 0 PDF под прямые запросы Марины: добавлены SVG натал-колесо, closed-dictionary text-интерпретации (не rules engine), блок дирекций (Solar Arc), и editorial overrides layer (`Draft`). Это conscious deviations — UX evolution, не дисциплинарный drift. См. `architecture-drift-recon.md` § 5.1. Bright lines (§ 11) сохраняются: интерпретации остаются closed-dictionary template-фразами (не free-text / LLM / rules engine); PDF rendering продолжает жить в Python+WeasyPrint; ephemeris/aspects/houses в Haskell core.
+
+Цель Phase 0: PDF-отчёт — **структурированные факты + графический натал-референс + closed-dictionary заголовки и подсказки** — на основе чего Марина пишет финальную интерпретацию для клиента (с editorial overrides через DraftEditor если нужно).
 
 **Блоки отчёта:**
 
 1. **Заголовок:** ФИО клиента, дата/время/место рождения, год соляра.
-2. **Натальная карта:**
-   - Таблица позиций планет (Planet, Sign, Degree°Minute, House Placidus, House Equal, Retrograde?).
-   - Таблица аспектов (с указанием orb-профиля Natal).
-   - Соединения с фикс.звёздами (планета / звезда / orb).
-   - Классификации (strong-planets с причинами, weak-planets с причинами).
-3. **Соляр-карта:**
-   - Точный момент возврата (UTC + локальное время места рождения).
-   - Таблица позиций планет.
-   - Аспекты (в профиле Natal, т.к. это натал-типа карта).
-   - Классификации.
-4. **Годовая таблица транзитов по домам натала:**
-   - Разбиение на 4 раздела: Марс / Венера / Сатурн / Юпитер.
-   - В каждом — список «период X в доме натала Y» с датами вход/выход + хиты аспектов к натальным объектам (с orb-профилем Prognostic).
-5. **Footer:** версия ruleset, версия core, ephemeris source, дата генерации.
 
-**Чего НЕТ в Phase 0 PDF:**
-- Графических карт-колёс (SVG натальная карта) — Phase 1 (нужна для книги).
-- Текстовых интерпретаций — Phase 1+ (когда правила станут first-class).
-- Дирекций — Phase 1.
-- Касаний высших планет — Phase 1.
+2. **Натал-карта (визуальная):** SVG-колесо с path-based глифами знаков и планет (`services/api-python/app/pdf/wheel.py`). Решение через path-based вместо `<text>` продиктовано WeasyPrint 68.1 limitation; см. Correction 007 в `astro/.claude/corrections.md`.
+
+3. **Натальная карта (таблицы):**
+   - Таблица позиций планет (Planet, Sign, Degree°Minute, House Placidus, Retrograde?).
+   - Таблица аспектов (Natal-профиль).
+   - Соединения с фикс.звёздами — Phase 0.2 (`Domain.FixedStars` отсутствует на `astro:b7774cf`; см. `PHASE_0_TASKS.md` T-B.4).
+   - Классификации (strong-planets с причинами, weak-planets с причинами).
+
+4. **Соляр-карта:**
+   - Точный момент возврата (UTC + локальное время места рождения).
+   - Таблица позиций + аспекты + классификации.
+   - **Closed-dictionary house-pair interpretations** (Solar/Natal — 144 ячейки в `services/api-python/app/pdf/house_pair_themes.py`).
+
+5. **Дирекции (Solar Arc):**
+   - Active formulas для Asc / MC / 1-house с relevance-фильтром (`core/astrology-hs/src/Domain/Directions.hs`).
+   - **Closed-dictionary direction-text** (`services/api-python/app/pdf/direction_themes.py`).
+   - Метод по умолчанию — Solar Arc (Phase 0.5 lock-in; см. Correction 006 в `astro/.claude/corrections.md`).
+
+6. **Годовая таблица транзитов по домам натала:**
+   - Inner movers (Mars / Venus / Saturn / Jupiter) — таблица «период X в доме натала Y» с датами вход/выход + хиты аспектов (Prognostic-профиль).
+   - **Closed-dictionary transit-by-house interpretations** «{планета} в {доме}» (84 entries в `services/api-python/app/pdf/transit_themes.py`).
+   - Outer slow planets (Uranus / Neptune / Pluto) обрабатываются отдельно через `Domain.ImportantTransitPlanets`; их long-transit narrative — Phase 0.9b refinement (см. § «Чего НЕТ» ниже).
+
+7. **«Итоги консультации» (theme-grouped synthesis):**
+   - 10 life themes (финансы, документы / переезд / курсы, партнёрство / контракты, и т.п.).
+   - **Closed-dictionary synthesis blocks** (`services/api-python/app/pdf/synthesis_themes.py`).
+
+8. **Footer:** версия ruleset, версия core, ephemeris source, дата генерации.
+
+**Чего НЕТ в Phase 0 PDF (residual):**
+
+- **Свободно-текстовых LLM-интерпретаций** — never; всё closed-dictionary by design (см. § 6.1).
+- **Editor правил интерпретации в UI** — Phase 1+. DraftEditor (`apps/web-react/src/pages/DraftEditor.tsx`) — это editorial overrides поверх machine-generated skeleton, **не** rules editor; см. § 7.2.
+- **Equal-from-Asc дома** — Phase 0.2 (`Domain.Houses.Equal` отсутствует на `astro:b7774cf`; см. `PHASE_0_TASKS.md` T-B.3).
+- **Касаний фикс.звёзд** — Phase 0.2 (см. T-B.4).
+- **Polar fallback** (`|lat| > 66.5°` → Equal) — Phase 0.2.
+- **Касаний высших планет в формате отдельного long-transit блока** — Phase 0.9b (упомянуты в `Domain.ImportantTransitPlanets`, но без выделенного PDF-раздела).
+
+### 6.1 Closed-dictionary interpretations — НЕ rules engine
+
+Phase 0 PDF содержит closed-dictionary template-фразы в `services/api-python/app/pdf/*_themes.py`. Это **не нарушает** § 5.2 («`InterpretationRule` как rules engine отсутствует в Phase 0») — closed-dictionary это статические phrase-таблицы (`PriorityTheme → Text`, `(Planet, House) → Text`, и т.п.), индексируемые pure-функциями по enum/тип. Различие критическое:
+
+- ✅ **Closed-dictionary (Phase 0):** фиксированные таблицы в product code; no clock, no I/O, no LLM, no user-editable rules; обновляются только через product-code commit + ревью.
+- ❌ **Rules engine (Phase 1+):** редактируемые в UI правила, версионированные in-DB, применяемые движком к фактам — это `InterpretationRule` сущность из § 5.2, отложенная.
+
+Closed-dictionary frame совместим с принципом «правила живут у Марины в PDF на её стороне» — каноничные фразы Марины зафиксированы в Python-коде, не в БД с UI-редактором. Это **не** ослабление bright lines, это явная под-категория («template-driven content»), не входящая в категорию rules engine.
 
 ---
 
@@ -435,13 +464,14 @@ DELETE /api/v1/consultations/{id}         удалить
 
 - `PersonList`, `PersonForm`, `PersonDetails`
 - `ConsultationList`, `ConsultationForm`, `ConsultationView`
+- `DraftEditor` + 16 компонентов в `components/draft-editor/` (Phase 0.8 — editorial overrides поверх machine-generated skeleton; см. § 5.2 и `architecture-drift-recon.md` § 5.1).
 - `NatalChartFacts` (таблица позиций, аспектов, классификаций)
 - `SolarChartFacts` (та же структура)
 - `AnnualTransitTable` (по 4 планетам, группировка по домам)
 
 ### 7.3 Что **не** во Frontend
 
-- Редактор правил интерпретации — Phase 1+.
+- **Editor правил интерпретации (rules engine UI)** — Phase 1+. Текущий `DraftEditor` (Phase 0.8) — это editorial overrides поверх machine-generated skeleton, **не** rules editor (см. § 6.1 про различие closed-dictionary vs rules engine).
 - Графическая карта-колесо (SVG wheel) — Phase 1 (для книги).
 - Share-link для Марины — Phase 1+ (сейчас оператор пересылает PDF по почте/Telegram).
 
