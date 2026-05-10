@@ -1,4 +1,4 @@
-.PHONY: check check-structure check-sitka-overlay check-astro-overlay status submit-task accept-handoff accept-task reject-task new-task new-handoff
+.PHONY: check check-structure check-sitka-overlay check-astro-overlay status context submit-task accept-handoff accept-task reject-task new-task new-handoff
 
 check: check-structure check-sitka-overlay check-astro-overlay
 
@@ -22,6 +22,15 @@ check-astro-overlay:
 SLUG ?= sitka-office
 status:
 	@bash scripts/status.sh $(SLUG)
+
+# Compact context pack on stdout: STATUS_RU + dashboard + last 5 commits +
+# corrections headings + (active) NEXT_ACTIONS head. Polymorphic by overlay
+# `.overlay-maturity` (active vs pre-phase0). First read for new TL session
+# instead of crawling reading-order manually. Length cap ~300 lines.
+# Usage: make context SLUG=sitka-office
+#        make context SLUG=astro
+context:
+	@bash scripts/context-pack.sh $(SLUG)
 
 # Submit a TASK for review: bump Status: open|in-progress → review.
 # Worker (or whichever role finished execution) calls this AFTER writing

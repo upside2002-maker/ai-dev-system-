@@ -30,18 +30,25 @@ claude
 Модель: только Claude Code (Claude Opus).
 
 Reading order:
-1. `/Users/ilya/Projects/ai-dev-system/ROLE_MODEL.md` — роль и координация
-2. `/Users/ilya/Projects/ai-dev-system/CLAUDE_GLOBAL.md` — anti-confabulation, tech-lead posture
-3. `/Users/ilya/Projects/ai-dev-system/corrections/global-corrections.md` — кросс-проектные anti-patterns
-4. `/Users/ilya/Projects/ai-dev-system/project-overlays/sitka-office/OPERATING.md` — что сейчас в работе
-5. `/Users/ilya/Projects/ai-dev-system/project-overlays/sitka-office/CURRENT_STATE.md` — что в коде
-6. `/Users/ilya/Projects/ai-dev-system/project-overlays/sitka-office/KNOWN_ISSUES.md` — открытые долги
-7. `/Users/ilya/Projects/ai-dev-system/project-overlays/sitka-office/NEXT_ACTIONS.md` — приоритеты
-8. `/Users/ilya/Projects/ai-dev-system/project-overlays/sitka-office/PROJECT_MAP.md` — карта кода
-9. `/Users/ilya/Projects/sitka-office/CLAUDE.md` — проектные правила
-10. `/Users/ilya/Projects/sitka-office/.claude/architecture-invariants.md` — инварианты (highest priority)
-11. `/Users/ilya/Projects/sitka-office/.claude/risk-tiers.md` — тиры файлов
-12. `/Users/ilya/Projects/sitka-office/docs/DM-7-cashbox.md` — текущая фаза проекта (cashbox дизайн, Phase B)
+
+1. **`make -C /Users/ilya/Projects/ai-dev-system context SLUG=sitka-office`** — компактный context pack: STATUS_RU + OPERATING dashboard + CURRENT_STATE summary + active TASKS/HANDOFFS + last 5 commits overlay + last 5 commits sitka-office + corrections headings + NEXT_ACTIONS head. Это **first read** для каждой TL-сессии вместо ручного обхода списка ниже.
+
+Если нужно глубже (по запросу из конкретной задачи):
+
+2. `/Users/ilya/Projects/ai-dev-system/ROLE_MODEL.md` — роль и координация
+3. `/Users/ilya/Projects/ai-dev-system/CLAUDE_GLOBAL.md` — anti-confabulation, tech-lead posture
+4. `/Users/ilya/Projects/ai-dev-system/corrections/global-corrections.md` — полный текст anti-patterns (заголовки в context pack)
+5. `/Users/ilya/Projects/ai-dev-system/project-overlays/sitka-office/OPERATING.md` — dashboard (в context pack уже целиком)
+6. `/Users/ilya/Projects/ai-dev-system/project-overlays/sitka-office/OPERATING/journal/<YYYY-MM>.md` — журнал событий по датам
+7. `/Users/ilya/Projects/ai-dev-system/project-overlays/sitka-office/OPERATING/backlog.md` — открытые мелочи (не в context pack)
+8. `/Users/ilya/Projects/ai-dev-system/project-overlays/sitka-office/CURRENT_STATE.md` — полный snapshot (в pack только head -25)
+9. `/Users/ilya/Projects/ai-dev-system/project-overlays/sitka-office/KNOWN_ISSUES.md` — открытые долги
+10. `/Users/ilya/Projects/ai-dev-system/project-overlays/sitka-office/NEXT_ACTIONS.md` — полный (в pack только head -15)
+11. `/Users/ilya/Projects/ai-dev-system/project-overlays/sitka-office/PROJECT_MAP.md` — карта кода
+12. `/Users/ilya/Projects/sitka-office/CLAUDE.md` — проектные правила
+13. `/Users/ilya/Projects/sitka-office/.claude/architecture-invariants.md` — инварианты (highest priority)
+14. `/Users/ilya/Projects/sitka-office/.claude/risk-tiers.md` — тиры файлов
+15. `/Users/ilya/Projects/sitka-office/docs/DM-7-cashbox.md` — design doc DM-7 (формула `csExpectedMargin`, lifecycle reservation, Phase D scope)
 
 Перед действием — tech-lead posture (4 фильтра из CLAUDE_GLOBAL):
 - Goal vs letter

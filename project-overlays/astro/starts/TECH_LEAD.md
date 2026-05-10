@@ -43,18 +43,23 @@ claude
 Модель: только Claude Code (Claude Opus).
 
 Reading order:
-1. `/Users/ilya/Projects/ai-dev-system/ROLE_MODEL.md` — роль и координация
-2. `/Users/ilya/Projects/ai-dev-system/CLAUDE_GLOBAL.md` — anti-confabulation, tech-lead posture
-3. `/Users/ilya/Projects/ai-dev-system/corrections/global-corrections.md` — кросс-проектные anti-patterns
-4. `/Users/ilya/Projects/ai-dev-system/BASELINE.md` — что сделала AI Dev System v0.1, какие 4 системных gap'а закрыла system-fix
-5. `/Users/ilya/Projects/ai-dev-system/project-overlays/astro/README.md` — контекст Astro + bootstrap risks (TL reading order vs Worker reading order разделены)
-6. `/Users/ilya/Projects/ai-dev-system/project-overlays/astro/ARCHITECTURE/target-architecture.md` — целевая архитектура, треугольник источников истины, **8 bright lines** (§ 11) — highest priority контракты
-7. `/Users/ilya/Projects/ai-dev-system/project-overlays/astro/ARCHITECTURE/migration-plan.md` — порядок миграции mini-MVP → target
-8. `/Users/ilya/Projects/ai-dev-system/project-overlays/astro/ARCHITECTURE/PHASE_0_TASKS.md` — атомарные задачи Phase 0.1 (walking skeleton) + 0.2 (full)
-9. `/Users/ilya/Projects/ai-dev-system/project-overlays/astro/ARCHITECTURE/current-mvp-review.md` — что физически в `/Users/ilya/Projects/astro/`, покомпонентный приговор (на момент 2026-04-24)
-10. `/Users/ilya/Projects/astro/CLAUDE.md` — продуктовые правила
-11. `/Users/ilya/Projects/astro/.claude/architecture-invariants.md` — bright lines (echo из target-architecture.md, локальный для продуктового repo)
-12. `/Users/ilya/Projects/astro/.claude/corrections.md` — продуктовые corrections (накопленные в ходе работы над PDF и движком; включают methodology lock-ins вроде Correction 006)
+
+1. **`make -C /Users/ilya/Projects/ai-dev-system context SLUG=astro`** — компактный context pack: STATUS_RU + README head + last 5 commits overlay + last 5 commits astro repo + corrections headings. Это **first read** для каждой TL-сессии вместо ручного обхода списка ниже. (Внимание: для Astro maturity = `pre-phase0`, поэтому в pack нет `OPERATING`/`CURRENT_STATE`/`NEXT_ACTIONS` — они появятся при T-F.4.)
+
+Если нужно глубже (по запросу из конкретной задачи):
+
+2. `/Users/ilya/Projects/ai-dev-system/ROLE_MODEL.md` — роль и координация
+3. `/Users/ilya/Projects/ai-dev-system/CLAUDE_GLOBAL.md` — anti-confabulation, tech-lead posture
+4. `/Users/ilya/Projects/ai-dev-system/corrections/global-corrections.md` — полный текст anti-patterns (заголовки в context pack)
+5. `/Users/ilya/Projects/ai-dev-system/BASELINE.md` — что сделала AI Dev System v0.1, какие 4 системных gap'а закрыла system-fix
+6. `/Users/ilya/Projects/ai-dev-system/project-overlays/astro/README.md` — полный контекст Astro + bootstrap risks (в pack только head -40)
+7. `/Users/ilya/Projects/ai-dev-system/project-overlays/astro/ARCHITECTURE/target-architecture.md` — целевая архитектура, треугольник источников истины, **8 bright lines** (§ 11) — highest priority контракты
+8. `/Users/ilya/Projects/ai-dev-system/project-overlays/astro/ARCHITECTURE/migration-plan.md` — порядок миграции mini-MVP → target
+9. `/Users/ilya/Projects/ai-dev-system/project-overlays/astro/ARCHITECTURE/PHASE_0_TASKS.md` — атомарные задачи Phase 0.1 (walking skeleton) + 0.2 (full)
+10. `/Users/ilya/Projects/ai-dev-system/project-overlays/astro/ARCHITECTURE/current-mvp-review.md` — что физически в `/Users/ilya/Projects/astro/`, покомпонентный приговор (на момент 2026-04-24)
+11. `/Users/ilya/Projects/astro/CLAUDE.md` — продуктовые правила
+12. `/Users/ilya/Projects/astro/.claude/architecture-invariants.md` — bright lines (echo из target-architecture.md, локальный для продуктового repo)
+13. `/Users/ilya/Projects/astro/.claude/corrections.md` — продуктовые corrections (накопленные в ходе работы над PDF и движком; включают methodology lock-ins вроде Correction 006)
 
 **Не существуют пока (см. Bootstrap status выше):** `CURRENT_STATE.md`, `KNOWN_ISSUES.md`, `NEXT_ACTIONS.md`, `PROJECT_MAP.md`, `OPERATING.md`. Не ссылайся на них до Phase 0.2 / T-F.4.
 
