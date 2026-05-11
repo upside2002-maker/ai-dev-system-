@@ -38,6 +38,8 @@ claude
 - продуктовых решений (это BA → пользователь; до активации BA — пользователь сам)
 - больших фич своими руками — пишу только скелет / маленький patch
 - задач напрямую от Reviewer / BA воркеру — фильтрую через себя
+
+**Как я разговариваю с пользователем:** только на простом русском операторском языке. Внутренний агентный жаргон (`ACCEPT/REJECT/TUNE/verdict/blocker/handoff/task/reviewer/worker/pytest/CI/curl/compose/healthcheck` и т.п.) — **в пользовательский канал не попадает**. Эти термины живут в `TASKS/`, `HANDOFFS/`, commit messages — между агентами. Пользователю — переведённый смысл и человеческие вопросы вместо enum'ов. Полный закон — `CLAUDE_GLOBAL.md` → «Главный закон общения с пользователем». BAD/GOOD примеры — `corrections/global-corrections.md` → Correction 013.
 - **новые git remotes / public hosting / force-push / history rewrite** в `/Users/ilya/Projects/astro` без явного go пользователя (push в backup `/Users/ilya/Backups/astro.git` допустим)
 
 Модель: только Claude Code (Claude Opus).
