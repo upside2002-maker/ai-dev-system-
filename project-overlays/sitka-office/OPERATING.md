@@ -31,6 +31,7 @@
 
 ## Заметки
 
+- 2026-05-10 (вечер): TASK `sitka-perimeter-close` принята (Mode: strict, Risk tier A) — закрыт P1 perimeter gap **в репо**. Worker iter1 + Reviewer iter1 (REQUEST CHANGES — web healthcheck бил `/` за `auth_basic`) + Worker iter2 (override healthcheck на `/health` + Compose ≥ 2.20 pre-check в DEPLOY.md) + Reviewer iter2 (ACCEPT). 4 файла в product repo working tree, нужен PR + merge + deploy на сервер отдельной сессией. **До деплоя на сервере perimeter всё ещё открыт** — фикс есть в репо, не в проде.
 - 2026-05-10: arbitration `codex-prod-audit-arbitration` принята и закрыта; HANDOFF и TASK перемещены в archive. Backlog по 4 принятым findings уже зафиксирован в `OPERATING/backlog.md` (коммит `b44ac5d`, 2026-05-09); P3 `expenseCategoryId` остаётся отложенным — триггер «оператор хочет breakdown» в существующем DRAFT `dm7-c-backend-widget-prereq.md`.
 - 2026-05-09: memory/context cleanup — журнал событий перенесён в `OPERATING/journal/`, открытые мелочи — в `OPERATING/backlog.md`, dashboard сокращён до этого файла.
 - 2026-05-02: Production live на 94.72.112.106:8088 (master `b58e5fb`); DM-7-C полностью закрыта. Подробности — `OPERATING/journal/2026-05.md` (раздел «Сводка EOD 2026-05-02»).
