@@ -11,9 +11,7 @@
 
 ## Production / security
 
-- 🟡 **P1 perimeter gap — фикс в репо готов, ждёт деплоя на сервер.** Принят 2026-05-10 через TASK `sitka-perimeter-close` (Mode: strict, Risk tier A, archive `TASKS/archive/2026-05-10-sitka-perimeter-close.md`). Worker iter1 + Reviewer iter1 (REQUEST CHANGES — web healthcheck бил `/` за `auth_basic`) + Worker iter2 (override healthcheck на `/health` + Compose ≥ 2.20 pre-check в DEPLOY.md) + Reviewer iter2 (ACCEPT). 4 файла в product repo: `docker-compose.prod.yml` (loopback bindings + web healthcheck override), `deploy/nginx-prod.conf` (Basic Auth на `/`, `/api/`, `/services/`), `deploy/htpasswd.example` (dummy), `DEPLOY.md` секция «6. Защита периметра». **До деплоя на сервер perimeter всё ещё открыт** — порты `8080`/`8081` слушают `0.0.0.0` на 94.72.112.106 как раньше. Деплой = отдельная сессия: TL ssh root@94.72.112.106 → `git pull` → `htpasswd -B -c /etc/sitka-htpasswd sitka-ops` → обновить server-only `docker-compose.override.yml` с volume mount → `docker compose up -d --force-recreate web core services` → smoke по чек-листу DEPLOY.md §6.c.
-
-- **Frontend bearer auth flow** — сейчас prod использует `CORE_AUTH=disabled` + `SITKA_API_TOKEN=""` потому что frontend никогда не реализован для bearer header. Если когда-нибудь захочется external exposure (DNS+SSL+Let's Encrypt phase 5) — нужен frontend auth flow ~50-100 LOC + token storage. На internal IP-only сейчас не критично.
+- **Frontend bearer auth flow** — сейчас prod использует `CORE_AUTH=disabled` + `SITKA_API_TOKEN=""` потому что frontend никогда не реализован для bearer header. Если когда-нибудь захочется external exposure (DNS+SSL+Let's Encrypt phase 5) — нужен frontend auth flow ~50-100 LOC + token storage. На internal IP-only сейчас не критично (perimeter Basic Auth + loopback bind закрывают всё что нужно).
 
 ## Frontend / build / deploy
 
