@@ -111,8 +111,12 @@ if [[ "${CURRENT_APPROVED}" == "${EFFECTIVE_EMAIL}" ]]; then
   exit 0
 fi
 
-# Заменить значение строки.
-perl -i -pe "s|^- Critical approved by:.*\$|- Critical approved by: ${EFFECTIVE_EMAIL}|" "${FILE}"
+# Заменить значение строки. Email пробрасывается через ENV — иначе bash
+# раскрывает ${EFFECTIVE_EMAIL} в double-quoted perl-команде, и perl видит
+# `@gmail` как свой массив-переменную (пустой), что отъедает кусок email'а.
+APPROVER_EMAIL="${EFFECTIVE_EMAIL}" perl -i -pe \
+  's|^- Critical approved by:.*$|- Critical approved by: $ENV{APPROVER_EMAIL}|' \
+  "${FILE}"
 
 # Commit + push.
 BRANCH="$(git -C "${ROOT_DIR}" rev-parse --abbrev-ref HEAD)"
