@@ -46,7 +46,7 @@ claude
 
 Reading order:
 
-1. **Смена.** Если ты сейчас активный главный по Astro — `make -C /Users/ilya/Projects/ai-dev-system take-shift SLUG=astro SCOPE="зона работы"`. Иначе посмотри `project-overlays/astro/TL_SHIFT.md` и работай только на чтение, пока не возьмёшь смену. В команде два разработчика — в один момент активный главный по проекту только один. Подробнее — `policies/SHIFTS.md`.
+1. **Ведение.** Если ты сейчас активный держатель ведения по Astro — `make -C /Users/ilya/Projects/ai-dev-system take-shift SLUG=astro SCOPE="зона работы"` (бессрочно). Иначе посмотри `project-overlays/astro/TL_SHIFT.md` и работай только на чтение, пока не возьмёшь ведение. В команде два разработчика — в один момент активный держатель по проекту только один. Подробнее — `policies/SHIFTS.md`.
 2. **`make -C /Users/ilya/Projects/ai-dev-system context SLUG=astro`** — компактный context pack: блок «Кто на смене» + STATUS_RU + README head + last 5 commits overlay + last 5 commits astro repo + corrections headings. Это **first read** для каждой TL-сессии вместо ручного обхода списка ниже. (Внимание: для Astro maturity = `pre-phase0`, поэтому в pack нет `OPERATING`/`CURRENT_STATE`/`NEXT_ACTIONS` — они появятся при T-F.4.)
 
 Если нужно глубже (по запросу из конкретной задачи):

@@ -1,4 +1,4 @@
-# Смена главного по проекту — sitka-office
+# Ведение проекта — sitka-office
 
 - Released: yes
 - Holder: (нет)
@@ -9,4 +9,4 @@
 
 ## Notes
 
-_(заметки появляются при освобождении смены через `make release-shift`)_
+_(заметки появляются при сдаче ведения через `make release-shift`)_

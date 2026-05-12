@@ -1,10 +1,11 @@
 #!/usr/bin/env bash
-# Take a project shift lock. After successful run, the caller is the active
-# project lead (Holder) until either release-shift or the expiry window passes.
+# Take ведение проекта. After successful run, the caller is the active project
+# lead (Holder) until either release-shift, the expiry window passes (if set),
+# or someone overrides (owner only).
 #
 # Atomic from caller's perspective: refuses on precondition failure before
-# any mutation. If push to backup fails (someone got there first), the user
-# is told to reset and re-evaluate.
+# any mutation. If push fails (someone got there first), caller is told to
+# pull and re-evaluate.
 #
 # Usage:
 #   bash scripts/take-shift.sh SLUG SCOPE [HOURS]
@@ -12,38 +13,43 @@
 #   make take-shift SLUG=sitka-office SCOPE="разбор передачи"
 #   make take-shift SLUG=sitka-office SCOPE="..." HOURS=4
 #
-# Default HOURS=8 (typical shift length).
+# HOURS — опциональный срок ведения в часах. Если не указан — ведение
+# берётся бессрочно (Expires: бессрочно). Срок имеет смысл только для
+# коротких сессий по выбору ("на 4 часа доделать UI", "на 12 часов
+# уехать с проектом"). По умолчанию ведение бессрочное.
+#
 # Email is taken from `git config user.email`.
 #
-# Pulls the latest TL_SHIFT.md from backup before reading, so the decision
-# (free / occupied) is made on the freshest state. Pushes the new state on
-# success — if push is rejected (non-fast-forward), someone else took the
-# shift in parallel; user resets to backup/<branch> and retries if needed.
+# Pulls latest TL_SHIFT.md from origin before reading, so the decision
+# (free / occupied / extend) is made on the freshest state. Pushes the new
+# state on success via scripts/_push_helper.sh (origin + backup).
 #
-# Override flow (экстренное прерывание):
-#   OVERRIDE=yes REASON="..." make take-shift SLUG=... SCOPE=...
-# When OVERRIDE=yes:
-#   - caller's email must have `can_override: yes` in policies/USERS.md
-#   - REASON must be non-empty
-#   - if shift is held by another user (not expired), caller becomes new
-#     Holder and prior Holder block is preserved in `## Override history`
-#   - if shift was already free / expired, OVERRIDE flag is a no-op (no
-#     override entry written, caller just takes the free slot normally)
+# Поведение по случаям:
+#  - Ведение свободно → берём бессрочно (или на HOURS, если задано).
+#  - Срок предыдущего ведения истёк → берём как свободное.
+#  - Тот же держатель повторно вызывает take-shift (без OVERRIDE) →
+#    продление ведения: обновляются Scope и опционально Expires, Started
+#    сохраняется как история начала ведения.
+#  - Ведение занято другим, без OVERRIDE → отказ.
+#  - OVERRIDE=yes REASON="..." от email с can_override: yes — перехват
+#    (экстренное прерывание, для пожаров). Прежний Holder сохраняется в
+#    `## Override history`.
 #
 # Test hook: env var OVERRIDE_EMAIL=<email> substitutes the caller's email
 # for can_override / Holder checks WITHOUT touching git config. For tests
-# only — real-life override always reads from `git config user.email`.
+# only — real-life ведение always reads from `git config user.email`.
 #
 # Refuses on:
-#   - missing SLUG / SCOPE / non-integer or zero HOURS
+#   - missing SLUG / SCOPE
+#   - HOURS задан, но не целое положительное число
 #   - overlay project-overlays/<SLUG>/ does not exist
 #   - TL_SHIFT.md missing inside overlay
 #   - git config user.email empty
-#   - rebase on backup/<branch> conflicts (manual resolution required)
-#   - shift held by another user with non-expired Expires (without OVERRIDE)
+#   - rebase on origin/<branch> conflicts (manual resolution required)
+#   - ведение занято другим Holder'ом без OVERRIDE и срок не истёк
 #   - OVERRIDE=yes from email without can_override permission
 #   - OVERRIDE=yes without non-empty REASON
-#   - push to backup rejected (race lost)
+#   - push rejected (race lost)
 
 set -euo pipefail
 
@@ -53,11 +59,11 @@ usage() {
   cat >&2 <<EOF
 Usage: $0 SLUG SCOPE [HOURS]
   SLUG   — overlay slug (e.g. sitka-office, astro)
-  SCOPE  — короткое описание зоны работы на смену, на простом русском
-  HOURS  — длина смены в часах (по умолчанию: 8)
+  SCOPE  — короткое описание зоны работы, на простом русском
+  HOURS  — опциональный срок ведения в часах. Без него — бессрочно.
 
 Environment (для экстренного прерывания):
-  OVERRIDE=yes        — попытаться перехватить занятую смену
+  OVERRIDE=yes        — попытаться перехватить занятое ведение
   REASON="..."        — обязательно непустое при OVERRIDE=yes
   OVERRIDE_EMAIL=...  — подменить email инициатора (только для тестов)
 
@@ -76,11 +82,15 @@ fi
 
 SLUG="$1"
 SCOPE="$2"
-HOURS="${3:-8}"
+HOURS="${3:-}"
 
-if ! [[ "${HOURS}" =~ ^[0-9]+$ ]] || (( HOURS < 1 )); then
-  echo "ERROR: HOURS должно быть целым положительным числом (получено: '${HOURS}')" >&2
-  exit 65  # EX_DATAERR
+# Если HOURS задан — должно быть целым положительным числом.
+# Если не задан — ведение берётся бессрочно (Expires: бессрочно).
+if [[ -n "${HOURS}" ]]; then
+  if ! [[ "${HOURS}" =~ ^[0-9]+$ ]] || (( HOURS < 1 )); then
+    echo "ERROR: HOURS должно быть целым положительным числом (получено: '${HOURS}')" >&2
+    exit 65  # EX_DATAERR
+  fi
 fi
 
 OVERLAY="${ROOT_DIR}/project-overlays/${SLUG}"
@@ -91,14 +101,14 @@ fi
 
 LOCK_FILE="${OVERLAY}/TL_SHIFT.md"
 if [[ ! -f "${LOCK_FILE}" ]]; then
-  echo "ERROR: файл смены не найден: ${LOCK_FILE}" >&2
+  echo "ERROR: файл ведения не найден: ${LOCK_FILE}" >&2
   echo "       Создай его руками по стандартному шаблону перед первым использованием." >&2
   exit 65
 fi
 
 EMAIL="$(git -C "${ROOT_DIR}" config user.email 2>/dev/null || true)"
 if [[ -z "${EMAIL}" ]]; then
-  echo "ERROR: git config user.email пустой — установи email перед взятием смены" >&2
+  echo "ERROR: git config user.email пустой — установи email перед взятием ведения" >&2
   exit 65
 fi
 
@@ -121,7 +131,7 @@ esac
 
 if [[ "${OVERRIDE}" == "yes" ]] && [[ -z "${REASON}" ]]; then
   echo "ERROR: при OVERRIDE=yes нужно указать непустое REASON=\"...\"" >&2
-  echo "       Это короткое объяснение зачем перехватываешь смену — попадёт" >&2
+  echo "       Это короткое объяснение зачем забираешь ведение — попадёт" >&2
   echo "       в TL_SHIFT.md в раздел ## Override history как аудит-след." >&2
   exit 65
 fi
@@ -148,9 +158,9 @@ if [[ "${OVERRIDE}" == "yes" ]]; then
     }
   ' "${POLICIES_USERS}")"
   if [[ "${CAN_OVERRIDE}" != "yes" ]]; then
-    echo "ERROR: у ${EFFECTIVE_EMAIL} нет права на экстренное прерывание смены" >&2
+    echo "ERROR: у ${EFFECTIVE_EMAIL} нет права на экстренное прерывание ведения" >&2
     echo "       поле can_override в policies/USERS.md = '${CAN_OVERRIDE:-(не найдено)}'" >&2
-    echo "       Это право есть только у владельца. Договорись с текущим главным" >&2
+    echo "       Это право есть только у владельца. Договорись с текущим держателем" >&2
     echo "       или попроси владельца сделать перехват от своего имени." >&2
     exit 65
   fi
@@ -179,52 +189,70 @@ RELEASED="$(grep -m1 -E '^- Released:' "${LOCK_FILE}" | sed -E 's/^- Released:[[
 HOLDER_LINE="$(grep -m1 -E '^- Holder:' "${LOCK_FILE}" | sed -E 's/^- Holder:[[:space:]]*//')"
 EXPIRES_LINE="$(grep -m1 -E '^- Expires:' "${LOCK_FILE}" | sed -E 's/^- Expires:[[:space:]]*//')"
 
-# Текущее время и время истечения новой смены.
+# Текущее время и время истечения нового ведения.
+# Если HOURS не задан — ведение бессрочное (маркер "бессрочно" вместо даты).
 NOW="$(date '+%Y-%m-%d %H:%M:%S')"
 NOW_EPOCH="$(date '+%s')"
-EXPIRES_NEW_EPOCH=$(( NOW_EPOCH + HOURS * 3600 ))
-# macOS BSD date: -r epoch; GNU date: -d @epoch.
-EXPIRES_NEW="$(date -r "${EXPIRES_NEW_EPOCH}" '+%Y-%m-%d %H:%M:%S' 2>/dev/null \
-              || date -d "@${EXPIRES_NEW_EPOCH}" '+%Y-%m-%d %H:%M:%S')"
+if [[ -z "${HOURS}" ]]; then
+  EXPIRES_NEW="бессрочно"
+else
+  EXPIRES_NEW_EPOCH=$(( NOW_EPOCH + HOURS * 3600 ))
+  # macOS BSD date: -r epoch; GNU date: -d @epoch.
+  EXPIRES_NEW="$(date -r "${EXPIRES_NEW_EPOCH}" '+%Y-%m-%d %H:%M:%S' 2>/dev/null \
+                || date -d "@${EXPIRES_NEW_EPOCH}" '+%Y-%m-%d %H:%M:%S')"
+fi
 
-# Свободна или истекла?
+# Свободно ли ведение? Маркеры "бессрочно" / "none" / "(нет)" проверяются
+# явно ДО попытки парсить Expires как дату — иначе date -j -f выдаёт
+# непредсказуемый exit code на не-дате.
 SHIFT_FREE="no"
 EXPIRY_REASON=""
 if [[ "${RELEASED}" == "yes" ]]; then
   SHIFT_FREE="yes"
-  EXPIRY_REASON="смена была свободна"
+  EXPIRY_REASON="ведение было свободно"
 elif [[ -z "${HOLDER_LINE}" ]] || [[ "${HOLDER_LINE}" == "(нет)" ]]; then
   SHIFT_FREE="yes"
   EXPIRY_REASON="поле Holder было пустым"
-elif [[ -n "${EXPIRES_LINE}" ]] && [[ "${EXPIRES_LINE}" != "(нет)" ]]; then
+elif [[ "${EXPIRES_LINE}" == "бессрочно" ]] || [[ "${EXPIRES_LINE}" == "none" ]] || [[ "${EXPIRES_LINE}" == "(нет)" ]] || [[ -z "${EXPIRES_LINE}" ]]; then
+  # Бессрочное ведение — не истекает само по себе.
+  : # SHIFT_FREE остаётся "no"
+else
   EXPIRES_EPOCH="$(date -j -f '%Y-%m-%d %H:%M:%S' "${EXPIRES_LINE}" '+%s' 2>/dev/null \
                   || date -d "${EXPIRES_LINE}" '+%s' 2>/dev/null \
                   || echo "0")"
   if (( EXPIRES_EPOCH > 0 )) && (( EXPIRES_EPOCH < NOW_EPOCH )); then
     SHIFT_FREE="yes"
-    EXPIRY_REASON="срок предыдущей смены истёк (был до ${EXPIRES_LINE})"
+    EXPIRY_REASON="срок предыдущего ведения истёк (был до ${EXPIRES_LINE})"
   fi
 fi
 
+# Продление ведения тем же держателем: если SCOPE'у обновить хотят, и
+# вызывающий — тот же email, что и текущий Holder, и OVERRIDE не запрошен —
+# это продление, не отказ. Started сохраняется (история начала ведения).
+DO_EXTEND="no"
 DO_OVERRIDE="no"
 if [[ "${SHIFT_FREE}" != "yes" ]]; then
-  if [[ "${OVERRIDE}" == "yes" ]]; then
+  if [[ "${OVERRIDE}" != "yes" ]] && [[ "${HOLDER_LINE}" == "${EFFECTIVE_EMAIL}" ]]; then
+    DO_EXTEND="yes"
+    PRIOR_STARTED_KEEP="$(grep -m1 -E '^- Started:' "${LOCK_FILE}" | sed -E 's/^- Started:[[:space:]]*//')"
+    EXPIRY_REASON="продление ведения тем же держателем"
+  elif [[ "${OVERRIDE}" == "yes" ]]; then
     DO_OVERRIDE="yes"
     PRIOR_HOLDER="${HOLDER_LINE}"
     PRIOR_STARTED="$(grep -m1 -E '^- Started:' "${LOCK_FILE}" | sed -E 's/^- Started:[[:space:]]*//')"
     PRIOR_EXPIRES="${EXPIRES_LINE}"
     PRIOR_SCOPE="$(grep -m1 -E '^- Scope:' "${LOCK_FILE}" | sed -E 's/^- Scope:[[:space:]]*//')"
-    EXPIRY_REASON="экстренное прерывание (прежний главный: ${PRIOR_HOLDER}, до ${PRIOR_EXPIRES})"
+    EXPIRY_REASON="экстренное прерывание (прежний держатель: ${PRIOR_HOLDER}, до ${PRIOR_EXPIRES})"
   else
-    echo "ERROR: смена занята" >&2
-    echo "  главный: ${HOLDER_LINE}" >&2
-    echo "  до:      ${EXPIRES_LINE}" >&2
-    echo "  сейчас:  ${NOW}" >&2
+    echo "ERROR: ведение занято" >&2
+    echo "  держатель: ${HOLDER_LINE}" >&2
+    echo "  до:        ${EXPIRES_LINE}" >&2
+    echo "  сейчас:    ${NOW}" >&2
     echo "" >&2
-    echo "       Если нужно перехватить — экстренное прерывание:" >&2
+    echo "       Если нужно забрать ведение — экстренное прерывание (для пожаров):" >&2
     echo "         OVERRIDE=yes REASON=\"причина\" make take-shift SLUG=${SLUG} SCOPE=\"...\"" >&2
     echo "       Право на прерывание есть только у владельца (см. policies/USERS.md)." >&2
-    echo "       Иначе — договорись с текущим главным или дождись истечения срока." >&2
+    echo "       Иначе — договорись с текущим держателем или дождись истечения срока (если задан)." >&2
     exit 75
   fi
 fi
@@ -242,29 +270,45 @@ EXISTING_NOTES="$(awk '/^## Notes/{flag=1; next} flag' "${LOCK_FILE}" \
                   | awk 'NF || p; NF{p=1}')"
 
 # Новая override entry — если перехват. Заголовок секции выводит инициатор и
-# время; тело — карточка прежней смены и причина перехвата.
+# время; тело — карточка прежнего ведения и причина перехвата.
 NEW_OVERRIDE_ENTRY=""
 if [[ "${DO_OVERRIDE}" == "yes" ]]; then
   NEW_OVERRIDE_ENTRY="### ${NOW} — перехват инициировал ${EFFECTIVE_EMAIL}
 
-- Прежний главный:   ${PRIOR_HOLDER}
+- Прежний держатель: ${PRIOR_HOLDER}
 - Прежнее начало:    ${PRIOR_STARTED}
 - Прежний предел:    ${PRIOR_EXPIRES}
 - Прежняя зона:      ${PRIOR_SCOPE}
 - Причина перехвата: ${REASON}"
 fi
 
+# Started: при продлении сохраняется как история начала ведения.
+# В остальных случаях (свободно/истёкло/override) — текущий момент.
+if [[ "${DO_EXTEND}" == "yes" ]]; then
+  STARTED_OUT="${PRIOR_STARTED_KEEP}"
+else
+  STARTED_OUT="${NOW}"
+fi
+
+# Active TASK: при продлении сохраняем существующее значение, иначе пусто.
+if [[ "${DO_EXTEND}" == "yes" ]]; then
+  PRIOR_ACTIVE_TASK="$(grep -m1 -E '^- Active TASK:' "${LOCK_FILE}" | sed -E 's/^- Active TASK:[[:space:]]*//')"
+  ACTIVE_TASK_OUT="${PRIOR_ACTIVE_TASK:-(нет)}"
+else
+  ACTIVE_TASK_OUT="(нет)"
+fi
+
 # Сформировать новое содержимое файла: шапка + (опц. override history) + notes.
 {
   cat <<EOF
-# Смена главного по проекту — ${SLUG}
+# Ведение проекта — ${SLUG}
 
 - Released: no
 - Holder: ${EFFECTIVE_EMAIL}
-- Started: ${NOW}
+- Started: ${STARTED_OUT}
 - Expires: ${EXPIRES_NEW}
 - Scope: ${SCOPE}
-- Active TASK: (нет)
+- Active TASK: ${ACTIVE_TASK_OUT}
 EOF
 
   has_new_override="no"
@@ -291,14 +335,19 @@ EOF
   if [[ -n "$(echo "${EXISTING_NOTES}" | tr -d '[:space:]')" ]]; then
     echo "${EXISTING_NOTES}"
   else
-    echo "_(заметки появляются при освобождении смены через \`make release-shift\`)_"
+    echo "_(заметки появляются при сдаче ведения через \`make release-shift\`)_"
   fi
 } > "${LOCK_FILE}"
 
 # Сохранить в журнал репозитория и отправить в резервную копию.
-COMMIT_MSG="shift(${SLUG}): take by ${EFFECTIVE_EMAIL} for ${HOURS}h — ${SCOPE}"
 if [[ "${DO_OVERRIDE}" == "yes" ]]; then
   COMMIT_MSG="shift(${SLUG}): OVERRIDE by ${EFFECTIVE_EMAIL} from ${PRIOR_HOLDER} — ${REASON}"
+elif [[ "${DO_EXTEND}" == "yes" ]]; then
+  COMMIT_MSG="shift(${SLUG}): extend by ${EFFECTIVE_EMAIL} — ${SCOPE}"
+elif [[ -z "${HOURS}" ]]; then
+  COMMIT_MSG="shift(${SLUG}): take by ${EFFECTIVE_EMAIL} (бессрочно) — ${SCOPE}"
+else
+  COMMIT_MSG="shift(${SLUG}): take by ${EFFECTIVE_EMAIL} for ${HOURS}h — ${SCOPE}"
 fi
 RELATIVE_LOCK="${LOCK_FILE#"${ROOT_DIR}/"}"
 # shellcheck disable=SC1091
@@ -320,21 +369,28 @@ source "${ROOT_DIR}/scripts/_push_helper.sh"
 
 echo ""
 if [[ "${DO_OVERRIDE}" == "yes" ]]; then
-  echo "OK: смена перехвачена (экстренное прерывание)"
-  echo "  проект:        ${SLUG}"
-  echo "  новый главный: ${EFFECTIVE_EMAIL}"
-  echo "  прежний:       ${PRIOR_HOLDER}"
-  echo "  до:            ${EXPIRES_NEW}"
-  echo "  зона:          ${SCOPE}"
-  echo "  причина:       ${REASON}"
+  echo "OK: ведение перехвачено (экстренное прерывание)"
+  echo "  проект:          ${SLUG}"
+  echo "  новый держатель: ${EFFECTIVE_EMAIL}"
+  echo "  прежний:         ${PRIOR_HOLDER}"
+  echo "  до:              ${EXPIRES_NEW}"
+  echo "  зона:            ${SCOPE}"
+  echo "  причина:         ${REASON}"
   echo ""
   echo "В TL_SHIFT.md записана аудит-карточка в раздел ## Override history."
+elif [[ "${DO_EXTEND}" == "yes" ]]; then
+  echo "OK: ведение продлено (тот же держатель)"
+  echo "  проект:    ${SLUG}"
+  echo "  держатель: ${EFFECTIVE_EMAIL}"
+  echo "  с:         ${STARTED_OUT} (история начала сохранена)"
+  echo "  до:        ${EXPIRES_NEW}"
+  echo "  зона:      ${SCOPE}"
 else
-  echo "OK: смена взята (${EXPIRY_REASON})"
-  echo "  проект:  ${SLUG}"
-  echo "  главный: ${EFFECTIVE_EMAIL}"
-  echo "  до:      ${EXPIRES_NEW}"
-  echo "  зона:    ${SCOPE}"
+  echo "OK: ведение взято (${EXPIRY_REASON})"
+  echo "  проект:    ${SLUG}"
+  echo "  держатель: ${EFFECTIVE_EMAIL}"
+  echo "  до:        ${EXPIRES_NEW}"
+  echo "  зона:      ${SCOPE}"
 fi
 echo ""
-echo "Освободить смену: make release-shift SLUG=${SLUG} NOTES=\"...\""
+echo "Сдать ведение: make release-shift SLUG=${SLUG} NOTES=\"...\""

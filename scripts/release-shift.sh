@@ -1,28 +1,27 @@
 #!/usr/bin/env bash
-# Release a project shift lock. Caller must be the current Holder (or shift
-# must be already free — in which case it's a no-op error). Appends NOTES
-# entry into `## Notes` section and resets Holder/Started/Expires/Scope.
+# Сдать ведение проекта. Caller must be the current Holder (or ведение
+# already free — no-op error). Appends NOTES entry into `## Notes` and
+# resets Holder/Started/Expires/Scope.
 #
 # Usage:
 #   bash scripts/release-shift.sh SLUG NOTES
 # or via make:
-#   make release-shift SLUG=sitka-office NOTES="что сделано за смену"
+#   make release-shift SLUG=sitka-office NOTES="что сделано за период ведения"
 #
-# NOTES is mandatory and non-empty: it's the short message to the other dev
-# about what got done during this shift. Lazy releases lose value; the gate
-# forces at least one sentence.
+# NOTES is mandatory and non-empty: короткое описание того, что сделано
+# за период ведения — для второго разработчика, когда он подхватит проект.
+# Ленивые сдачи теряют ценность; gate требует хотя бы одну фразу.
 #
 # Refuses on:
 #   - missing SLUG / empty NOTES
 #   - overlay project-overlays/<SLUG>/ does not exist
 #   - TL_SHIFT.md missing
 #   - git config user.email empty
-#   - shift already free (Released: yes — nothing to release)
-#   - caller email != Holder email (cannot release someone else's shift)
+#   - ведение уже свободно (Released: yes — нечего сдавать)
+#   - caller email != Holder email (cannot release someone else's ведение)
 #
-# Push failure on backup is soft: the release is saved locally; the user is
-# told how to push manually. Rationale: release is less time-critical than
-# take, and never racing for ownership.
+# Push в обе копии (origin + backup) через scripts/_push_helper.sh.
+# Если origin отверг — fatal (расхождение с источником правды).
 
 set -euo pipefail
 
@@ -32,7 +31,7 @@ usage() {
   cat >&2 <<EOF
 Usage: $0 SLUG NOTES
   SLUG   — overlay slug (e.g. sitka-office, astro)
-  NOTES  — короткое описание что сделано за смену, непустое
+  NOTES  — короткое описание что сделано за период ведения, непустое
 
 Example:
   $0 sitka-office "разобрал передачу, поставил TASK dm-7-c-foo"
@@ -56,7 +55,7 @@ fi
 
 LOCK_FILE="${OVERLAY}/TL_SHIFT.md"
 if [[ ! -f "${LOCK_FILE}" ]]; then
-  echo "ERROR: файл смены не найден: ${LOCK_FILE}" >&2
+  echo "ERROR: файл ведения не найден: ${LOCK_FILE}" >&2
   exit 65
 fi
 
@@ -73,17 +72,18 @@ PREV_SCOPE="$(grep -m1 -E '^- Scope:' "${LOCK_FILE}" | sed -E 's/^- Scope:[[:spa
 PREV_STARTED="$(grep -m1 -E '^- Started:' "${LOCK_FILE}" | sed -E 's/^- Started:[[:space:]]*//')"
 
 if [[ "${RELEASED}" == "yes" ]]; then
-  echo "ERROR: смена уже свободна — нечего освобождать" >&2
+  echo "ERROR: ведение уже свободно — нечего сдавать" >&2
   echo "  файл: ${LOCK_FILE#"${ROOT_DIR}/"}" >&2
   exit 65
 fi
 
 if [[ "${HOLDER}" != "${EMAIL}" ]]; then
-  echo "ERROR: смена не твоя — освобождать чужую нельзя" >&2
-  echo "  текущий главный: ${HOLDER}" >&2
-  echo "  ты:              ${EMAIL}" >&2
-  echo "  Если нужно прервать его смену — потребуется экстренное прерывание" >&2
-  echo "  (добавляется в коммите 2 плана; пока недоступно)." >&2
+  echo "ERROR: ведение не твоё — сдавать чужое нельзя" >&2
+  echo "  текущий держатель: ${HOLDER}" >&2
+  echo "  ты:                ${EMAIL}" >&2
+  echo "  Если нужно забрать его ведение — потребуется экстренное прерывание:" >&2
+  echo "    OVERRIDE=yes REASON=\"причина\" make take-shift SLUG=${SLUG} SCOPE=\"...\"" >&2
+  echo "  Право на прерывание есть только у владельца (см. policies/USERS.md)." >&2
   exit 65
 fi
 
@@ -104,7 +104,7 @@ EXISTING_NOTES="$(awk '/^## Notes/{flag=1; next} flag' "${LOCK_FILE}" \
 # новая запись в Notes наверху + старые заметки под ней.
 {
   cat <<EOF
-# Смена главного по проекту — ${SLUG}
+# Ведение проекта — ${SLUG}
 
 - Released: yes
 - Holder: (нет)
@@ -127,9 +127,9 @@ EOF
 
 ### ${NOW} — ${EMAIL}
 
-- Зона смены: ${PREV_SCOPE}
-- Начало:     ${PREV_STARTED}
-- Заметки:    ${NOTES}
+- Зона ведения: ${PREV_SCOPE}
+- Начало:       ${PREV_STARTED}
+- Заметки:      ${NOTES}
 EOF
 
   if [[ -n "$(echo "${EXISTING_NOTES}" | tr -d '[:space:]')" ]]; then
@@ -150,7 +150,7 @@ source "${ROOT_DIR}/scripts/_push_helper.sh"
 
   if ! push_both "${BRANCH}"; then
     echo "" >&2
-    echo "ERROR: отправка не прошла — освобождение сохранено локально, но не синхронизировано." >&2
+    echo "ERROR: отправка не прошла — сдача ведения сохранена локально, но не синхронизирована." >&2
     echo "  Если origin отверг — подтяни свежее:" >&2
     echo "    git -C ${ROOT_DIR} pull --rebase origin ${BRANCH}" >&2
     echo "  Затем 'git push origin ${BRANCH} && git push backup ${BRANCH}' вручную." >&2
@@ -159,7 +159,7 @@ source "${ROOT_DIR}/scripts/_push_helper.sh"
 ) || exit $?
 
 echo ""
-echo "OK: смена освобождена"
-echo "  проект:  ${SLUG}"
-echo "  главный: ${EMAIL}"
-echo "  заметки: ${NOTES}"
+echo "OK: ведение сдано"
+echo "  проект:    ${SLUG}"
+echo "  держатель: ${EMAIL}"
+echo "  заметки:   ${NOTES}"

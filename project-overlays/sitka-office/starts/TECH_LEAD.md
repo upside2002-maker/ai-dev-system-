@@ -33,7 +33,7 @@ claude
 
 Reading order:
 
-1. **Смена.** Если ты сейчас активный главный по sitka — `make -C /Users/ilya/Projects/ai-dev-system take-shift SLUG=sitka-office SCOPE="зона работы"`. Иначе посмотри `project-overlays/sitka-office/TL_SHIFT.md` и работай только на чтение, пока не возьмёшь смену. В команде два разработчика — в один момент активный главный по проекту только один. Подробнее — `policies/SHIFTS.md`.
+1. **Ведение.** Если ты сейчас активный держатель ведения по sitka — `make -C /Users/ilya/Projects/ai-dev-system take-shift SLUG=sitka-office SCOPE="зона работы"` (бессрочно). Иначе посмотри `project-overlays/sitka-office/TL_SHIFT.md` и работай только на чтение, пока не возьмёшь ведение. В команде два разработчика — в один момент активный держатель по проекту только один. Подробнее — `policies/SHIFTS.md`.
 2. **`make -C /Users/ilya/Projects/ai-dev-system context SLUG=sitka-office`** — компактный context pack: блок «Кто на смене» + STATUS_RU + OPERATING dashboard + CURRENT_STATE summary + active TASKS/HANDOFFS + last 5 commits overlay + last 5 commits sitka-office + corrections headings + NEXT_ACTIONS head. Это **first read** для каждой TL-сессии вместо ручного обхода списка ниже.
 
 Если нужно глубже (по запросу из конкретной задачи):
