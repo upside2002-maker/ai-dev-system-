@@ -129,6 +129,31 @@ head_or_skip() {
 - Product repo: ${PRODUCT_REPO}${PRODUCT_REPO_NOTE}
 EOF
 
+  # Блок «Кто на смене» — короткая сводка из TL_SHIFT.md. Появляется и для
+  # active, и для pre-phase0 overlay'ев (для archived блок не рисуется, так
+  # как смены там не имеют смысла). Полное описание — policies/SHIFTS.md.
+  section "Кто на смене"
+  if [[ "${MATURITY}" == "archived" ]]; then
+    echo "_(overlay архивирован — смены не отслеживаются)_"
+  elif [[ -f "${OVERLAY_DIR}/TL_SHIFT.md" ]]; then
+    SHIFT_RELEASED="$(grep -m1 -E '^- Released:' "${OVERLAY_DIR}/TL_SHIFT.md" | sed -E 's/^- Released:[[:space:]]*//' | awk '{print $1}')"
+    SHIFT_HOLDER="$(grep -m1 -E '^- Holder:' "${OVERLAY_DIR}/TL_SHIFT.md" | sed -E 's/^- Holder:[[:space:]]*//')"
+    SHIFT_EXPIRES="$(grep -m1 -E '^- Expires:' "${OVERLAY_DIR}/TL_SHIFT.md" | sed -E 's/^- Expires:[[:space:]]*//')"
+    SHIFT_SCOPE="$(grep -m1 -E '^- Scope:' "${OVERLAY_DIR}/TL_SHIFT.md" | sed -E 's/^- Scope:[[:space:]]*//')"
+    SHIFT_ACTIVE_TASK="$(grep -m1 -E '^- Active TASK:' "${OVERLAY_DIR}/TL_SHIFT.md" | sed -E 's/^- Active TASK:[[:space:]]*//')"
+    if [[ "${SHIFT_RELEASED}" == "yes" ]]; then
+      echo "- смена свободна (активного главного нет)"
+      echo "- взять смену: \`make take-shift SLUG=${SLUG} SCOPE=\"...\"\`"
+    else
+      echo "- главный:         ${SHIFT_HOLDER}"
+      echo "- до:              ${SHIFT_EXPIRES}"
+      echo "- зона:            ${SHIFT_SCOPE}"
+      echo "- активная задача: ${SHIFT_ACTIVE_TASK}"
+    fi
+  else
+    echo "_(TL_SHIFT.md ещё не создан — см. policies/SHIFTS.md)_"
+  fi
+
   section "STATUS_RU.md"
   read_or_skip "${OVERLAY_DIR}/STATUS_RU.md" "STATUS_RU.md"
 

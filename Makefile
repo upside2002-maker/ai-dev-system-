@@ -1,4 +1,4 @@
-.PHONY: check check-structure check-sitka-overlay check-astro-overlay status context submit-task accept-handoff accept-task reject-task new-task new-handoff
+.PHONY: check check-structure check-sitka-overlay check-astro-overlay status context submit-task accept-handoff accept-task reject-task new-task new-handoff take-shift release-shift
 
 check: check-structure check-sitka-overlay check-astro-overlay
 
@@ -71,3 +71,18 @@ new-task:
 #   defaults: FROM=worker, TO=tl
 new-handoff:
 	@bash scripts/new-handoff.sh "$(SLUG)" "$(TASK)" "$(FROM)" "$(TO)"
+
+# Take a project shift lock: register caller as the active project lead for
+# the given overlay. Pulls TL_SHIFT.md from backup first, refuses if shift
+# is held by another user with non-expired Expires, writes new state, pushes.
+# Default HOURS=8 (typical shift length). Полное описание — policies/SHIFTS.md.
+# Usage: make take-shift SLUG=sitka-office SCOPE="разбор передачи"
+#        make take-shift SLUG=sitka-office SCOPE="..." HOURS=4
+take-shift:
+	@bash scripts/take-shift.sh "$(SLUG)" "$(SCOPE)" "$(HOURS)"
+
+# Release a project shift lock: caller must be current Holder, NOTES must be
+# non-empty. Appends entry to ## Notes section, resets Holder fields, pushes.
+# Usage: make release-shift SLUG=sitka-office NOTES="что сделано за смену"
+release-shift:
+	@bash scripts/release-shift.sh "$(SLUG)" "$(NOTES)"
