@@ -114,6 +114,39 @@ if [[ "${CURRENT_READY}" != "yes" ]]; then
   exit 65
 fi
 
+# Self-check handoff gate (if linked HANDOFF exists).
+# Поиск связанного HANDOFF: в TASK overlay'е директория HANDOFFS/, ищем
+# файл который ссылается на текущий TASK по relative path. Если HANDOFF не
+# найден — пропускаем самопроверку (Worker мог ещё не написать или это
+# мелкая задача без HANDOFF). Если найден — запускаем self-check; при errors
+# отказ submit'а до bump'а Status.
+OVERLAY_DIR="$(dirname "$(dirname "${FILE}")")"
+TASK_REL="${FILE#"${ROOT_DIR}/"}"
+HANDOFF_FILE=""
+if [[ -d "${OVERLAY_DIR}/HANDOFFS" ]]; then
+  for h in "${OVERLAY_DIR}/HANDOFFS/"*.md; do
+    [[ -f "${h}" ]] || continue
+    [[ "$(basename "${h}")" == "README.md" ]] && continue
+    if grep -qF "${TASK_REL}" "${h}" 2>/dev/null \
+       || grep -qF "$(basename "${TASK_REL}")" "${h}" 2>/dev/null; then
+      HANDOFF_FILE="${h}"
+      break
+    fi
+  done
+fi
+
+if [[ -n "${HANDOFF_FILE}" ]]; then
+  echo "Связанная передача найдена: ${HANDOFF_FILE#"${ROOT_DIR}/"}"
+  if ! bash "${ROOT_DIR}/scripts/self-check-handoff.sh" "${HANDOFF_FILE}"; then
+    echo "" >&2
+    echo "ERROR: самопроверка передачи нашла ошибки. Поправь HANDOFF и повтори submit-task." >&2
+    echo "       Запустить вручную: make self-check-handoff FILE=${HANDOFF_FILE#"${ROOT_DIR}/"}" >&2
+    exit 65
+  fi
+else
+  echo "Info: связанной передачи не найдено в ${OVERLAY_DIR#"${ROOT_DIR}/"}/HANDOFFS/ — пропускаю самопроверку."
+fi
+
 # Mutate: bump Status to review (perl for portability between macOS/Linux sed).
 perl -i -pe 's/^- Status:.*$/- Status: review/' "${FILE}"
 

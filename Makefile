@@ -1,4 +1,4 @@
-.PHONY: check check-structure check-sitka-overlay check-astro-overlay status context submit-task accept-handoff accept-task reject-task new-task new-handoff take-shift release-shift approve-critical
+.PHONY: check check-structure check-sitka-overlay check-astro-overlay status context submit-task accept-handoff accept-task reject-task new-task new-handoff take-shift release-shift approve-critical self-check-handoff
 
 check: check-structure check-sitka-overlay check-astro-overlay
 
@@ -99,3 +99,11 @@ release-shift:
 # Usage: make approve-critical FILE=project-overlays/sitka-office/TASKS/<file>.md
 approve-critical:
 	@bash scripts/approve-critical.sh "$(FILE)"
+
+# Run self-check on a HANDOFF file: required header fields, Product repo
+# status, evidence rule (warning), user-facing forbidden words (warning),
+# length (warning). Used by submit-task before bumping Status to review;
+# also runnable standalone for debugging. Exit 1 = errors (caller blocks).
+# Usage: make self-check-handoff FILE=project-overlays/sitka-office/HANDOFFS/<f>.md
+self-check-handoff:
+	@bash scripts/self-check-handoff.sh "$(FILE)"

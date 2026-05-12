@@ -66,14 +66,14 @@
 
 ### Запрещено в адрес пользователя без перевода
 
-- `ACCEPT` / `REJECT` / `TUNE` / `verdict`
-- `blocker` / `non-blocker`
-- `fixture` / `golden` / `smoke` / `render` / `artifact`
-- `handoff` / `task` / `reviewer` / `worker` / `owner`
-- `pytest` / `CI` / `status code` (`401` / `200` / `502`)
-- `accept-cascade`
-- Смешанные русско-английские конструкции (`visual verdict`, `code-side accept`, `render clean`)
-- Технические термины внутренностей (`compose`, `bcrypt`, `curl`, `healthcheck`, `override`, `loopback`, `container`, `volume mount`, `htpasswd`)
+Ключевые группы (полный машиночитаемый список — `policies/OPERATOR_LANGUAGE.md`, главный источник правды):
+
+- Агентный жаргон: `handoff`, `task`, `worker`, `reviewer`, `verdict`, `blocker`, `accept-cascade`, `fixture`, `golden`, `smoke`, `render`, `artifact`, `owner`.
+- Классификация задач: `Tier`, `Mode`, `strict`, `normal`, `light`, `preview`.
+- Технические внутренности: `compose`, `bcrypt`, `curl`, `healthcheck`, `container`, `pytest`, `CI`, `401`/`200`/`502`.
+- Смешанные русско-английские конструкции: `visual verdict`, `code-side accept`, `render clean`, `smoke прошёл`.
+
+Полный список и автоматическая самопроверка передач (`scripts/self-check-handoff.sh`, запускается `make submit-task` перед bump'ом статуса) — `policies/OPERATOR_LANGUAGE.md`. Если правишь список — правь там, остальные файлы (этот закон и Correction 013) ссылаются на главный источник.
 
 ### Как переводить
 
