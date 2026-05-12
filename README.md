@@ -33,9 +33,22 @@ learning/
 corrections/
   global-corrections.md           ← кросс-проектные anti-patterns
 
+docs/
+  ONBOARDING_LEAD_DEVELOPER.md    ← стартовая инструкция для второго разработчика
+
+policies/
+  SHIFTS.md                       ← правила ведения проектов (взять, продлить, сдать, override)
+  USERS.md                        ← разработчики и их права (can_override / can_approve_critical / can_deploy)
+  REMOTES.md                      ← устройство двух удалённых копий (origin + backup) и правила отправки
+  CRITICAL_PATHS.md               ← список путей в зоне обязательной подписи владельца
+  AUDIT.md                        ← процедура периодической сверки раз в 2-3 недели
+  MODES.md                        ← режимы выполнения задач (light/normal/strict/preview)
+  OPERATOR_LANGUAGE.md            ← главный источник запрещённых слов для самопроверки передач
+
 templates/
   TASKS_TEMPLATE.md               ← формат TASK от TL → Worker
   HANDOFFS_TEMPLATE.md            ← формат передачи между ролями/моделями
+  AUDIT_TASK_TEMPLATE.md          ← шаблон задачи на периодическую сверку
   reference-snippets/             ← эталонные code samples
 
 playbooks/                        ← layer-specific guidance (haskell / python / frontend)
@@ -65,6 +78,12 @@ project-overlays/
 scripts/
   check-system-structure.sh       ← проверка root docs + entrypoints
   check-overlay-consistency.sh    ← проверка, что overlay не отстал от repo
+  take-shift.sh                   ← взять или продлить ведение проекта
+  release-shift.sh                ← сдать ведение проекта
+  approve-critical.sh             ← подпись задачи владельцем (критичные пути)
+  new-audit-task.sh               ← создание задачи на периодическую сверку
+  self-check-handoff.sh           ← самопроверка передачи перед submit-task
+  _push_helper.sh                 ← общая функция двойной отправки в origin + backup
 
 Makefile
   check                           ← запустить минимальные self-checks

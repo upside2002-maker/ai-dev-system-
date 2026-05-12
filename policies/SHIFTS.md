@@ -160,6 +160,7 @@ make new-audit-task SLUG=astro
 
 ## Связанные файлы
 
+- `docs/ONBOARDING_LEAD_DEVELOPER.md` — стартовая инструкция для второго разработчика когда заходит в проекты впервые.
 - `policies/USERS.md` — список разработчиков и их прав.
 - `policies/REMOTES.md` — описание двух удалённых копий (origin + backup).
 - `policies/CRITICAL_PATHS.md` — список путей в зоне обязательной подписи.
