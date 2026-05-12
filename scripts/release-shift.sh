@@ -89,13 +89,19 @@ fi
 
 NOW="$(date '+%Y-%m-%d %H:%M:%S')"
 
-# Достать существующие notes (всё после строки "## Notes").
-# Уберём leading плейсхолдер если он есть.
-EXISTING_NOTES="$(awk '/^## Notes/{flag=1;next} flag' "${LOCK_FILE}" \
+# Извлечь существующие секции из файла ДО перезаписи. Override history и
+# существующие заметки — накопительные, должны сохраняться. Leading blank
+# lines режутся awk-фильтром `NF || p; NF{p=1}` (печатать строку если она
+# непустая, или если уже была непустая раньше) — иначе двойные пустые
+# строки нарастают на каждый цикл release.
+EXISTING_OVERRIDE_HISTORY="$(awk '/^## Override history/{flag=1; next} flag && /^## /{flag=0} flag' "${LOCK_FILE}" \
+                              | awk 'NF || p; NF{p=1}')"
+EXISTING_NOTES="$(awk '/^## Notes/{flag=1; next} flag' "${LOCK_FILE}" \
                   | sed -E '/^_\(заметки появляются.*\)_$/d' \
                   | awk 'NF || p; NF{p=1}')"
 
-# Записать новое состояние.
+# Записать новое состояние: шапка с Released=yes, опц. override history,
+# новая запись в Notes наверху + старые заметки под ней.
 {
   cat <<EOF
 # Смена главного по проекту — ${SLUG}
@@ -106,6 +112,16 @@ EXISTING_NOTES="$(awk '/^## Notes/{flag=1;next} flag' "${LOCK_FILE}" \
 - Expires: (нет)
 - Scope: (нет)
 - Active TASK: (нет)
+EOF
+
+  if [[ -n "$(echo "${EXISTING_OVERRIDE_HISTORY}" | tr -d '[:space:]')" ]]; then
+    echo ""
+    echo "## Override history"
+    echo ""
+    echo "${EXISTING_OVERRIDE_HISTORY}"
+  fi
+
+  cat <<EOF
 
 ## Notes
 

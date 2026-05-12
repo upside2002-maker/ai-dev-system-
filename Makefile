@@ -78,8 +78,13 @@ new-handoff:
 # Default HOURS=8 (typical shift length). Полное описание — policies/SHIFTS.md.
 # Usage: make take-shift SLUG=sitka-office SCOPE="разбор передачи"
 #        make take-shift SLUG=sitka-office SCOPE="..." HOURS=4
+#
+# Экстренное прерывание (только для владельца с can_override: yes в
+# policies/USERS.md). REASON обязательное — короткое объяснение, попадает
+# в TL_SHIFT.md в раздел ## Override history как аудит-след.
+# Usage: make take-shift SLUG=sitka-office SCOPE="hot fix" OVERRIDE=yes REASON="..."
 take-shift:
-	@bash scripts/take-shift.sh "$(SLUG)" "$(SCOPE)" "$(HOURS)"
+	@OVERRIDE="$(OVERRIDE)" REASON="$(REASON)" bash scripts/take-shift.sh "$(SLUG)" "$(SCOPE)" "$(HOURS)"
 
 # Release a project shift lock: caller must be current Holder, NOTES must be
 # non-empty. Appends entry to ## Notes section, resets Holder fields, pushes.
