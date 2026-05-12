@@ -135,7 +135,9 @@ fi
 CRITICAL_PATHS_FILE="${ROOT_DIR}/policies/CRITICAL_PATHS.md"
 if [[ -f "${CRITICAL_PATHS_FILE}" ]]; then
   # Извлечь Files-секцию задачи (после ## Files до следующего ## ...).
-  FILES_BLOCK="$(awk '/^## Files/{flag=1; next} flag && /^## /{flag=0} flag' "${FILE}")"
+  # Backticks убираются — markdown-convention в шаблонах обёртывает пути в
+  # `path/...`, и без нормализации gate не ловит критичные пути в backticks.
+  FILES_BLOCK="$(awk '/^## Files/{flag=1; next} flag && /^## /{flag=0} flag' "${FILE}" | tr -d '`')"
 
   # Извлечь критичные паттерны.
   CRITICAL_PATTERNS="$(awk '
