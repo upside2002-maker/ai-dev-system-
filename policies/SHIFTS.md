@@ -121,12 +121,29 @@ make take-shift SLUG=sitka-office SCOPE="hot fix продакшена" OVERRIDE=
 
 Полный список критичных путей и формат паттернов — `policies/CRITICAL_PATHS.md`. Описание антипаттерна и примеры BAD/GOOD — Correction 014 в `corrections/global-corrections.md`.
 
+## Периодическая сверка
+
+Раз в две-три недели (или после большого блока работ — что раньше) владелец запускает периодическую сверку: проходит чек-лист из пяти пунктов, ловит drift между правилами в файлах и реальным исполнением. Это страховка от ситуации «правила работают, исполнение хромает» — то, что не видит ни один автоматический скрипт-проверка.
+
+Команда:
+
+```
+make new-audit-task SLUG=sitka-office
+make new-audit-task SLUG=astro
+```
+
+Полная процедура и чек-лист — `policies/AUDIT.md`. Право запускать сверку — то же `can_approve_critical: yes` что для подписи серьёзных задач и экстренного прерывания смены. Единообразный флаг для всех операций контроля.
+
 ## Связанные файлы
 
 - `policies/USERS.md` — список разработчиков и их прав.
 - `policies/CRITICAL_PATHS.md` — список путей в зоне обязательной подписи.
+- `policies/AUDIT.md` — процедура периодической сверки.
+- `policies/OPERATOR_LANGUAGE.md` — список запрещённых слов для самопроверки передач.
 - `scripts/take-shift.sh` — скрипт захвата смены.
 - `scripts/release-shift.sh` — скрипт освобождения смены.
 - `scripts/approve-critical.sh` — подпись задачи владельцем.
+- `scripts/new-audit-task.sh` — создание задачи на периодическую сверку.
+- `scripts/self-check-handoff.sh` — самопроверка передачи.
 - `project-overlays/sitka-office/TL_SHIFT.md` — состояние смены для проекта sitka-office.
 - `project-overlays/astro/TL_SHIFT.md` — состояние смены для проекта astro.

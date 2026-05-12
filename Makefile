@@ -1,4 +1,4 @@
-.PHONY: check check-structure check-sitka-overlay check-astro-overlay status context submit-task accept-handoff accept-task reject-task new-task new-handoff take-shift release-shift approve-critical self-check-handoff
+.PHONY: check check-structure check-sitka-overlay check-astro-overlay status context submit-task accept-handoff accept-task reject-task new-task new-handoff take-shift release-shift approve-critical self-check-handoff new-audit-task
 
 check: check-structure check-sitka-overlay check-astro-overlay
 
@@ -107,3 +107,12 @@ approve-critical:
 # Usage: make self-check-handoff FILE=project-overlays/sitka-office/HANDOFFS/<f>.md
 self-check-handoff:
 	@bash scripts/self-check-handoff.sh "$(FILE)"
+
+# Scaffold a periodic-audit TASK from templates/AUDIT_TASK_TEMPLATE.md.
+# Owner-only: caller email must have can_approve_critical: yes in
+# policies/USERS.md (same right as override-shift and approve-critical —
+# единообразный флаг прав на операции контроля). См. policies/AUDIT.md
+# для процедуры сверки.
+# Usage: make new-audit-task SLUG=sitka-office
+new-audit-task:
+	@bash scripts/new-audit-task.sh "$(SLUG)"
