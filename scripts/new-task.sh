@@ -119,6 +119,15 @@ if [[ -e "${TARGET}" ]]; then
 fi
 
 # --- write skeleton ----------------------------------------------------------
+# Auto-fill Created by from git config user.email (tests may override via env
+# OVERRIDE_EMAIL — same convention as scripts/take-shift.sh).
+GIT_EMAIL="$(git -C "${ROOT_DIR}" config user.email 2>/dev/null || true)"
+CREATED_BY="${OVERRIDE_EMAIL:-${GIT_EMAIL}}"
+if [[ -z "${CREATED_BY}" ]]; then
+  echo "ERROR: не удалось определить email создателя — установи git config user.email" >&2
+  exit 65
+fi
+
 mkdir -p "${TASKS_DIR}"
 
 cat > "${TARGET}" <<EOF
@@ -131,8 +140,10 @@ cat > "${TARGET}" <<EOF
 - Layer: ${LAYER}
 - Risk tier: ${TIER}
 - Owner: Project Tech Lead
+- Created by: ${CREATED_BY}
 - Worker model: TBD
 - Mode: ${MODE}
+- Critical approved by: (нет)
 
 ## Problem
 

@@ -14,7 +14,7 @@
 
 `<task-slug>` совпадает с именем файла без даты-префикса и `.md`.
 
-## Header (9 полей, в этом порядке)
+## Header (11 полей, в этом порядке)
 
 - `Status:` — `open` | `in-progress` | `review` | `done` | `rejected` (lifecycle)
 - `Ready:` — `yes` | `no`. `no` = DRAFT / blocked / awaits-prereq, Worker не стартует. Семантика отдельна от `Status`.
@@ -23,8 +23,10 @@
 - `Layer:` — `docs` | `core` | `services` | `web` | `infra` | `mixed` (см. `guides/LAYER_RESPONSIBILITIES.md`)
 - `Risk tier:` — `A` | `B` | `C` (из проектного `.claude/risk-tiers.md`; tier D не используется)
 - `Owner:` — `Project Tech Lead`
+- `Created by:` — email создателя задачи (автозаполняется из `git config user.email` при `make new-task`). Используется `scripts/accept-task.sh` для проверки нужна ли подпись владельца при затрагивании критичных путей (см. `policies/CRITICAL_PATHS.md`).
 - `Worker model:` — `Claude Code` | `Codex` | `TBD` (фиксируется до старта Worker)
 - `Mode:` — `light` | `normal` | `strict` | `preview` (объём процесса; ось ортогональна `Risk tier:`). Default по tier'у: C → `light`, B → `normal`, A → `strict`. Tier A без `Mode: strict` отказывается `accept-task` гейтом. Полные правила — `policies/MODES.md`.
+- `Critical approved by:` — email владельца, который подписал задачу как затрагивающую критичный путь. Опциональное; пустое = `(нет)`. Заполняется через `make approve-critical FILE=<task.md>` (только от email с `can_approve_critical: yes` в `policies/USERS.md`). Если `Created by` уже имеет это право — отдельная подпись не нужна, accept-task пропускает.
 
 ## Body (5 обязательных секций)
 

@@ -1,4 +1,4 @@
-.PHONY: check check-structure check-sitka-overlay check-astro-overlay status context submit-task accept-handoff accept-task reject-task new-task new-handoff take-shift release-shift
+.PHONY: check check-structure check-sitka-overlay check-astro-overlay status context submit-task accept-handoff accept-task reject-task new-task new-handoff take-shift release-shift approve-critical
 
 check: check-structure check-sitka-overlay check-astro-overlay
 
@@ -91,3 +91,11 @@ take-shift:
 # Usage: make release-shift SLUG=sitka-office NOTES="что сделано за смену"
 release-shift:
 	@bash scripts/release-shift.sh "$(SLUG)" "$(NOTES)"
+
+# Sign a TASK as critical-approved by the owner. Required when the task
+# touches paths from policies/CRITICAL_PATHS.md and Created by does not
+# have can_approve_critical permission. Updates the `- Critical approved by:`
+# line in TASK header to caller's email, commits, pushes to backup.
+# Usage: make approve-critical FILE=project-overlays/sitka-office/TASKS/<file>.md
+approve-critical:
+	@bash scripts/approve-critical.sh "$(FILE)"

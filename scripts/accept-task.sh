@@ -125,6 +125,117 @@ if [[ "${CURRENT_TIER}" == "A" ]]; then
   fi
 fi
 
+# Critical-paths gate: если задача затрагивает путь из policies/CRITICAL_PATHS.md
+# — нужна подпись владельца (поле `- Critical approved by:` от email с
+# can_approve_critical: yes в policies/USERS.md). Если Created by уже имеет
+# это право — отдельная подпись не нужна (creator == approver).
+#
+# Парсинг паттернов: блок между ``` маркерами в policies/CRITICAL_PATHS.md.
+# Поддерживаемые форматы: точный путь, `prefix/**`, `*suffix`.
+CRITICAL_PATHS_FILE="${ROOT_DIR}/policies/CRITICAL_PATHS.md"
+if [[ -f "${CRITICAL_PATHS_FILE}" ]]; then
+  # Извлечь Files-секцию задачи (после ## Files до следующего ## ...).
+  FILES_BLOCK="$(awk '/^## Files/{flag=1; next} flag && /^## /{flag=0} flag' "${FILE}")"
+
+  # Извлечь критичные паттерны.
+  CRITICAL_PATTERNS="$(awk '
+    /^```/ { in_block = !in_block; next }
+    in_block && !/^[[:space:]]*#/ && NF { print }
+  ' "${CRITICAL_PATHS_FILE}")"
+
+  TOUCHES_CRITICAL="no"
+  WHICH_PATTERN=""
+  while IFS= read -r pattern; do
+    [[ -z "${pattern}" ]] && continue
+    case "${pattern}" in
+      *"/**")
+        prefix="${pattern%/**}"
+        if echo "${FILES_BLOCK}" | grep -qE "(^|[[:space:]/,])${prefix}/"; then
+          TOUCHES_CRITICAL="yes"; WHICH_PATTERN="${pattern}"; break
+        fi
+        ;;
+      "*"*)
+        suffix="${pattern#\*}"
+        if echo "${FILES_BLOCK}" | grep -qF "${suffix}"; then
+          TOUCHES_CRITICAL="yes"; WHICH_PATTERN="${pattern}"; break
+        fi
+        ;;
+      *)
+        if echo "${FILES_BLOCK}" | grep -qE "(^|[[:space:]/,])${pattern}([[:space:],]|$)"; then
+          TOUCHES_CRITICAL="yes"; WHICH_PATTERN="${pattern}"; break
+        fi
+        ;;
+    esac
+  done <<< "${CRITICAL_PATTERNS}"
+
+  if [[ "${TOUCHES_CRITICAL}" == "yes" ]]; then
+    POLICIES_USERS="${ROOT_DIR}/policies/USERS.md"
+    if [[ ! -f "${POLICIES_USERS}" ]]; then
+      echo "ERROR: ${POLICIES_USERS} не найден — без него нельзя проверить право подписи" >&2
+      exit 65
+    fi
+
+    # Helper: get a can_* field for email from USERS.md.
+    get_user_perm() {
+      local _email="$1" _field="$2"
+      awk -v want_email="${_email}" -v want_field="${_field}" '
+        /^- email:[[:space:]]*/ {
+          sub(/^- email:[[:space:]]*/, "");
+          cur_email = $0;
+          next;
+        }
+        cur_email == want_email && $0 ~ ("^- " want_field ":[[:space:]]*") {
+          line = $0;
+          sub("^- " want_field ":[[:space:]]*", "", line);
+          print line;
+          exit;
+        }
+      ' "${POLICIES_USERS}"
+    }
+
+    CREATED_BY="$(grep -m1 -E '^- Created by:' "${FILE}" | sed -E 's/^- Created by:[[:space:]]*//' | awk '{print $1}')"
+    APPROVED_BY="$(grep -m1 -E '^- Critical approved by:' "${FILE}" | sed -E 's/^- Critical approved by:[[:space:]]*//' | awk '{print $1}')"
+
+    CREATOR_CAN_APPROVE=""
+    if [[ -n "${CREATED_BY}" ]]; then
+      CREATOR_CAN_APPROVE="$(get_user_perm "${CREATED_BY}" "can_approve_critical")"
+    fi
+
+    if [[ "${CREATOR_CAN_APPROVE}" == "yes" ]]; then
+      echo "Info: TASK затрагивает критичный путь '${WHICH_PATTERN}', но Created by '${CREATED_BY}' имеет право подписи — пропускаю отдельную проверку Critical approved by."
+    else
+      if [[ -z "${APPROVED_BY}" ]] || [[ "${APPROVED_BY}" == "(нет)" ]]; then
+        echo "ERROR: TASK затрагивает критичный путь '${WHICH_PATTERN}' (из policies/CRITICAL_PATHS.md)" >&2
+        echo "       а Created by '${CREATED_BY:-(не указано)}' не имеет права can_approve_critical." >&2
+        echo "       Нужна подпись владельца. Сделай:" >&2
+        echo "         make approve-critical FILE=${FILE#"${ROOT_DIR}/"}" >&2
+        exit 65
+      fi
+      APPROVER_CAN_APPROVE="$(get_user_perm "${APPROVED_BY}" "can_approve_critical")"
+      if [[ "${APPROVER_CAN_APPROVE}" != "yes" ]]; then
+        echo "ERROR: TASK подписан '${APPROVED_BY}', но у него нет права can_approve_critical" >&2
+        echo "       (поле в policies/USERS.md = '${APPROVER_CAN_APPROVE:-(не найдено)}')." >&2
+        echo "       Подпись должна быть от владельца. Сделай:" >&2
+        echo "         make approve-critical FILE=${FILE#"${ROOT_DIR}/"}" >&2
+        exit 65
+      fi
+      # Защита от подмены: проверить что последний коммит, изменивший
+      # `Critical approved by:` в этом файле, был сделан approver-email'ом.
+      # Если файл новый (не закоммичен) — git log вернёт пусто, пропускаем.
+      LAST_AUTHOR="$(git -C "${ROOT_DIR}" log -1 --format='%ae' \
+                       --pickaxe-regex -S '^- Critical approved by:' \
+                       -- "${FILE}" 2>/dev/null || true)"
+      if [[ -n "${LAST_AUTHOR}" ]] && [[ "${LAST_AUTHOR}" != "${APPROVED_BY}" ]]; then
+        echo "ERROR: поле Critical approved by указывает на '${APPROVED_BY}'," >&2
+        echo "       но последний commit, который ввёл/изменил эту строку, был от '${LAST_AUTHOR}'." >&2
+        echo "       Это похоже на подделку подписи. Пусть владелец подпишет своим email'ом:" >&2
+        echo "         make approve-critical FILE=${FILE#"${ROOT_DIR}/"}" >&2
+        exit 65
+      fi
+    fi
+  fi
+fi
+
 # Mutate: bump Status to done (perl for portability between macOS/Linux sed).
 perl -i -pe 's/^- Status:.*$/- Status: done/' "${FILE}"
 
