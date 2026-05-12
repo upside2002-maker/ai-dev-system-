@@ -158,19 +158,20 @@ fi
 
 BRANCH="$(git -C "${ROOT_DIR}" rev-parse --abbrev-ref HEAD)"
 
-# Подтянуть последние изменения с резервной копии (если ветка там есть).
-# Пропускается при AIDS_SKIP_PUSH=1 — тестовый режим без сетевой работы.
+# Подтянуть последние изменения из origin (источник правды для совместной
+# работы). Пропускается при AIDS_SKIP_PUSH=1 — тестовый режим без сетевой
+# работы. Если ветки на origin нет (новая локальная ветка) — пропускаю rebase.
 if [[ "${AIDS_SKIP_PUSH:-0}" == "1" ]]; then
-  echo "  (rebase на backup пропущен — AIDS_SKIP_PUSH=1, режим тестирования)"
-elif git -C "${ROOT_DIR}" fetch backup "${BRANCH}" 2>/dev/null; then
-  echo "Подтягиваю последние изменения из резервной копии (ветка ${BRANCH})..."
-  if ! git -C "${ROOT_DIR}" rebase "backup/${BRANCH}"; then
-    echo "ERROR: rebase на backup/${BRANCH} не прошёл — разреши конфликты руками и попробуй снова" >&2
+  echo "  (rebase на origin пропущен — AIDS_SKIP_PUSH=1, режим тестирования)"
+elif git -C "${ROOT_DIR}" fetch origin "${BRANCH}" 2>/dev/null; then
+  echo "Подтягиваю последние изменения из origin (ветка ${BRANCH})..."
+  if ! git -C "${ROOT_DIR}" rebase "origin/${BRANCH}"; then
+    echo "ERROR: rebase на origin/${BRANCH} не прошёл — разреши конфликты руками и попробуй снова" >&2
     git -C "${ROOT_DIR}" rebase --abort 2>/dev/null || true
     exit 75
   fi
 else
-  echo "  ветка ${BRANCH} ещё не на резервной копии — пропускаю rebase"
+  echo "  ветка ${BRANCH} ещё не на origin или сеть недоступна — пропускаю rebase"
 fi
 
 # Прочитать текущее состояние смены ПОСЛЕ rebase.
@@ -300,28 +301,20 @@ if [[ "${DO_OVERRIDE}" == "yes" ]]; then
   COMMIT_MSG="shift(${SLUG}): OVERRIDE by ${EFFECTIVE_EMAIL} from ${PRIOR_HOLDER} — ${REASON}"
 fi
 RELATIVE_LOCK="${LOCK_FILE#"${ROOT_DIR}/"}"
+# shellcheck disable=SC1091
+source "${ROOT_DIR}/scripts/_push_helper.sh"
 (
   cd "${ROOT_DIR}"
   git add "${RELATIVE_LOCK}"
   git commit -m "${COMMIT_MSG}" >/dev/null
 
-  if [[ "${AIDS_SKIP_PUSH:-0}" == "1" ]]; then
-    echo "  (push в backup пропущен — AIDS_SKIP_PUSH=1, режим тестирования)"
-  elif PUSH_OUT="$(git push backup "${BRANCH}" 2>&1)"; then
-    echo "${PUSH_OUT}" | tail -2
-  else
-    echo "${PUSH_OUT}" >&2
-    if echo "${PUSH_OUT}" | grep -qE 'rejected|non-fast-forward'; then
-      echo "" >&2
-      echo "ERROR: кто-то опередил тебя — резервная копия отказалась принимать запись" >&2
-      echo "  Чтобы откатить локальное состояние и увидеть кто записался первым:" >&2
-      echo "    git -C ${ROOT_DIR} reset --hard backup/${BRANCH}" >&2
-      echo "  После отката посмотри новый TL_SHIFT.md и реши, нужна ли смена сейчас." >&2
-      exit 75
-    else
-      echo "ERROR: push backup ${BRANCH} не удался — посмотри ошибку выше" >&2
-      exit 75
-    fi
+  if ! push_both "${BRANCH}"; then
+    echo "" >&2
+    echo "ERROR: отправка изменений не прошла — операция остановлена." >&2
+    echo "  Если origin отверг (кто-то опередил) — подтяни свежее:" >&2
+    echo "    git -C ${ROOT_DIR} pull --rebase origin ${BRANCH}" >&2
+    echo "  Затем повтори make take-shift." >&2
+    exit 75
   fi
 ) || exit $?
 

@@ -118,25 +118,25 @@ APPROVER_EMAIL="${EFFECTIVE_EMAIL}" perl -i -pe \
   's|^- Critical approved by:.*$|- Critical approved by: $ENV{APPROVER_EMAIL}|' \
   "${FILE}"
 
-# Commit + push.
+# Commit + двойная отправка (origin + backup) через scripts/_push_helper.sh.
 BRANCH="$(git -C "${ROOT_DIR}" rev-parse --abbrev-ref HEAD)"
 RELATIVE="${FILE#"${ROOT_DIR}/"}"
+# shellcheck disable=SC1091
+source "${ROOT_DIR}/scripts/_push_helper.sh"
 (
   cd "${ROOT_DIR}"
   git add "${RELATIVE}"
   git commit -m "approve-critical(${RELATIVE}): signed by ${EFFECTIVE_EMAIL}" >/dev/null
 
-  if [[ "${AIDS_SKIP_PUSH:-0}" == "1" ]]; then
-    echo "  (push в backup пропущен — AIDS_SKIP_PUSH=1, режим тестирования)"
-  elif PUSH_OUT="$(git push backup "${BRANCH}" 2>&1)"; then
-    echo "${PUSH_OUT}" | tail -2
-  else
-    echo "${PUSH_OUT}" >&2
+  if ! push_both "${BRANCH}"; then
     echo "" >&2
-    echo "WARN: push backup ${BRANCH} не удался — подпись сохранена локально" >&2
-    echo "      попробуй push вручную: git -C ${ROOT_DIR} push backup ${BRANCH}" >&2
+    echo "ERROR: отправка не прошла — подпись сохранена локально, но не синхронизирована." >&2
+    echo "  Если origin отверг — подтяни свежее:" >&2
+    echo "    git -C ${ROOT_DIR} pull --rebase origin ${BRANCH}" >&2
+    echo "  Затем 'git push origin ${BRANCH} && git push backup ${BRANCH}' вручную." >&2
+    exit 75
   fi
-)
+) || exit $?
 
 echo ""
 echo "OK: задача подписана"
