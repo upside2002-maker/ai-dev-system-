@@ -35,7 +35,22 @@ Phase 4 программы Transit Section Recovery (`ARCHITECTURE/transit-secti
 
 Задача — добавить генератор outer-planet cards в `transit_themes.py` (или новый модуль) + render их в template после общего блока «Аспекты», но до календаря. Использовать `loop_transit_windows` view (Phase 3 reserved name) — карточкам нужен **full-loop horizon** включая касания за пределами солярного года (Нептун-Юпитер уходит до 2028, Нептун-Нептун начинается в 2024).
 
-После закрытия TASK 4 → **9 xfail tests** должны flip → passed (см. § Test contract).
+После закрытия TASK 4 → **7 xfail tests** должны flip → passed (см. § Test contract).
+
+**Phase 4 scope correction (после preflight BLOCKED 2026-05-13, TL Path 3 decision):** Engine эмитит hits **по одному per motion phase** внутри orb-окна, а не per окно. Для медленных планет (Нептун) одно orb-окно содержит несколько фаз — Marina'ы «3 касания» = «3 display windows», не «3 raw hits». Test contract `_assert_three_phase_intervals` имеет design gap (Phase 2 erratum). **TL Path 3 decision:** Phase 4 строит карточки с консолидацией raw hits в display windows best-effort (для PDF parity), но **НЕ закрывает Category 4 Neptune interval xfails** — они остаются xfail до отдельного TASK 4a про contact-window semantics. Phase 4 acceptance: 7 xfail flips (6 Cat 3 структура + 1 Cat 7 regression ban), не 9.
+
+**Жёсткие запреты Path 3:**
+- НЕ модифицировать `_assert_three_phase_intervals` (Path 1 маскирует проблему — 178d Neptune-Neptune window 1 shift останется).
+- НЕ хардкодить Marina-date overrides в production code (`outer_cards.py` или другие). Карточки строятся **из engine output путём агрегации** raw hits в display windows. Date parity с Marina по Нептуну **не гарантируется** в этой задаче.
+- НЕ перезаписывать `expected.json` для «подгонки» под Marina даты.
+- НЕ unmark Category 4 xfails (`test_neptune_square_jupiter_three_touches_tolerance_2d`, `test_neptune_square_neptune_three_touches_tolerance_2d`) — они остаются `@pytest.mark.xfail(strict=True)` с **обновлённым reason**: `"TASK 4a — Neptune slow-loop contact window semantics"`.
+
+**Aggregation logic для карточек (best-effort, без overrides):**
+- Каждая карточка показывает **3 display windows** (это что Marina показывает в эталоне).
+- Worker группирует raw hits engine output по уникальным `(orb_enter, orb_exit)` тuples → unique windows.
+- Если unique_windows = 3 (e.g. Нептун-Юпитер, Нептун-Нептун) — отлично, ровно 3 окна в карточке.
+- Если unique_windows ≠ 3 (например, engine эмитит 4 уникальных окна для какого-то аспекта) — это **сигнал**, Worker фиксирует в HANDOFF, может потребоваться корректировка allowlist или дополнительная aggregation logic для конкретного случая.
+- Phase order (D/R/DR) показывается как **set of phases per window** (one display window может содержать `[Direct, Retrograde]` или просто `[DirectReturn]` — это OK).
 
 ## Scope discipline — какие именно карточки генерировать
 
@@ -119,9 +134,9 @@ Detector может найти больше aspects чем allowlist (напри
 - [ ] **Карточка для Уран 150° Юпитер НЕ генерируется** — он остаётся в календаре, не в cards. Worker проверяет PDF на отсутствие card-блока для Уран-Юпитер.
 - [ ] Только 3 outer card в PDF Натальи. Не 4, не 0.
 
-### Test contract (Phase 4 xfail flips → passed)
+### Test contract (Phase 4 xfail flips → passed) — Path 3 scope
 
-После landing TASK 4 `pytest tests/test_natalya_transits_acceptance.py -v` показывает **9 xfail tests** перешли в **passed**, Worker unmark'нул их декораторы:
+После landing TASK 4 `pytest tests/test_natalya_transits_acceptance.py -v` показывает **7 xfail tests** перешли в **passed**, Worker unmark'нул их декораторы:
 
 Category 3 (outer-planet structure, 6 xfail Phase 4):
 - `test_pdf_contains_uranus_square_venus_card` → passed
@@ -131,19 +146,21 @@ Category 3 (outer-planet structure, 6 xfail Phase 4):
 - `test_each_outer_card_has_psychology_level` → passed
 - `test_each_outer_card_has_event_level` → passed
 
-Category 4 (outer-planet intervals, 2 xfail Phase 4 — `Уран-Венера` already passing as regression guard):
-- `test_neptune_square_jupiter_three_touches_tolerance_2d` → passed
-- `test_neptune_square_neptune_three_touches_tolerance_2d` → passed
-
 Category 7 (regression bans, 1 xfail Phase 4):
 - `test_outer_cards_always_present_when_marina_shows_them` → passed (unmark xfail)
 - (Category 3 `test_pdf_contains_outer_transits_section_heading` — was passing already, остаётся passing.)
 
-**Итого 9 xfail flips:** 6 + 2 + 1 = 9. Phase 5/6 xfails (Category 5 calendar clipping + Category 6 target houses) **остаются xfail**. Worker НЕ трогает их.
+**Категория 4 (Neptune interval tests) — ОСТАЁТСЯ XFAIL** per Path 3 decision:
+- `test_neptune_square_jupiter_three_touches_tolerance_2d` — xfail остаётся; reason обновить: `"TASK 4a — Neptune slow-loop contact window semantics"`.
+- `test_neptune_square_neptune_three_touches_tolerance_2d` — xfail остаётся; reason обновить: то же.
+- Worker **только обновляет `reason` строку** в декораторах; **не unmark, не fix**.
+- `test_uranus_square_venus_three_touches_tolerance_2d` — это уже passing (regression guard), не трогать.
+
+**Итого 7 xfail flips:** 6 (Cat 3) + 1 (Cat 7 regression ban) = 7. Phase 5/6 xfails + Category 4 Neptune intervals **остаются xfail**. Worker НЕ трогает их (только обновляет reason text у 2 Neptune tests).
 
 **Phase 5 target-house xfails — особое внимание:** golden-rule таблица каждой карточки содержит ссылки на дома (radix дома цели, ruled дома). Worker реализует их через **closed card-facts (per case_id)** из Marina oracle pp. 18/20/21 — НЕ через generic rulership-expanded helper (это работа Phase 5). Поэтому Phase 5 xfails (`test_target_houses_not_placement_only_for_multi_house_targets`, `test_target_houses_distinguish_placement_from_rulership` и др.) остаются xfail — они проверяют generic API surface, который Phase 4 не строит.
 
-**Если Worker наблюдает xpass на тестах ВНЕ Phase 4 mapping (Phase 5, Phase 6) — это сигнал, investigate, НЕ unmark.**
+**Если Worker наблюдает xpass на тестах ВНЕ Phase 4 mapping (Phase 5, Phase 6, или Category 4 Neptune intervals) — это сигнал, investigate, НЕ unmark.**
 
 ### Preflight check для Neptune interval tests (Category 4)
 
@@ -166,7 +183,7 @@ Category 7 (regression bans, 1 xfail Phase 4):
 ### Common acceptance
 
 - [ ] `cabal build` сделан (Phase 2 lesson) — даже если presentation-only не трогает core.
-- [ ] `cd services/api-python && .venv/bin/pytest --tb=no -q` — green; ожидание `~115 passed + ~8 xfailed` (Phase 4 flips увеличивают passed на 9 единиц, xfailed уменьшают на 9: было 106 passed + 17 xfailed → стало 115 passed + 8 xfailed).
+- [ ] `cd services/api-python && .venv/bin/pytest --tb=no -q` — green; ожидание `~113 passed + ~10 xfailed` (Phase 4 flips увеличивают passed на 7 единиц, xfailed уменьшают на 7: было 106 passed + 17 xfailed → стало 113 passed + 10 xfailed; 2 Neptune Cat 4 остаются xfail).
 - [ ] `git status --short` чисто **для intended product changes**.
 - [ ] Один commit (или ≤ 2 при чистой границе: generator module отдельно от template wiring + tests unmark).
 - [ ] Push на backup, parity verified.

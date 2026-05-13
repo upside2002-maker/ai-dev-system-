@@ -217,17 +217,29 @@ Deliverable: настоящий документ зафиксирован (в `a
 - Каждая карточка содержит психологический уровень.
 - Каждая карточка содержит событийный уровень.
 
-**Outer-planet intervals** (tolerance ±2 дня на границы; **строго 3 касания**, **строгий порядок D → R → DR**, текстовый формат совпадает с эталонным стилем; **никакого exact timestamp equality**):
+**Outer-planet intervals** (tolerance ±2 дня на границы; **3 display windows (касания)** per карточку; **строго D → R → DR порядок по фазам внутри окон**, текстовый формат совпадает с эталонным стилем; **никакого exact timestamp equality**):
 
-- Уран квадрат Венера содержит три интервала (reference):
+> **ERRATUM 2026-05-13 (после Phase 4 preflight BLOCKED + TL Path 3 decision):**
+> Прежняя формулировка «строго 3 касания» оказалась неточной. Marina-style «касание» = **display window (orb-window)**, не **raw engine hit per motion phase**. Engine эмитит **hit-per-motion-phase** внутри orb-окна; для медленных планет (Нептун) одно orb-окно может содержать 2 фазы (D+R или R+DR), поэтому raw hit count = 4-5 при 3 display windows.
+>
+> Правильная семантика для card display:
+> - **3 display windows** per карточка (Marina-style: 1-е/2-е/3-е касание).
+> - Worker presentation агрегирует raw hits по уникальным `(orb_enter, orb_exit)` tuples в display windows.
+> - Phase order проверяется как **set of phases per window**, не как точный list (window 1 для Нептун-Юпитер: `{Direct, Retrograde}`; window 3: `{Retrograde, DirectReturn}`).
+>
+> Reference даты ниже корректны для display windows у Урана-Венеры (где engine эмитит 3 окна = 3 hits, потому что Уран быстрее). Для Нептуна (одно окно может содержать 2 фазы) reference даты ниже **могут расходиться** с engine output на границах окон (особенно Нептун-Нептун окно 1 — 178d shift). Это **TASK 4a domain** — `Transit contact window semantics for slow outer loops` — открывается после Phase 4 close.
+>
+> Phase 4 acceptance Phase 4 retroactively суживается с 9 → 7 xfail flips; 2 Neptune interval tests остаются xfail до TASK 4a.
+
+- Уран квадрат Венера содержит три display windows (reference):
   - `03.06.2025 12:00 - 12.07.2025 12:00`
   - `02.11.2025 12:00 - 22.12.2025 12:00`
   - `19.03.2026 00:00 - 30.04.2026 00:00`
-- Нептун квадрат Юпитер содержит три интервала (reference):
+- Нептун квадрат Юпитер содержит три display windows (reference; engine emit 5 hits in 3 windows):
   - `21.04.2026 12:00 - 28.09.2026 12:00`
   - `21.02.2027 12:00 - 16.04.2027 12:00`
   - `10.10.2027 00:00 - 16.02.2028 12:00`
-- Нептун квадрат Нептун содержит три интервала (reference):
+- Нептун квадрат Нептун содержит три display windows (reference; engine emit 4 hits in 3 windows; window 1 has ~178d shift — TASK 4a domain):
   - `27.09.2024 00:00 - 12.10.2024 00:00`
   - `31.01.2025 12:00 - 29.03.2025 00:00`
   - `25.10.2025 00:00 - 24.01.2026 12:00`

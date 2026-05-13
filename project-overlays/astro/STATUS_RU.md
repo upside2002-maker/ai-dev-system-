@@ -33,7 +33,13 @@
 - xfail flips: 4 tests (saturn houses, saturn-6-pdf, horizon-param, regression ban). Phase 5/6 xfails остаются untouched.
 - Tests: 106 passed + 17 xfailed = 123 total, 0 failed.
 
-**Phase 4 (Outer-planet cards generator) — TASK 4 spec готов, Ready: no, ждёт ack пользователя.** TASK `2026-05-13-outer-planet-cards-generator.md`. Tier C / Mode normal / Layer services. Восстанавливает Маринин формат outer-planet карточек: для Натальи **строго 3 карточки** (Уран-Венера, Нептун-Юпитер, Нептун-Нептун), каждая с 5 секциями (заголовок + интервалы + таблица «Золотое правило» + психологический уровень + событийный уровень). Marina reference oracle: pp. 17-22 эталона. Уран 150° Юпитер остаётся в календаре, НЕ становится карточкой. Phase 4 closing flip-flag 11 xfail tests → passed.
+**Phase 4 (Outer-planet cards generator) — Path 3 decision applied, Worker reopen pending.** TASK `2026-05-13-outer-planet-cards-generator.md`, Ready: yes. Tier C / Mode normal / Layer services.
+
+После первого Worker preflight 2026-05-13 (BLOCKED — Neptune interval contract mismatch) — пользователь принял **Path 3 decision**: Phase 4 строит карточки с консолидацией raw hits в 3 display windows best-effort (для PDF parity с Мариной), но **НЕ закрывает Category 4 Neptune interval xfails**. Acceptance retroactively суживается с 9 → **7 xfail flips** (6 Cat 3 структура + 1 Cat 7 regression ban).
+
+**Phase 2 erratum:** прежняя формулировка «строго 3 касания» в архитектурном документе оказалась неточной. Marina-style «касание» = **display/orb window**, не **raw engine hit per motion phase**. Erratum записан в § 6 architecture document; решение по correct contract semantics — отдельный TASK 4a после Phase 4 close.
+
+Жёсткие запреты Path 3 для Phase 4 Worker'а: НЕ модифицировать `_assert_three_phase_intervals` (Path 1 маскирует root cause), НЕ хардкодить Marina-date overrides, НЕ перезаписывать `expected.json`, НЕ unmark Cat 4 xfails (только обновить их `reason` строку на `"TASK 4a — Neptune slow-loop contact window semantics"`).
 
 
 
@@ -88,7 +94,8 @@
 - **Phase 1** (single source of truth + render provenance) — **CLOSED** 2026-05-13 (TASK 1 accepted, commit `9793d5d`, worktree merged в main).
 - **Phase 2** (hard acceptance assertions) — **CLOSED** 2026-05-13 (TASK 2 accepted, commit `fb47aca`, 29 hard assertions с xfail-strict).
 - **Phase 3** (transit horizon split) — **CLOSED** 2026-05-13 (TASK 3 accepted, commit `70185b0`, Path B presentation-level, 4 xfail flips).
-- **Phase 4** (outer-planet cards generator) — **TASK 4 готов, ждёт ack пользователя.** Tier C, Marina-reference oracle pp. 17-22. После landing: 11 xfail tests должны flip → passed.
+- **Phase 4** (outer-planet cards generator) — **Path 3 applied, Worker reopen in progress.** Tier C, Marina-reference oracle pp. 17-22. После landing: **7 xfail tests** flip → passed (Cat 3 структура + 1 Cat 7 regression). 2 Cat 4 Neptune interval xfails остаются — открывается TASK 4a после close.
+- **Phase 4a** (Transit contact window semantics for slow outer loops) — **открывается после Phase 4 close.** Формализует `raw hit` / `motion phase hit` / `orb window` / `display contact` / `tight Marina window`; решает scope (Tier C test-contract или Tier A engine semantic). Это backlog item на момент 2026-05-13.
 - **Phase 4** (outer-planet cards generator) — только для тех outer-aspects, что представлены в эталоне как карточки.
 - **Phase 5** (rulership-expanded target houses) — Tier C с эскалацией до Tier A при shared core helper.
 - **Phase 6** (per-context cutoff policy) — explicit clipping rules.
