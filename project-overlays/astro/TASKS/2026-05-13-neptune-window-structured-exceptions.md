@@ -1,7 +1,7 @@
 # TASK: neptune-window-structured-exceptions
 
 - Status: open
-- Ready: no
+- Ready: yes
 - Date: 2026-05-13
 - Project: astro
 - Layer: services
@@ -30,11 +30,17 @@ Implementation TASK для Path 4 решения (per TL/user decision 2026-05-1
   - **`services/api-python/tests/test_natalya_transits_acceptance.py`** — **единственный затрагиваемый файл**:
     - Refactor `_assert_three_phase_intervals` helper:
       - вместо `assert len(hits) == 3` — `assert len(aggregate_display_windows(hits)) == 3`. Reuse `outer_cards.aggregate_display_windows` (Phase 4 helper), не дублировать логику.
-      - phase order проверяется как **set of phases per window**, не strict ordered list. Window может содержать `{Direct, Retrograde}`, `{DirectReturn}`, etc.
-      - per-window boundary tolerance: по умолчанию `±2d`. Параметр `tolerance_overrides: dict[int, dict[str, tuple[int, str]]]` позволяет per-window-index указать override `{window_index: {"start": (days, reason), "end": (days, reason)}}`.
-    - Add 2 structured exceptions с reason-строками + cross-reference на memo:
-      - Neptune-Jupiter Square W3 end: tolerance `±20d`, reason: `"Marina extends past engine 1° orb threshold by 17d; editorial choice per memo § 4.4 + Path 4 decision 2026-05-13 — not a regression"`.
-      - Neptune-Neptune Square W1 start: tolerance `±200d`, reason: `"Marina shows tail only of long first-orb-window (15-day approach before exit) vs engine wide-orb 1° threshold (193-day window); editorial choice per memo § 4.4 + Path 4 decision 2026-05-13 — not a regression"`.
+      - Phase-set assertion **explicit, передаваемый как параметр**, НЕ выводимый из actual emission (иначе тест становится тавтологией). Параметр `expected_phase_sets: list[set[str]]` (или эквивалентный type). Per-window-index assertion: `actual_phase_set_at_window_i == expected_phase_sets[i]`.
+      - **Window index канонически 1-based** во всех overrides и phase-set references. W1 / W2 / W3 в memo, Marina reference, и reason-строках уже 1-based — test API использует ту же convention. `tolerance_overrides={3: ...}` и `{1: ...}` — 1-based.
+      - Per-window boundary tolerance: по умолчанию `±2d`. Параметр `tolerance_overrides: dict[int, dict[str, tuple[int, str]]]` позволяет per-window-index указать override `{1-based_window_index: {"start": (days, reason), "end": (days, reason)}}`.
+    - **Explicit expected phase sets per allowlist triple** (starting reference из user spec; Worker validates против actual engine output из memo § 3.5):
+      - Uranus Square Venus: `[{Direct}, {Retrograde}, {DirectReturn}]`.
+      - Neptune Square Jupiter: `[{Direct, Retrograde}, {Retrograde}, {Retrograde, DirectReturn}]` (user spec; memo § 3.5 показывает W2 = {DirectReturn}, не {Retrograde} — Worker валидирует против actual emission и использует engine truth, flag'ит расхождение TL в HANDOFF если user-listed противоречит memo).
+      - Neptune Square Neptune: `[{Direct, Retrograde}, {Retrograde}, {DirectReturn}]` (user spec; memo § 3.5 показывает W2 = {DirectReturn} — та же ситуация, Worker валидирует).
+      - **Discipline rule:** если actual engine emission per memo § 3.5 расходится с user-listed expected — Worker использует **actual emission** (engine = source of truth), документирует расхождение в HANDOFF под секцией «User spec vs engine reality reconciliation», TL escalates to user.
+    - Add 2 structured exceptions с reason-строками + cross-reference на memo (1-based window index):
+      - **`tolerance_overrides={3: {"end": (20, reason)}}`** для Neptune-Jupiter Square test. Reason: `"Marina extends past engine 1° orb threshold by 17d; editorial choice per memo § 4.4 + Path 4 decision 2026-05-13 — not a regression"`.
+      - **`tolerance_overrides={1: {"start": (200, reason)}}`** для Neptune-Neptune Square test. Reason: `"Marina shows tail only of long first-orb-window (15-day approach before exit) vs engine wide-orb 1° threshold (193-day window); editorial choice per memo § 4.4 + Path 4 decision 2026-05-13 — not a regression"`.
     - Unmark `@pytest.mark.xfail` для 2 Cat 4 tests:
       - `test_neptune_square_jupiter_three_touches_tolerance_2d`
       - `test_neptune_square_neptune_three_touches_tolerance_2d`
@@ -76,8 +82,8 @@ Implementation TASK для Path 4 решения (per TL/user decision 2026-05-1
 
 ### Test runs
 
-- [ ] `cd services/api-python && .venv/bin/pytest --tb=no -q` — **115 passed + 8 xfailed** (было 113/10; 2 Cat 4 flipped + 2 reason-update не меняют count). 0 failed.
-- [ ] `pytest tests/test_natalya_transits_acceptance.py --runxfail -v` — debug mode показывает 2 Neptune tests passing (с tolerance overrides), не падают на boundary divergence.
+- [ ] `cd services/api-python && .venv/bin/pytest --tb=no -q` — **115 passed + 8 xfailed** (было 113/10; 2 Cat 4 flipped). 0 failed.
+- [ ] **Selective debug check** (НЕ полный файл — полный с `--runxfail` упадёт на Phase 5/6 xfails): `pytest tests/test_natalya_transits_acceptance.py -k "neptune_square_jupiter_three_touches or neptune_square_neptune_three_touches" --runxfail -v` — два Neptune теста проходят с tolerance overrides, не падают на boundary divergence.
 - [ ] Регрессии не на остальных 7 boundaries: U-V × 3 + N-J × 2 (W1+W2 ≤2d) + N-N × 2 (W2+W3 ≤2d) — все продолжают проходить с `±2d` без override.
 
 ### Scope discipline
@@ -114,11 +120,6 @@ Implementation TASK для Path 4 решения (per TL/user decision 2026-05-1
 
 **Phase 7 gate clause:** если TASK 7 multi-case calibration (после Phase 5/6) покажет что **похожие Neptune (или другие slow-mover) overrides начинают накапливаться** (>5 за case или >10 across all cases), это сигнал что Path 4 структура не масштабируется и нужно пересмотреть продуктовый подход — возможно отдельный presentation-layer "editorial override" механизм, но это не TASK 4b и не engine. Phase 7 Worker фиксирует override count в HANDOFF; если threshold превышен — TL эскалирует пользователю до closing Phase 7.
 
-**Critical wording для документации** (на момент landing TASK 4b обновить STATUS_RU + architecture erratum):
-- Path 4 закрывает **тестовую дисциплину**, не превращает 2 даты в «совпавшие».
-- PDF продолжает рендерить engine-derived dates через Phase 4 aggregation.
-- Marina при показе видит **engine boundaries, не свои эталонные** для 2 Neptune windows.
-- Это **known editorial divergence**, accepted TL/user 2026-05-13.
-- Не regression. Не engine bug.
+**Worker scope discipline:** product commit Worker'а трогает **только** `services/api-python/tests/test_natalya_transits_acceptance.py`. Никаких других файлов. Overlay-уровень artefacts (`STATUS_RU.md`, `transit-section-program-2026-05-13.md` § 6 erratum) — **TL responsibility** в отдельном overlay commit после accept TASK 4b. Worker не правит overlay, не пишет в `STATUS_RU`, не правит architecture document.
 
 **Ready: no** — TL flip'ает в `yes` после ack пользователя на TASK 4b spec.
