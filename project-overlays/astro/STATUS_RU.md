@@ -43,7 +43,17 @@
 - Tests: **113 passed + 10 xfailed = 123 total, 0 failed.**
 - PDF `/tmp/natalya-phase4.pdf` — 3 cards присутствуют, Уран 150° Юпитер не карточка.
 
-**Phase 4a (Transit contact window semantics) — TASK 4a spec готов, Ready: no, ждёт ack пользователя.** TASK `2026-05-13-transit-contact-window-semantics.md`. Tier C / Mode normal / Layer docs (analysis-only). Worker формализует taxonomy (raw hit / motion phase hit / orb window / display contact / tight Marina window), читает engine code + Marina reference, проводит analysis Neptune-Jupiter Δ17d и Neptune-Neptune Δ178d shifts, выдаёт recommendation (Path 1 test contract fix / Path 2 Tier A engine adjustment / Path 3 documented exception). Без code changes. Deliverable — analysis memo в `ARCHITECTURE/transit-contact-window-semantics-2026-05-13.md`. После memo + TL escalation — пользователь выбирает path, открывается отдельный TASK для implementation.
+**Phase 4a (Transit contact window semantics) — ACCEPTED.** TASK 4a memo deliverable принят. Memo `project-overlays/astro/ARCHITECTURE/transit-contact-window-semantics-2026-05-13.md` (758 lines) с 7 sections: taxonomy 5 concepts, engine semantic analysis, Marina hypothesis testing (4 hypotheses на 3 examples), path analysis, recommendation.
+
+Главный finding: **Marina display boundaries для slow outer loops не имеют deterministic rule.** H1 (tight orb), H2 (anchored half-width), H3 (drift skip) fit максимум 2 из 3 examples; только H4 (editorial / non-deterministic) консистентна. Killer evidence: N-J W1 и N-N W1 морфологически идентичны (D+R в одном orb window, similar timing offsets), но Marina рисует одно как 160-day full window, другое как 15-day tail. Engine `Domain.TransitCalendar` semantically корректен (1° orb threshold per planet class); Marina boundaries — editorial.
+
+**Path 4 chosen (TL/user decision 2026-05-13):** structured editorial exceptions в test contract — engine не трогаем, 2 Cat 4 xfails закрываем через per-window tolerance override mechanism с явными reason-строками в коде. Implementation — TASK 4b (`neptune-window-structured-exceptions`).
+
+**Phase 4b (Path 4 implementation) — TASK 4b spec готов, Ready: no, ждёт ack пользователя.** TASK `2026-05-13-neptune-window-structured-exceptions.md`. Tier C / Mode normal / Layer services. Единственный затрагиваемый файл — `services/api-python/tests/test_natalya_transits_acceptance.py`. Refactor `_assert_three_phase_intervals` на window-count + phase-set semantics + per-window tolerance override; 2 explicit overrides (N-J W3 end ±20d, N-N W1 start ±200d) с reason-строками и cross-reference на memo § 4.4; unmark 2 Cat 4 xfails. Expected: `115 passed + 8 xfailed`.
+
+**Известный editorial разрыв (документировать честно):** Path 4 закрывает **тестовую дисциплину**, не превращает 2 даты в «совпавшие». PDF продолжает рендерить engine-derived dates; Marina при показе видит engine boundaries для 2 Neptune windows, не свои эталонные. Это **known editorial divergence, accepted TL/user 2026-05-13**, не regression и не engine bug.
+
+**Phase 7 gate clause:** если multi-case calibration (Phase 7) покажет накопление similar Neptune (или other slow-mover) overrides (>5 за case или >10 across all cases) — это сигнал что Path 4 структура не масштабируется и нужно пересмотреть продуктовый подход (возможно отдельный presentation-layer editorial override механизм). Phase 7 Worker фиксирует override count в HANDOFF; threshold exceeded → TL эскалирует пользователю до closing Phase 7.
 
 
 
@@ -72,8 +82,8 @@
 
 ## Ждёт твоего решения
 
-- **Ack на TASK 4a spec.** Прочитать `project-overlays/astro/TASKS/2026-05-13-transit-contact-window-semantics.md`. Analysis-only TASK, deliverable — markdown memo с taxonomy и Path recommendation. Без ack Worker не стартует — Ready: no.
-- **Когда показывать Марине** — после закрытия всей программы (Phase 0-7) и финального ack пользователя. До этого PDF — внутренний debug/QA артефакт.
+- **Ack на TASK 4b spec.** Прочитать `project-overlays/astro/TASKS/2026-05-13-neptune-window-structured-exceptions.md`. Single-file test refactor + 2 structured overrides per Path 4 decision. Без ack Worker не стартует — Ready: no.
+- **Когда показывать Марине** — после закрытия всей программы (Phase 0-7) и финального ack пользователя. До этого PDF — внутренний debug/QA артефакт. Известный editorial разрыв на 2 Neptune boundaries (N-J W3 +17d, N-N W1 +178d) **будет видно Марине при показе**; это accepted divergence, но Marina об этом не знает заранее — TL подготовит ей framing в момент показа.
 
 Локальная ветка `claude/dreamy-moore-46f5eb` остаётся (deferred cleanup) — не блокер.
 
@@ -99,7 +109,8 @@
 - **Phase 2** (hard acceptance assertions) — **CLOSED** 2026-05-13 (TASK 2 accepted, commit `fb47aca`, 29 hard assertions с xfail-strict).
 - **Phase 3** (transit horizon split) — **CLOSED** 2026-05-13 (TASK 3 accepted, commit `70185b0`, Path B presentation-level, 4 xfail flips).
 - **Phase 4** (outer-planet cards generator) — **CLOSED** 2026-05-13 (TASK 4 accepted, commit `8c9588d`, Path 3 7 xfail flips + 2 Cat 4 reason updates).
-- **Phase 4a** (Transit contact window semantics for slow outer loops) — **TASK 4a готов, ждёт ack пользователя.** Tier C / Mode normal / Layer docs (analysis-only). Worker формализует taxonomy + memo с recommendation Path 1/2/3.
+- **Phase 4a** (Transit contact window semantics — analysis memo) — **CLOSED** 2026-05-13 (TASK 4a accepted, memo deliverable, Path 4 chosen by TL/user).
+- **Phase 4b** (Neptune window structured exceptions — Path 4 implementation) — **TASK 4b готов, ждёт ack пользователя.** Tier C / Mode normal / Layer services. Single-file refactor + 2 overrides + xfail unmark. После landing — 2 Cat 4 Neptune xfails flip → passing; Phase 4 acceptance restored.
 - **Phase 4** (outer-planet cards generator) — только для тех outer-aspects, что представлены в эталоне как карточки.
 - **Phase 5** (rulership-expanded target houses) — Tier C с эскалацией до Tier A при shared core helper.
 - **Phase 6** (per-context cutoff policy) — explicit clipping rules.

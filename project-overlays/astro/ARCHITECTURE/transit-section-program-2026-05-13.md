@@ -219,7 +219,7 @@ Deliverable: настоящий документ зафиксирован (в `a
 
 **Outer-planet intervals** (tolerance ±2 дня на границы; **3 display windows (касания)** per карточку; **строго D → R → DR порядок по фазам внутри окон**, текстовый формат совпадает с эталонным стилем; **никакого exact timestamp equality**):
 
-> **ERRATUM 2026-05-13 (после Phase 4 preflight BLOCKED + TL Path 3 decision):**
+> **ERRATUM 2026-05-13 (после Phase 4 preflight BLOCKED + TL Path 3 decision, затем Phase 4a memo + TL Path 4 decision):**
 > Прежняя формулировка «строго 3 касания» оказалась неточной. Marina-style «касание» = **display window (orb-window)**, не **raw engine hit per motion phase**. Engine эмитит **hit-per-motion-phase** внутри orb-окна; для медленных планет (Нептун) одно orb-окно может содержать 2 фазы (D+R или R+DR), поэтому raw hit count = 4-5 при 3 display windows.
 >
 > Правильная семантика для card display:
@@ -227,9 +227,13 @@ Deliverable: настоящий документ зафиксирован (в `a
 > - Worker presentation агрегирует raw hits по уникальным `(orb_enter, orb_exit)` tuples в display windows.
 > - Phase order проверяется как **set of phases per window**, не как точный list (window 1 для Нептун-Юпитер: `{Direct, Retrograde}`; window 3: `{Retrograde, DirectReturn}`).
 >
-> Reference даты ниже корректны для display windows у Урана-Венеры (где engine эмитит 3 окна = 3 hits, потому что Уран быстрее). Для Нептуна (одно окно может содержать 2 фазы) reference даты ниже **могут расходиться** с engine output на границах окон (особенно Нептун-Нептун окно 1 — 178d shift). Это **TASK 4a domain** — `Transit contact window semantics for slow outer loops` — открывается после Phase 4 close.
+> Reference даты ниже корректны для display windows у Урана-Венеры (где engine эмитит 3 окна = 3 hits, потому что Уран быстрее). Для Нептуна (одно окно может содержать 2 фазы) reference даты ниже **расходятся** с engine output на двух boundaries: Нептун-Юпитер W3 end (+17d), Нептун-Нептун W1 start (+178d).
 >
-> Phase 4 acceptance Phase 4 retroactively суживается с 9 → 7 xfail flips; 2 Neptune interval tests остаются xfail до TASK 4a.
+> **Phase 4a memo finding (2026-05-13):** Marina display boundaries для slow outer loops **не имеют deterministic rule** — 4 hypotheses протестированы (tight orb, anchored half-width, drift skip, editorial); только H4 (editorial / non-deterministic) консистентна на 3 примерах Натальи. Engine `Domain.TransitCalendar` semantically корректен (1° orb threshold per planet class); Marina boundaries — editorial choice. См. `transit-contact-window-semantics-2026-05-13.md` § 4.
+>
+> **Path 4 acceptance (TL/user decision 2026-05-13):** structured editorial exceptions в test contract — `_assert_three_phase_intervals` принимает per-window tolerance override, 2 explicit overrides с reason-строками (N-J W3 end ±20d, N-N W1 start ±200d), 2 Cat 4 xfails flip → passing. **Engine не трогается.** PDF продолжает рендерить engine-derived dates через Phase 4 aggregation; Marina при показе видит engine boundaries, не свои эталонные для этих 2 windows. Это **known editorial divergence, accepted TL/user 2026-05-13**, не regression и не engine bug. Реализация — TASK 4b (`neptune-window-structured-exceptions`).
+>
+> Phase 4 acceptance restored after TASK 4b: 9 xfail flips total (7 Phase 4 + 2 Phase 4b Cat 4).
 
 - Уран квадрат Венера содержит три display windows (reference):
   - `03.06.2025 12:00 - 12.07.2025 12:00`

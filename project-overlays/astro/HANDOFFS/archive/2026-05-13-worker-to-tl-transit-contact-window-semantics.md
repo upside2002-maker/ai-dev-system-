@@ -1,6 +1,6 @@
 # HANDOFF: worker → tl — transit-contact-window-semantics
 
-- Status: open
+- Status: closed
 - Date: 2026-05-13 13:50
 - Project: astro
 - From: worker
