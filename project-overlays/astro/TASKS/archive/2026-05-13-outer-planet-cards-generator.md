@@ -1,6 +1,6 @@
 # TASK: outer-planet-cards-generator
 
-- Status: open
+- Status: done
 - Ready: yes
 - Date: 2026-05-13
 - Project: astro
