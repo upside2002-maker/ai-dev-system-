@@ -4,18 +4,27 @@
 
 ## Сейчас
 
-Внутренний инструмент Марины для подготовки соляр-консультаций. **Программа Transit Section Recovery в работе. Phase 1 закрыт. Phase 2 готов к запуску (ack pending).**
+Внутренний инструмент Марины для подготовки соляр-консультаций. **Программа Transit Section Recovery в работе. Phase 0/1/2 закрыты. Phase 3 spec готов (ack pending). Worktree merged в main.**
 
-**Phase 1 (Single source of truth + render provenance) — ACCEPTED.** TASK 1 закрыт коммитом `9793d5d` на ветке `claude/dreamy-moore-46f5eb`:
+**Phase 1 (Single source of truth + render provenance) — ACCEPTED.** TASK 1 закрыт коммитом `9793d5d`, теперь на `main` (после fast-forward merge `claude/dreamy-moore-46f5eb` → `main`):
 - Canonical render entry point: `services/api-python/scripts/render_natalya.py` с CLI флагами (`--mode {fixture-render,recompute}`, `--output`, `--debug`, `--facts`, `--input`).
 - Render provenance module: `services/api-python/app/pdf/provenance.py`. Sidecar JSON `<output>.pdf.provenance.json` рядом с PDF; 13 keys (git SHA, repo root, render script, facts path+hash, input fixture path+hash, mode, core CLI path+hash, timestamp UTC, worktree branch) + bonus debug_mode + extra.
 - Opt-in debug footer в `solar.html.j2`: guarded by `provenance_meta.debug_mode`; на клиентских PDF не виден (text-extract verified).
 - Tests: 94/94 green (85 baseline + 9 новых в `test_provenance.py`).
 - Workspace cleanup: forensic listing `/tmp/render_*.py` в HANDOFF (5 files), не удалены per policy. Внутри repo нет alternative render entry points.
 
-**Phase 2 (Hard acceptance assertions) — TASK 2 spec готов, Ready: no, ждёт ack пользователя.** TASK файл `2026-05-13-hard-acceptance-assertions-natalya-transits.md`. Стратегия: pytest `@xfail(strict=True)` — assertions фиксируются сейчас как контракт, падают на текущем PDF (Phase 3-6 not yet done), CI остаётся зелёным (xfail==pass); после landing'а фикса assertion xpass'ит → strict flip → CI красный → Worker обязан unmark xfail. ~30 тестов в 7 категориях по § 6 архитектурного документа.
+**Phase 2 (Hard acceptance assertions) — ACCEPTED.** TASK 2 закрыт коммитом `fb47aca` на main:
+- `services/api-python/tests/test_natalya_transits_acceptance.py` — 29 assertions в 7 категориях по § 6 архитектурного документа.
+- `services/api-python/tests/conftest.py` — session-scoped fixtures (canonical render once per test session, pypdf text extraction).
+- Стратегия `@pytest.mark.xfail(strict=True, reason="Phase N — ...")` — assertions фиксируют контракт **сейчас**, закрытие Phase 3/4/5/6 переведёт xfailed → xpassed → strict flip заставит Worker unmark.
+- Distribution: **8 passed** (Category 1 Render provenance + 4 regression guards already-satisfied) + **21 xfailed** (Phase 3 = 5, Phase 4 = 11, Phase 5 = 4, Phase 6 = 4).
+- Tests: **102 passed + 21 xfailed = 123 total, 0 failed.**
 
-**Worktree merge decision — pending.** Worker Phase 1 рекомендует MERGE `claude/dreamy-moore-46f5eb` → `main` fast-forward (clean, 7 коммитов поверх main, нет конфликтов). Решение остаётся за пользователем; Worker mechanics не выполнял.
+**Worktree merged.** `claude/dreamy-moore-46f5eb` → `main` fast-forward сделан перед TASK 2 (commit `9793d5d` теперь HEAD `main`, backup parity ✓). Worktree directory orphaned (same SHA как main); pruning — отдельное user decision, не блокер.
+
+**Lesson from Phase 2 verification — cabal build hygiene.** Worker Phase 2 первоначально обнаружил 9 «pre-existing» failures в `test_golden_cases.py` на baseline `9793d5d`. Расследование: stale cabal cache (source `TransitCalendar.hs` менялся в Tier A, но binary cache на main был stale после merge). После `cabal build` все 9 проходят. **Дисциплина для следующих Phase Worker'ов:** при работе с engine или после смены ветки — обязательный `cabal build` перед pytest. Worker может рассчитывать что cabal cache stale пока не доказано иначе.
+
+**Phase 3 (Transit horizon split) — TASK 3 spec готов, Ready: no, ждёт ack пользователя.** TASK `2026-05-13-transit-horizon-split.md`. Two paths: Path A (engine-level, Tier-A escalation, schema cascade) или Path B (presentation-level, Tier C). Worker анализирует и выбирает с обоснованием в HANDOFF. Default TL: Path B. Phase 3 closing должен flip 5 xfail tests → passed (Сатурн houses, Сатурн-6-pdf, horizon parameter, no-Сатурн-6-regression).
 
 
 
@@ -44,9 +53,9 @@
 
 ## Ждёт твоего решения
 
-- **Merge ветки `claude/dreamy-moore-46f5eb` → `main`** (рекомендация Worker'а Phase 1 — clean fast-forward). Без явного go не делаю. Если ок — выполняю mechanics (`git merge --ff-only` + `git push backup main`) и фиксирую решение.
-- **Ack на TASK 2 spec.** Прочитать `project-overlays/astro/TASKS/2026-05-13-hard-acceptance-assertions-natalya-transits.md`, дать ack (или построчные правки до старта). Без ack Worker не стартует — Ready: no.
-- **Когда показывать Марине** — после закрытия всей программы (до Phase 7 включительно) и финального ack пользователя. До этого PDF — внутренний debug/QA артефакт.
+- **Ack на TASK 3 spec.** Прочитать `project-overlays/astro/TASKS/2026-05-13-transit-horizon-split.md`. Два варианта пути (Path A engine-level vs Path B presentation-level) — Worker сам выбирает с обоснованием, default TL — Path B. Без ack Worker не стартует — Ready: no.
+- **Pruning worktree directory `.claude/worktrees/dreamy-moore-46f5eb`** в `/Users/ilya/Projects/astro/` — orphaned, тот же SHA как main. Можно `git worktree remove`. Не блокер, можно отложить.
+- **Когда показывать Марине** — после закрытия всей программы (Phase 0-7) и финального ack пользователя. До этого PDF — внутренний debug/QA артефакт.
 
 ## Срочные риски
 
@@ -66,9 +75,9 @@
 Программа Transit Section Recovery, фазы 0-7:
 
 - **Phase 0** (freeze + audit trail) — **CLOSED** 2026-05-13 (architecture document + STATUS_RU freeze).
-- **Phase 1** (single source of truth + render provenance) — **CLOSED** 2026-05-13 (TASK 1 accepted, commit `9793d5d`).
-- **Phase 2** (hard acceptance assertions) — **TASK 2 готов, ждёт ack пользователя.**
-- **Phase 3** (transit horizon split) — Tier C с эскалацией до Tier A при изменении schema/core.
+- **Phase 1** (single source of truth + render provenance) — **CLOSED** 2026-05-13 (TASK 1 accepted, commit `9793d5d`, worktree merged в main).
+- **Phase 2** (hard acceptance assertions) — **CLOSED** 2026-05-13 (TASK 2 accepted, commit `fb47aca`, 29 hard assertions с xfail-strict).
+- **Phase 3** (transit horizon split) — **TASK 3 готов, ждёт ack пользователя.** Tier C с эскалацией до Tier A при изменении schema/core. После landing: 5 xfail tests должны flip → passed.
 - **Phase 4** (outer-planet cards generator) — только для тех outer-aspects, что представлены в эталоне как карточки.
 - **Phase 5** (rulership-expanded target houses) — Tier C с эскалацией до Tier A при shared core helper.
 - **Phase 6** (per-context cutoff policy) — explicit clipping rules.
