@@ -57,9 +57,25 @@
 - Worker truncation post-implementation; TL salvage-commit'нул Worker'ову работу с явной attribution (subagent ID `a0d2e46652775fed8`).
 - Tests: **115 passed + 8 xfailed = 123 total, 0 failed.**
 
-**Phase 5 (Rulership-expanded target houses) — TASK 5 spec готов, Ready: no, ждёт ack пользователя.** TASK `2026-05-13-rulership-expanded-target-houses.md`. Tier C / Mode normal / Layer services (с эскалацией до Tier A при Path A — shared Haskell `Domain/` helper или schema-visible field). Two paths: Path A (engine-level helper, Tier-A cascade) или Path B (Python presentation helper, Tier C). Default TL: Path B.
+**Phase 5 (Rulership-expanded target houses) — ACCEPTED.** TASK 5 закрыт коммитом `1d59431` на main:
+- Path B (presentation-level) chosen; Path A не trigger'ил schema cascade.
+- Новый модуль `services/api-python/app/pdf/rulership_houses.py` с `PLANET_RULES` dict (modern rulership), `cusp_sign()`, `rulership_houses()`, `target_house_set()`.
+- Calendar-only scope соблюдён: `outer_cards.py` НЕ тронут (closed Phase 4 card-facts для golden-rule semantic зафиксированы).
+- `transit_aspects_by_month` signature updated для приёма `natal_chart`; `solar.html.j2` обновлен под multi-house render; `builder.py` minimal Jinja context update.
+- Calendar oracle Натальи validated против Marina pp. 22-23: Venus=[2,3,12], Mars=[3,8,9], Jupiter=[4,7], Neptune=[4,7]. Все 4 match exactly.
+- Cusp validation: cusp 9 = 29.812° = Aries confirmed (НЕ Taurus); repeated cusp signs (Libra 2/3, Aries 8/9) корректно учитываются.
+- 26 новых helper unit tests + 4 xfail flips (3 Cat 6 + 1 Cat 7 regression ban).
+- Tests: **145 passed + 4 xfailed = 149 total, 0 failed.**
 
-Цель: helper `target_house_set(target, natal_chart)` = `{placement_house}` ∪ `rulership_houses(target)`. Используется в `transit_aspects_by_month` календарь + опционально в `outer_cards.py` golden-rule таблицы. Validation против Marina pp. 18, 20-21 «Золотое правило транзита» для 4 planets Натальи (Венера, Юпитер, Нептун, Марс). После landing — 4 Phase 5 xfail tests flip → passed (3 Cat 6 target houses + 1 Cat 7 regression ban).
+**Phase 6 (Per-context cutoff policy) — TASK 6 spec готов, Ready: no, ждёт ack пользователя.** TASK `2026-05-13-per-context-cutoff-policy.md`. Tier C / Mode normal / Layer services. **Последняя phase implementation работы** перед Phase 7 multi-case calibration.
+
+Цель: explicit clipping rule для calendar `transit_aspects_by_month` per Marina pp. 22-23:
+- `period_end = min(actual_period_end, sr_jd + 365.25)`
+- `period_start = max(actual_period_start, sr_jd)`
+- Row drop если полностью вне solar year.
+- Outer cards (Phase 4) **не** clipped — показывают full loop context per Marina pp. 18-21.
+
+Calendar oracle Натальи: `Нептун 90° Юпитер` clipped до `07.08.2026` (engine actual до 28.09.2026); `Уран 0° MC` clipped до `07.08.2026` (engine actual до 14.11.2026). После landing — 4 Cat 5 Phase 6 xfail tests flip → passed. **Финальный pytest expected: xfailed count = 0** (все Phase 4/5/6 закрыты).
 
 **Известный editorial разрыв (документировать честно):** Path 4 закрывает **тестовую дисциплину**, не превращает 2 даты в «совпавшие». PDF продолжает рендерить engine-derived dates; Marina при показе видит engine boundaries для 2 Neptune windows, не свои эталонные. Это **known editorial divergence, accepted TL/user 2026-05-13**, не regression и не engine bug.
 
@@ -92,7 +108,7 @@
 
 ## Ждёт твоего решения
 
-- **Ack на TASK 5 spec.** Прочитать `project-overlays/astro/TASKS/2026-05-13-rulership-expanded-target-houses.md`. Path B authorized (presentation-level helper); Path A (engine-level Haskell helper) требует STOP+escalation memo. Без ack Worker не стартует — Ready: no.
+- **Ack на TASK 6 spec.** Прочитать `project-overlays/astro/TASKS/2026-05-13-per-context-cutoff-policy.md`. Финальная implementation phase. Single-file calendar clipping logic + 4 xfail unmark. Без ack Worker не стартует — Ready: no.
 - **Когда показывать Марине** — после закрытия всей программы (Phase 0-7) и финального ack пользователя. До этого PDF — внутренний debug/QA артефакт. Известный editorial разрыв на 2 Neptune boundaries (N-J W3 +17d, N-N W1 +178d) **будет видно Марине при показе**; это accepted divergence, но Marina об этом не знает заранее — TL подготовит ей framing в момент показа.
 
 Локальная ветка `claude/dreamy-moore-46f5eb` остаётся (deferred cleanup) — не блокер.
@@ -121,7 +137,9 @@
 - **Phase 4** (outer-planet cards generator) — **CLOSED** 2026-05-13 (TASK 4 accepted, commit `8c9588d`, Path 3 7 xfail flips + 2 Cat 4 reason updates).
 - **Phase 4a** (Transit contact window semantics — analysis memo) — **CLOSED** 2026-05-13 (TASK 4a accepted, memo deliverable, Path 4 chosen by TL/user).
 - **Phase 4b** (Neptune window structured exceptions — Path 4 implementation) — **CLOSED** 2026-05-13 (TASK 4b accepted, commit `d44d7c6`, 2 Cat 4 xfail flips, Worker truncation salvaged).
-- **Phase 5** (rulership-expanded target houses) — **TASK 5 готов, ждёт ack пользователя.** Tier C / Mode normal / Layer services (с Tier-A escalation rule if Path A engine helper). После landing: 4 Phase 5 xfail tests flip → passed (3 Cat 6 target houses + 1 Cat 7 regression ban).
+- **Phase 5** (rulership-expanded target houses) — **CLOSED** 2026-05-13 (TASK 5 accepted, commit `1d59431`, Path B presentation-level, 4 xfail flips, 26 new helper tests).
+- **Phase 6** (per-context cutoff policy) — **TASK 6 готов, ждёт ack пользователя.** Tier C / Mode normal / Layer services. Финальная implementation phase. После landing: xfailed count = 0 (4 Phase 6 flips закрывают остаток).
+- **Phase 7** (multi-case calibration) — после Phase 6. Validation что Phase 1-6 работают на 3+ дополнительных cases (default 05-ekaterina, 07-mariya, 10-danila). Финальная phase программы.
 - **Phase 4** (outer-planet cards generator) — только для тех outer-aspects, что представлены в эталоне как карточки.
 - **Phase 5** (rulership-expanded target houses) — Tier C с эскалацией до Tier A при shared core helper.
 - **Phase 6** (per-context cutoff policy) — explicit clipping rules.
