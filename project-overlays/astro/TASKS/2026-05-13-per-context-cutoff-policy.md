@@ -1,7 +1,7 @@
 # TASK: per-context-cutoff-policy
 
 - Status: open
-- Ready: no
+- Ready: yes
 - Date: 2026-05-13
 - Project: astro
 - Layer: services
@@ -36,11 +36,23 @@ Outer cards (Phase 4) — **не клипаются**, показывают full
 ## Files
 
 - modify:
-  - **`services/api-python/app/pdf/transit_themes.py:transit_aspects_by_month`** — добавить clipping logic per row:
-    - При сборке calendar entry — clip `period_start_jd = max(period_start_jd, sr_jd)` и `period_end_jd = min(period_end_jd, sr_jd + 365.25)`.
-    - Если после clipping `period_start_jd >= period_end_jd` (row полностью вне solar year) — drop этот row из календаря.
-    - Existing month-bucket filtering продолжает работать; clipping применяется до bucket-assignment, чтобы row mapped к правильным месяцам.
-    - Constant `_SOLAR_YEAR_DAYS = 365.25` уже есть в `transit_themes.py` (Phase 3); переиспользовать.
+  - **`services/api-python/app/pdf/transit_themes.py:transit_aspects_by_month`** — добавить clipping logic per row, **с явным разделением двух window pair'ов**:
+
+    **Critical design rule — две пары вместо одной:**
+    - `actual_start_jd` / `actual_end_jd` — raw engine values, **сохраняются для всех internal operations**:
+      - dedup key (если клипнуть до dedup, разные orb-windows начавшиеся до `sr_jd` схлопнутся на одном `sr_jd` → collapse risk).
+      - `_MIN_WINDOW_DAYS` filter (вычисляется на actual duration, не clipped).
+      - Quincunx display filter (per-aspect orb threshold tracker).
+    - `calendar_start_jd` / `calendar_end_jd` — clipped display bounds, **используются только для calendar entry presentation**:
+      - `calendar_start_jd = max(actual_start_jd, sr_jd)`
+      - `calendar_end_jd = min(actual_end_jd, sr_jd + 365.25)`
+      - `period_start_str`, `period_end_str` (формирование строк календаря) — из `calendar_*`.
+      - `orb_enter_jd`, `orb_exit_jd` в calendar entry output — **clipped display bounds** (`calendar_start_jd`, `calendar_end_jd`).
+      - Bucket assignment (month-bucket filtering) — по `calendar_*`.
+
+    **Row drop rule:** если `calendar_start_jd >= calendar_end_jd` (clipped row полностью вне solar year) — drop из календаря **после** dedup и `_MIN_WINDOW_DAYS` filter (т.е. dedup/filter работают на actual, drop по clipped).
+
+    Constant `_SOLAR_YEAR_DAYS = 365.25` уже есть в `transit_themes.py` (Phase 3); переиспользовать.
   - `services/api-python/tests/test_natalya_transits_acceptance.py` — **unmark `@pytest.mark.xfail`** для 4 Cat 5 Phase 6 tests. НЕ unmark остальные xfails (но после Phase 6 их и не остаётся — Phase 6 — последняя).
 
 - new (optional, Worker decides):
@@ -67,10 +79,21 @@ Outer cards (Phase 4) — **не клипаются**, показывают full
 
 ### Clipping logic (`transit_aspects_by_month`)
 
-- [ ] `period_end_jd` per calendar row clipped to `min(period_end_jd, sr_jd + 365.25)`.
-- [ ] `period_start_jd` per calendar row clipped to `max(period_start_jd, sr_jd)`.
-- [ ] Row dropped если `period_start_jd >= period_end_jd` после clipping (row полностью вне solar year).
-- [ ] Existing month-bucket filtering продолжает работать корректно (clipping применяется ДО bucket-assignment).
+- [ ] **Две window pair'ы поддерживаются отдельно:**
+  - `actual_start_jd`/`actual_end_jd` — raw engine values, используются для dedup key, `_MIN_WINDOW_DAYS` filter, quincunx display filter.
+  - `calendar_start_jd`/`calendar_end_jd` — clipped per formula, используются для presentation.
+- [ ] `calendar_end_jd = min(actual_end_jd, sr_jd + 365.25)`.
+- [ ] `calendar_start_jd = max(actual_start_jd, sr_jd)`.
+- [ ] Row dropped если `calendar_start_jd >= calendar_end_jd` (clipped row полностью вне solar year). **Drop происходит ПОСЛЕ dedup и `_MIN_WINDOW_DAYS` filter** — dedup/filter работают на actual values.
+- [ ] Existing month-bucket filtering работает на `calendar_*`, корректно mapping row к правильным месяцам.
+
+### Calendar entry output semantics (Phase 6 contract change)
+
+- [ ] **`orb_enter_jd` в calendar entry output = `calendar_start_jd`** (clipped display bound), **не raw engine** `actual_start_jd`.
+- [ ] **`orb_exit_jd` в calendar entry output = `calendar_end_jd`** (clipped display bound), **не raw engine** `actual_end_jd`.
+- [ ] `period_start_str` / `period_end_str` форматируются из `calendar_*`.
+- [ ] Cat 5 Phase 6 tests проверяют именно эти clipped fields — это формальное подтверждение что Phase 6 ввёл этот semantic shift для calendar context.
+- [ ] **Outer cards (Phase 4) продолжают использовать raw engine `orb_enter_jd`/`orb_exit_jd`** через `outer_cards.aggregate_display_windows`, который читает raw fields из `annual_transit_table` напрямую (НЕ через `transit_aspects_by_month`). Phase 6 clipping не затрагивает outer cards.
 
 ### Calendar oracle для Натальи
 
@@ -100,7 +123,7 @@ Category 5 (calendar dates and clipping, 4 xfail Phase 6):
 
 - [ ] `cabal build` (Phase 2 lesson).
 - [ ] `cd services/api-python && .venv/bin/pytest --tb=no -q` — green. **Acceptance count formula:** `(145 baseline) + (4 Phase 6 xfail flips) + (N new helper tests если Worker создаст test_calendar_clipping.py)` passed, **0 xfailed**, **0 failed**. Ожидание: ≥ 149 passed + 0 xfailed + 0 failed.
-- [ ] `git status --short` чисто для intended product changes.
+- [ ] `git status --short` чисто для **intended product changes**. **Pre-existing untracked `.claude/scheduled_tasks.lock` разрешён** (cron/scheduler lock file, не часть продуктового кода). Final commit **не должен** включать его. Если Worker видит другие untracked файлы вне intended scope — flag в HANDOFF.
 - [ ] Один commit. Conventional message + cross-ref на architecture document § 5 Phase 6.
 - [ ] Push на backup, parity verified.
 
