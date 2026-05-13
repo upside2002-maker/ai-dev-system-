@@ -67,15 +67,29 @@
 - 26 новых helper unit tests + 4 xfail flips (3 Cat 6 + 1 Cat 7 regression ban).
 - Tests: **145 passed + 4 xfailed = 149 total, 0 failed.**
 
-**Phase 6 (Per-context cutoff policy) — TASK 6 spec готов, Ready: no, ждёт ack пользователя.** TASK `2026-05-13-per-context-cutoff-policy.md`. Tier C / Mode normal / Layer services. **Последняя phase implementation работы** перед Phase 7 multi-case calibration.
+**Phase 6 (Per-context cutoff policy) — ACCEPTED.** TASK 6 закрыт коммитом `a1891cc` на main:
+- Two-window-pair architecture в `transit_aspects_by_month`: `actual_*` для dedup / `_MIN_WINDOW_DAYS` / quincunx filter; `calendar_*` для presentation (`period_*_str`, `orb_*_jd` calendar entry output, bucket assignment).
+- `calendar_start_jd = max(actual_start_jd, sr_jd)`, `calendar_end_jd = min(actual_end_jd, sr_jd + 365.25)`. Row drop если clipped >= clipped (полностью вне solar year), ПОСЛЕ dedup/filter на actual values.
+- **Semantic shift в calendar context**: `orb_enter_jd` / `orb_exit_jd` per calendar entry output = clipped display bounds. Outer cards (Phase 4) НЕ затронуты (используют raw engine через `aggregate_display_windows`).
+- Calendar oracle Натальи validated: `Нептун 90° Юпитер` clipped до `07.08.2026`; `Уран 0° MC` clipped до `07.08.2026`. No 2024/2027/2028 in calendar.
+- Outer cards regression check passed — full loop dates (02.04.2024, 12.10.2024, 21.02.2027, 30.01.2028) intact в interval lists.
+- 4 Phase 6 Cat 5 xfails flipped → passing.
+- Один existing test (`test_calendar_short_windows_filtered`) adapted к Phase 6 semantic shift — flagged в Worker HANDOFF для TL ack.
+- Tests: **149 passed + 0 xfailed + 0 failed.** Все Phase 4/5/6 acceptance contracts закрыты.
 
-Цель: explicit clipping rule для calendar `transit_aspects_by_month` per Marina pp. 22-23:
-- `period_end = min(actual_period_end, sr_jd + 365.25)`
-- `period_start = max(actual_period_start, sr_jd)`
-- Row drop если полностью вне solar year.
-- Outer cards (Phase 4) **не** clipped — показывают full loop context per Marina pp. 18-21.
+**Программа Transit Section Recovery — implementation work complete.** Phase 0/1/2/3/4/4a/4b/5/6 — все CLOSED. Остаётся Phase 7 multi-case calibration (validation).
 
-Calendar oracle Натальи: `Нептун 90° Юпитер` clipped до `07.08.2026` (engine actual до 28.09.2026); `Уран 0° MC` clipped до `07.08.2026` (engine actual до 14.11.2026). После landing — 4 Cat 5 Phase 6 xfail tests flip → passed. **Финальный pytest expected: xfailed count = 0** (все Phase 4/5/6 закрыты).
+**Phase 7 (Multi-case calibration) — TASK 7 spec готов, Ready: no, ждёт ack пользователя.** TASK `2026-05-13-multi-case-calibration.md`. Tier C / Mode normal / Layer services. **Финальная phase программы.** Validation на 3 дополнительных cases (default 05-ekaterina, 07-mariya, 10-danila) против Marina эталонов.
+
+Inventory Marina PDFs в `/Users/ilya/Downloads/Gmail (3)/`:
+- Соляр 2025-2026 для Анастасии.pdf (case 09)
+- Соляр 2025-2026 для Данилы.pdf (case 10)
+- Соляр 2025-2026_5.pdf (case 08 Натальи — Phase 1-6 oracle)
+- Соляр 2025-2026.pdf / _1 / _2 / _3 / _4 — cases unknown, требуют natal-data inspection (Phase 0 step в TASK 7).
+
+Worker mapping unknown PDFs → case_id, selects 3 cases с confirmed Marina PDF, per-case calibration (monthly table / per-house / outer cards / calendar diff), divergence classification (TYPE A/B/C), Phase 4b gate clause check (override accumulation), production-readiness verdict.
+
+После closing Phase 7 + явного ack пользователя по calibration report → программа полностью завершена; PDF status можно повысить до production-ready (Марине можно показывать).
 
 **Известный editorial разрыв (документировать честно):** Path 4 закрывает **тестовую дисциплину**, не превращает 2 даты в «совпавшие». PDF продолжает рендерить engine-derived dates; Marina при показе видит engine boundaries для 2 Neptune windows, не свои эталонные. Это **known editorial divergence, accepted TL/user 2026-05-13**, не regression и не engine bug.
 
@@ -108,7 +122,7 @@ Calendar oracle Натальи: `Нептун 90° Юпитер` clipped до `0
 
 ## Ждёт твоего решения
 
-- **Ack на TASK 6 spec.** Прочитать `project-overlays/astro/TASKS/2026-05-13-per-context-cutoff-policy.md`. Финальная implementation phase. Single-file calendar clipping logic + 4 xfail unmark. Без ack Worker не стартует — Ready: no.
+- **Ack на TASK 7 spec.** Прочитать `project-overlays/astro/TASKS/2026-05-13-multi-case-calibration.md`. **Финальная phase программы.** Multi-case validation + production-readiness verdict. Без ack Worker не стартует — Ready: no.
 - **Когда показывать Марине** — после закрытия всей программы (Phase 0-7) и финального ack пользователя. До этого PDF — внутренний debug/QA артефакт. Известный editorial разрыв на 2 Neptune boundaries (N-J W3 +17d, N-N W1 +178d) **будет видно Марине при показе**; это accepted divergence, но Marina об этом не знает заранее — TL подготовит ей framing в момент показа.
 
 Локальная ветка `claude/dreamy-moore-46f5eb` остаётся (deferred cleanup) — не блокер.
@@ -138,8 +152,8 @@ Calendar oracle Натальи: `Нептун 90° Юпитер` clipped до `0
 - **Phase 4a** (Transit contact window semantics — analysis memo) — **CLOSED** 2026-05-13 (TASK 4a accepted, memo deliverable, Path 4 chosen by TL/user).
 - **Phase 4b** (Neptune window structured exceptions — Path 4 implementation) — **CLOSED** 2026-05-13 (TASK 4b accepted, commit `d44d7c6`, 2 Cat 4 xfail flips, Worker truncation salvaged).
 - **Phase 5** (rulership-expanded target houses) — **CLOSED** 2026-05-13 (TASK 5 accepted, commit `1d59431`, Path B presentation-level, 4 xfail flips, 26 new helper tests).
-- **Phase 6** (per-context cutoff policy) — **TASK 6 готов, ждёт ack пользователя.** Tier C / Mode normal / Layer services. Финальная implementation phase. После landing: xfailed count = 0 (4 Phase 6 flips закрывают остаток).
-- **Phase 7** (multi-case calibration) — после Phase 6. Validation что Phase 1-6 работают на 3+ дополнительных cases (default 05-ekaterina, 07-mariya, 10-danila). Финальная phase программы.
+- **Phase 6** (per-context cutoff policy) — **CLOSED** 2026-05-13 (TASK 6 accepted, commit `a1891cc`, 4 Phase 6 xfail flips, two-window-pair architecture).
+- **Phase 7** (multi-case calibration) — **TASK 7 готов, ждёт ack пользователя.** Финальная phase. Tier C / Mode normal. Validation на 3 cases vs Marina эталоны; production-readiness verdict.
 - **Phase 4** (outer-planet cards generator) — только для тех outer-aspects, что представлены в эталоне как карточки.
 - **Phase 5** (rulership-expanded target houses) — Tier C с эскалацией до Tier A при shared core helper.
 - **Phase 6** (per-context cutoff policy) — explicit clipping rules.
