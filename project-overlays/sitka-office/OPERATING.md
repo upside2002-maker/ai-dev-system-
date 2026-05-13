@@ -11,6 +11,7 @@
 
 ## Активные TASKS
 
+- [`TASKS/2026-05-13-parser-quote-calculator-exchange-buffer.md`](TASKS/2026-05-13-parser-quote-calculator-exchange-buffer.md) — `Status: open`, `Ready: yes` → Worker (Claude Code) → добавить во фронт калькулятора парсера седьмое поле «Буфер курса, %» с дефолтом из `psExchangeBuffer`, эффективный курс = банковский × (1 + буфер/100), все USD→RUB конверсии через эффективный. Tier B / Mode normal / Reviewer обязателен (числовая корректность). Закрывает residual #2 из Reviewer-HANDOFF по PR #83.
 - [`TASKS/2026-04-29-dm7-c-backend-widget-prereq.md`](TASKS/2026-04-29-dm7-c-backend-widget-prereq.md) — `Status: open` → DRAFT → Worker → расширить `Api.TransactionResp` полем `trExpenseCategoryId :: Maybe Int64`. **НЕ срочно** — запускать только когда оператор захочет breakdown в виджете. Класс A без `Mode:` — перед запуском нужно дописать `Mode: strict` (или явно понизить класс с обоснованием), иначе `accept-task` откажет; см. STATUS_RU.md.
 
 См. [`TASKS/README.md`](TASKS/README.md) для правил.
