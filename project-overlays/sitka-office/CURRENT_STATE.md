@@ -1,7 +1,7 @@
 # Sitka Office — Current State
 
-Дата: 2026-05-10
-Snapshot commit: `470f48f` (`infra(perimeter): close P1 perimeter gap — loopback bindings + Basic Auth (#81)`, 2026-05-11 03:34Z UTC). Perimeter fix в репо merged; на сервер ещё **не применён** — ждёт отдельной deploy сессии (см. `STATUS_RU.md` «Ждёт твоего решения»).
+Дата: 2026-05-12
+Snapshot commit: `936ccdb` (`feat(parser): рабочий QuoteCalculator с расчётом, валидацией и копированием итога (#83)`). Perimeter fix задеплоен 2026-05-11. После него: PR #82 (portable `~/Projects/...` пути в `.claude/`) и PR #83 (рабочий калькулятор парсера) — оба в master.
 Repo: `/Users/ilya/Projects/sitka-office`
 
 ## Phase status
