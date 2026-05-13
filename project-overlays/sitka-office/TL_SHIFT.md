@@ -1,10 +1,10 @@
 # Ведение проекта — sitka-office
 
-- Released: yes
-- Holder: (нет)
-- Started: (нет)
-- Expires: (нет)
-- Scope: (нет)
+- Released: no
+- Holder: bondvit@gmail.com
+- Started: 2026-05-13 19:49:31
+- Expires: бессрочно
+- Scope: первая TL-сессия после онбординга
 - Active TASK: (нет)
 
 ## Notes
