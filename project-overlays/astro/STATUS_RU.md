@@ -4,7 +4,20 @@
 
 ## Сейчас
 
-Внутренний инструмент Марины для подготовки соляр-консультаций. **2026-05-13 раздел «Транзиты» переоткрыт как программа работ** — после визуальной построчной сверки пользователем с эталоном Марины обнаружены 5 системных недоделок presentation, которые не были выловлены при предыдущем accept'е Tier C от 2026-05-12.
+Внутренний инструмент Марины для подготовки соляр-консультаций. **Программа Transit Section Recovery в работе. Phase 1 закрыт. Phase 2 готов к запуску (ack pending).**
+
+**Phase 1 (Single source of truth + render provenance) — ACCEPTED.** TASK 1 закрыт коммитом `9793d5d` на ветке `claude/dreamy-moore-46f5eb`:
+- Canonical render entry point: `services/api-python/scripts/render_natalya.py` с CLI флагами (`--mode {fixture-render,recompute}`, `--output`, `--debug`, `--facts`, `--input`).
+- Render provenance module: `services/api-python/app/pdf/provenance.py`. Sidecar JSON `<output>.pdf.provenance.json` рядом с PDF; 13 keys (git SHA, repo root, render script, facts path+hash, input fixture path+hash, mode, core CLI path+hash, timestamp UTC, worktree branch) + bonus debug_mode + extra.
+- Opt-in debug footer в `solar.html.j2`: guarded by `provenance_meta.debug_mode`; на клиентских PDF не виден (text-extract verified).
+- Tests: 94/94 green (85 baseline + 9 новых в `test_provenance.py`).
+- Workspace cleanup: forensic listing `/tmp/render_*.py` в HANDOFF (5 files), не удалены per policy. Внутри repo нет alternative render entry points.
+
+**Phase 2 (Hard acceptance assertions) — TASK 2 spec готов, Ready: no, ждёт ack пользователя.** TASK файл `2026-05-13-hard-acceptance-assertions-natalya-transits.md`. Стратегия: pytest `@xfail(strict=True)` — assertions фиксируются сейчас как контракт, падают на текущем PDF (Phase 3-6 not yet done), CI остаётся зелёным (xfail==pass); после landing'а фикса assertion xpass'ит → strict flip → CI красный → Worker обязан unmark xfail. ~30 тестов в 7 категориях по § 6 архитектурного документа.
+
+**Worktree merge decision — pending.** Worker Phase 1 рекомендует MERGE `claude/dreamy-moore-46f5eb` → `main` fast-forward (clean, 7 коммитов поверх main, нет конфликтов). Решение остаётся за пользователем; Worker mechanics не выполнял.
+
+
 
 **Tier A engine cascade (2026-05-11/12) принят и удержан.** Math engine стабилен:
 - Quincunx revoke (scope = transit calendar only) — работает.
@@ -31,9 +44,9 @@
 
 ## Ждёт твоего решения
 
-- **TASK 1 («Single source of truth + render provenance») — стартовать сейчас?** Это Phase 1 программы. Tier C, Layer infra + services. Worker subagent делает: canonical render path, provenance в metadata/sidecar/log, решение по worktree merge/discard (mechanics — Worker, decision — пользователь).
-- **Merge ветки `claude/dreamy-moore-46f5eb` в main** — отложено до закрытия Phase 1 (где это решение и фиксируется). Без TL'ого инициативного действия.
-- **Когда показывать Марине** — после закрытия всей программы (Phase 0-7 включительно) и финального ack пользователя. До этого PDF — внутренний debug/QA артефакт.
+- **Merge ветки `claude/dreamy-moore-46f5eb` → `main`** (рекомендация Worker'а Phase 1 — clean fast-forward). Без явного go не делаю. Если ок — выполняю mechanics (`git merge --ff-only` + `git push backup main`) и фиксирую решение.
+- **Ack на TASK 2 spec.** Прочитать `project-overlays/astro/TASKS/2026-05-13-hard-acceptance-assertions-natalya-transits.md`, дать ack (или построчные правки до старта). Без ack Worker не стартует — Ready: no.
+- **Когда показывать Марине** — после закрытия всей программы (до Phase 7 включительно) и финального ack пользователя. До этого PDF — внутренний debug/QA артефакт.
 
 ## Срочные риски
 
@@ -52,9 +65,9 @@
 
 Программа Transit Section Recovery, фазы 0-7:
 
-- **Phase 0** (freeze + audit trail) — закрыт настоящим обновлением STATUS_RU + фиксацией architecture document.
-- **Phase 1** (single source of truth + render provenance) — следующий TASK.
-- **Phase 2** (hard acceptance assertions) — после Phase 1.
+- **Phase 0** (freeze + audit trail) — **CLOSED** 2026-05-13 (architecture document + STATUS_RU freeze).
+- **Phase 1** (single source of truth + render provenance) — **CLOSED** 2026-05-13 (TASK 1 accepted, commit `9793d5d`).
+- **Phase 2** (hard acceptance assertions) — **TASK 2 готов, ждёт ack пользователя.**
 - **Phase 3** (transit horizon split) — Tier C с эскалацией до Tier A при изменении schema/core.
 - **Phase 4** (outer-planet cards generator) — только для тех outer-aspects, что представлены в эталоне как карточки.
 - **Phase 5** (rulership-expanded target houses) — Tier C с эскалацией до Tier A при shared core helper.
