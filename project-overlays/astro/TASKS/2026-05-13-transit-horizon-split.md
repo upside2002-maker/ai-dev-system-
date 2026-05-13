@@ -1,16 +1,16 @@
 # TASK: transit-horizon-split
 
 - Status: open
-- Ready: no
+- Ready: yes
 - Date: 2026-05-13
 - Project: astro
 - Layer: mixed
-- Risk tier: C — with explicit Tier-A escalation rule if schema/core contract changes
+- Risk tier: C — AUTHORIZED for Path B (presentation-level). Tier A path requires STOP + escalation memo, NOT silent escalation в этой сессии.
 - Owner: Project Tech Lead
 - Created by: upside2002@gmail.com
 - Worker model: Claude Code
-- Mode: normal — with Mode: strict escalation if Tier-A path chosen
-- Critical approved by: (нет; при Tier-A escalation — нужен)
+- Mode: normal — at Tier C. Tier A path requires explicit go from user в отдельной задаче.
+- Critical approved by: (нет; при Tier-A escalation — открывается отдельный Tier A TASK с новым approval)
 
 ## Problem
 
@@ -59,7 +59,21 @@ Worker анализирует и выбирает path, **обосновывая
 
 **Дефолт TL:** Path B (presentation-level), если Worker не находит сильного основания для Path A. Path A нужен если split нужен для downstream системы (TS frontend, API consumers) — а это не наша явная нужда сейчас.
 
-Worker НЕ выбирает path молча — пишет анализ в HANDOFF + recommendation, потом проходит с выбранным path.
+### Path A gating — STOP-and-escalate (не silent escalation)
+
+**Этот TASK авторизует реализацию Path B только.** Если Worker анализом приходит к выводу что Path B недостаточен и нужен Path A:
+
+1. **STOP** — не начинать никаких schema/core cascade изменений внутри этой сессии.
+2. Записать в HANDOFF **escalation memo** с явными секциями:
+   - **Rationale**: почему Path B недостаточен (конкретные технические аргументы, не «было бы лучше»);
+   - **Files**: точный список schema/core/fixture/types файлов, которые должны измениться;
+   - **Contracts touched**: какие external API contracts (schema, TS types) меняются;
+   - **Reviewer requirement**: какой Reviewer'ский cold-start spec нужен (Tier A + strict mode + independent verification scope);
+   - **Cost estimate**: сколько примерно стоит cascade (fixture regen × 9 cases, schema validation, roundtrip tests).
+3. Submit HANDOFF с пометкой `BLOCKED — Path A escalation memo`.
+4. **TL эскалирует пользователю; ждёт explicit go перед открытием нового Tier A TASK'а** с правильной изоляцией (отдельный Worker subagent + Reviewer subagent в strict mode).
+
+Worker НЕ выбирает Path A молча и НЕ начинает Tier A работу внутри этой Tier C сессии.
 
 ## Files
 
@@ -76,12 +90,13 @@ Worker НЕ выбирает path молча — пишет анализ в HAND
   - `services/api-python/app/pdf/transit_themes.py` — переключить `houses_visited()` и synthesis на новые fields.
   - `core/astrology-hs/test/Test/Domain/TransitCalendarSpec.hs` — тесты на split.
 
-### Path B (presentation-level, Tier C)
+### Path B (presentation-level, Tier C) — AUTHORIZED PATH FOR THIS TASK
 
 - modify:
-  - `services/api-python/app/pdf/transit_themes.py` — добавить `solar_year_transits()` и `loop_transit_windows()` view-фильтры; переключить `houses_visited()` на solar-year view; synthesis-helpers переключить.
-  - `services/api-python/app/pdf/builder.py` (minimal, ≤ 10 строк) — registration Jinja, если view'ы передаются явно.
-  - `services/api-python/app/pdf/templates/solar.html.j2` (minimal) — wiring если нужен.
+  - `services/api-python/app/pdf/transit_themes.py` — добавить `solar_year_transits()` и `loop_transit_windows()` view-фильтры; переключить `houses_visited()` на solar-year view.
+  - **`services/api-python/app/pdf/synthesis_themes.py`** — переключить все references на `annual_transit_table` на `solar_year_transits` view. Stale 2024/2027/2028 даты протекали в итоговый synthesis (раздел `Итоги консультации`) — это не только проблема per-house блока. После Phase 3 final synthesis должен ссылаться **только** на солярный год.
+  - `services/api-python/app/pdf/builder.py` (minimal, ≤ 15 строк) — registration Jinja, если view'ы передаются явно; либо single derivation point на верхнем уровне рендера.
+  - `services/api-python/app/pdf/templates/solar.html.j2` (minimal) — wiring если нужен (template ссылки на `annual_transit_table` могут потребовать pass'а явного view).
   - `services/api-python/tests/test_transit_aspects_tables.py` — обновить если зависит от старого contract.
 
 ### Both paths
@@ -104,11 +119,12 @@ Worker НЕ выбирает path молча — пишет анализ в HAND
 
 - [ ] Worker в HANDOFF фиксирует выбранный path (A или B) с обоснованием минимум 3-5 sentences. Если Path A — explicit Tier-A escalation note + Mode strict обоснование.
 
-### Common acceptance (любой path)
+### Common acceptance (любой path — но в этом TASK'е только Path B авторизован)
 
 - [ ] `houses_visited()` или его replacement принимает явный `horizon` parameter / автоматически использует solar-year-only view.
 - [ ] Per-house трактовки в PDF Натальи показывают Сатурн только в домах `[7, 8]`. Никаких `Сатурн в 6 доме`.
 - [ ] Per-house section в PDF не содержит дат `2024`, `2027`, `2028`.
+- [ ] **Final synthesis блок (раздел `Итоги консультации`) использует только solar-year view.** Никаких ссылок на даты вне солярного года (2024 / 2027 / 2028) в итоговых выводах. Worker подтверждает в HANDOFF проверкой extracted PDF text по synthesis section.
 - [ ] Outer cards / календарь (когда Phase 4-6 закрыты) получают доступ к full-loop horizon, не теряют касания за границей соляра.
 
 ### Test contract (Phase 2 xfail flips)
