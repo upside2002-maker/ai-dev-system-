@@ -1,7 +1,7 @@
 # TASK: hard-acceptance-assertions-natalya-transits
 
 - Status: open
-- Ready: no
+- Ready: yes
 - Date: 2026-05-13
 - Project: astro
 - Layer: services
@@ -27,7 +27,7 @@ Phase 2 программы Transit Section Recovery (`ARCHITECTURE/transit-secti
 - new:
   - `services/api-python/tests/test_natalya_transits_acceptance.py` — основной файл с hard assertions. Все assertions из § 6 архитектурного документа, привязанные к case `08-natalya-2025-2026`. Использует:
     - canonical render path из Phase 1 (`services/api-python/scripts/render_natalya.py`) — генерирует PDF + sidecar в pytest tmp_path;
-    - extract PDF text через `pdfplumber` или `pypdf` (Worker выбирает, justifies в HANDOFF);
+    - **PDF text extraction через `pypdf`** (уже доступен в venv); Worker НЕ должен тянуть `pdfplumber` — `pypdf` достаточен для substring/regex проверок текста PDF;
     - structured-data assertions против `transit_themes.transit_aspects_by_month`, `transit_themes.transit_matrix_by_month` и аналогичных presentation helpers (где возможно, без PDF render — быстрее);
     - mix: где fact-level assertion possible (e.g. «Сатурн в houses_visited даёт `[7, 8]`») — структурный тест; где нужен PDF text — extracted-text assertion.
   - `services/api-python/tests/conftest.py` (если ещё нет — Worker check; иначе modify) — fixtures для:
@@ -36,7 +36,7 @@ Phase 2 программы Transit Section Recovery (`ARCHITECTURE/transit-secti
     - `natalya_pdf_render` (session-scoped fixture, generates one PDF + sidecar per test session, caches).
 
 - modify:
-  - `services/api-python/pyproject.toml` (или `requirements.txt` / `setup.py`) — добавить `pdfplumber` или `pypdf` в test deps, если ещё нет. Minimal addition.
+  - `services/api-python/pyproject.toml` (или `requirements.txt` / `setup.py`) — добавить `pypdf` в test deps, ТОЛЬКО ЕСЛИ он там ещё не declared (Worker check'ает перед добавлением — пользователь подтверждает что pypdf уже доступен в venv, поэтому может быть просто пропущенный declaration). НЕ добавлять `pdfplumber`.
 
 - delete: —
 
@@ -64,7 +64,7 @@ Phase 2 программы Transit Section Recovery (`ARCHITECTURE/transit-secti
 **1. Render provenance** (passes сразу, Phase 1 закрыт):
 
 - [ ] `test_provenance_sidecar_has_all_required_keys` — генерит PDF через canonical render, проверяет sidecar содержит 13 required keys.
-- [ ] `test_provenance_distinguishes_main_vs_worktree` — sidecar.repo_root_path содержит «worktree» если рендер из worktree.
+- [ ] `test_provenance_root_is_main_repo` — после fast-forward merge `claude/dreamy-moore-46f5eb` → `main` (commit `9793d5d`), sidecar.repo_root_path указывает на main `/Users/ilya/Projects/astro`, не на worktree path. (Если рендер запущен из orphan worktree — тест assertion будет хитрее: фиксируем что путь однозначен per render, без drift.)
 - [ ] `test_provenance_records_render_mode` — sidecar.mode ∈ {`fixture-render`, `recomputed`}.
 
 **2. Per-house transit interpretations** (xfail Phase 3 — horizon split):
@@ -113,12 +113,12 @@ Phase 2 программы Transit Section Recovery (`ARCHITECTURE/transit-secti
 - [ ] `test_uranus_square_venus_target_houses_match_marina_reference` — для `Уран 90° Венера` target_houses совпадают с Marina golden-rule table из эталона (reference set фиксируется Worker'ом TASK 5 на основе скриншота/visual reference; для TASK 2 — assertion expects не-singleton, конкретный set TBD).
 - [ ] `test_target_houses_distinguish_placement_from_rulership` — API target_house_set явно разделяет `placement_house` и `rulership_houses` поля.
 
-**7. Regression bans** (always-on, не xfail — должны быть зелёными после landing Phase 3-6):
+**7. Regression bans** (xfail-strict до закрытия соответствующей фазы; Worker фазы N снимает `xfail` при closing своего TASK'а):
 
-- [ ] `test_no_saturn_six_house_regression` — strict: PDF text **никогда** не содержит `Сатурн в 6 доме` в solar-year interpretation block (когда Phase 3+ закрыты).
-- [ ] `test_outer_cards_always_present_when_marina_shows_them` — Marina reference cards (Уран-Венера, Нептун-Юпитер, Нептун-Нептун) присутствуют в PDF после Phase 4.
-- [ ] `test_target_houses_no_placement_only_regression` — multi-house targets никогда не сжимаются до single placement.
-- [ ] `test_provenance_distinguishes_main_vs_worktree_always` — sidecar provenance всегда позволяет отличить main vs worktree.
+- [ ] `test_no_saturn_six_house_regression` — `@xfail(strict=True, reason="Phase 3 — horizon split")`. После Phase 3: PDF text никогда не содержит `Сатурн в 6 доме` в solar-year interpretation block.
+- [ ] `test_outer_cards_always_present_when_marina_shows_them` — `@xfail(strict=True, reason="Phase 4 — outer cards generator")`. После Phase 4: Marina reference cards (Уран-Венера, Нептун-Юпитер, Нептун-Нептун) присутствуют в PDF.
+- [ ] `test_target_houses_no_placement_only_regression` — `@xfail(strict=True, reason="Phase 5 — rulership-expanded houses")`. После Phase 5: multi-house targets никогда не сжимаются до single placement.
+- [ ] `test_provenance_root_unambiguous` — **БЕЗ xfail** (Phase 1 closed): sidecar provenance содержит ровно один `repo_root_path` (не комбинация main + worktree), он указывает на main repo `/Users/ilya/Projects/astro`. После fast-forward merge worktree → main (commit `9793d5d` → main) этот тест должен проходить сразу — он гарантирует что не вернётся drift.
 
 ### Self-consistency
 
@@ -153,7 +153,9 @@ Phase 2 программы Transit Section Recovery (`ARCHITECTURE/transit-secti
 
 **Mode normal + Tier C** (test contract foundation). Worker subagent. Reviewer subagent **необязателен** per Tier C матрица — TL inline-verifies test list completeness + sample xfail messages после Worker.
 
-**Baseline:** `9793d5d` (Phase 1 closed). Tests baseline 94/94 green.
+**Baseline:** `main @ 9793d5d` (после fast-forward merge `claude/dreamy-moore-46f5eb` → `main`, выполненного TL'ом перед запуском Worker'а). Tests baseline 94/94 green. Worker работает в `/Users/ilya/Projects/astro` на ветке `main`, не в worktree.
+
+**Worktree status:** `.claude/worktrees/dreamy-moore-46f5eb` orphaned (тот же SHA как у main), pruning — отдельное решение пользователя, не часть этого TASK'а. Worker НЕ удаляет worktree, НЕ работает из него.
 
 **Architecture SoT:** `project-overlays/astro/ARCHITECTURE/transit-section-program-2026-05-13.md`.
 - § 5 Phase 2 — formal definition.
@@ -161,10 +163,8 @@ Phase 2 программы Transit Section Recovery (`ARCHITECTURE/transit-secti
 - § 7 запреты — особенно «Не считать зелёные snapshot/golden tests достаточным доказательством близости к Марине».
 - § 8 TASK 2 — formal spec (зеркальная с настоящей).
 
-**Ready: no** — TL flip'ает в `yes` после ack пользователя на TASK 2 spec (Ready-gate сейчас намеренно). Без явного go от пользователя Worker не стартует.
-
 **После закрытия:** TL обновляет STATUS_RU, открывает TASK 3 (Phase 3 — Horizon split, Tier C с эскалацией до Tier A при schema/core contract changes).
 
 **xfail strategy rationale:** мы фиксируем контракт «вот это должно работать после Phase 3-6» **сейчас**, до их implementation. Без xfail тесты ломали бы CI. С xfail-strict они работают как guard rails: пройдут — strict-fail заставит Phase N Worker'а unmark xfail и thus формально close acceptance.
 
-**Worktree decision pending:** Phase 1 рекомендация — merge fast-forward. Пока решение не принято, тесты работают на ветке `claude/dreamy-moore-46f5eb`. После merge (если/когда) тесты автоматически перенесутся на main без правки кода — это features tests, не worktree-specific.
+**Provenance test и worktree drift:** после merge worktree больше не равноправный source — это orphan того же SHA как main. Тест `test_provenance_root_unambiguous` гарантирует что render из main даёт sidecar с `repo_root_path` указывающим на `/Users/ilya/Projects/astro` (не на worktree path). Если в будущем кто-то запустит render из orphan worktree — sidecar покажет worktree path, и это **корректно** (provenance не врёт). Тест проверяет что путь **однозначен per render**, не что он всегда main.
