@@ -24,7 +24,16 @@
 
 **Lesson from Phase 2 verification — cabal build hygiene.** Worker Phase 2 первоначально обнаружил 9 «pre-existing» failures в `test_golden_cases.py` на baseline `9793d5d`. Расследование: stale cabal cache (source `TransitCalendar.hs` менялся в Tier A, но binary cache на main был stale после merge). После `cabal build` все 9 проходят. **Дисциплина для следующих Phase Worker'ов:** при работе с engine или после смены ветки — обязательный `cabal build` перед pytest. Worker может рассчитывать что cabal cache stale пока не доказано иначе.
 
-**Phase 3 (Transit horizon split) — TASK 3 spec готов, Ready: no, ждёт ack пользователя.** TASK `2026-05-13-transit-horizon-split.md`. Two paths: Path A (engine-level, Tier-A escalation, schema cascade) или Path B (presentation-level, Tier C). Worker анализирует и выбирает с обоснованием в HANDOFF. Default TL: Path B. Phase 3 closing должен flip 5 xfail tests → passed (Сатурн houses, Сатурн-6-pdf, horizon parameter, no-Сатурн-6-regression).
+**Phase 3 (Transit horizon split) — ACCEPTED.** TASK 3 закрыт коммитом `70185b0` на main:
+- Path B выбран (presentation-level, Tier C). Engine + schema не тронуты.
+- `transit_themes.py`: `solar_year_transits(att, sr_jd)` + `loop_transit_windows(att)` view filters; `houses_visited()` accepts `horizon=` param с default `solar_year`.
+- `synthesis_themes.py`: routed на solar-year view, suppress out-of-year `exit_jd` tails в «Выводы:» / themed prose / «Итоги консультации».
+- `solar.html.j2`: per-house section passes explicit `solar_return_jd` from `facts.solar_chart.return_jd`.
+- Verify: PDF Натальи (`/tmp/natalya-phase3.pdf`) — Saturn houses `[7, 8]`, no `Сатурн в 6 доме`, no `2024/2027/2028` в per-house section и synthesis.
+- xfail flips: 4 tests (saturn houses, saturn-6-pdf, horizon-param, regression ban). Phase 5/6 xfails остаются untouched.
+- Tests: 106 passed + 17 xfailed = 123 total, 0 failed.
+
+**Phase 4 (Outer-planet cards generator) — TASK 4 spec готов, Ready: no, ждёт ack пользователя.** TASK `2026-05-13-outer-planet-cards-generator.md`. Tier C / Mode normal / Layer services. Восстанавливает Маринин формат outer-planet карточек: для Натальи **строго 3 карточки** (Уран-Венера, Нептун-Юпитер, Нептун-Нептун), каждая с 5 секциями (заголовок + интервалы + таблица «Золотое правило» + психологический уровень + событийный уровень). Marina reference oracle: pp. 17-22 эталона. Уран 150° Юпитер остаётся в календаре, НЕ становится карточкой. Phase 4 closing flip-flag 11 xfail tests → passed.
 
 
 
@@ -53,9 +62,10 @@
 
 ## Ждёт твоего решения
 
-- **Ack на TASK 3 spec.** Прочитать `project-overlays/astro/TASKS/2026-05-13-transit-horizon-split.md`. Два варианта пути (Path A engine-level vs Path B presentation-level) — Worker сам выбирает с обоснованием, default TL — Path B. Без ack Worker не стартует — Ready: no.
-- **Pruning worktree directory `.claude/worktrees/dreamy-moore-46f5eb`** в `/Users/ilya/Projects/astro/` — orphaned, тот же SHA как main. Можно `git worktree remove`. Не блокер, можно отложить.
+- **Ack на TASK 4 spec.** Прочитать `project-overlays/astro/TASKS/2026-05-13-outer-planet-cards-generator.md`. Особое внимание — scope discipline («строго 3 карточки», Уран 150° Юпитер не становится карточкой), identification rule, closed-dictionary тексты для психологии/событийного уровня. Без ack Worker не стартует — Ready: no.
 - **Когда показывать Марине** — после закрытия всей программы (Phase 0-7) и финального ack пользователя. До этого PDF — внутренний debug/QA артефакт.
+
+Локальная ветка `claude/dreamy-moore-46f5eb` остаётся (deferred cleanup) — не блокер.
 
 ## Срочные риски
 
@@ -77,7 +87,8 @@
 - **Phase 0** (freeze + audit trail) — **CLOSED** 2026-05-13 (architecture document + STATUS_RU freeze).
 - **Phase 1** (single source of truth + render provenance) — **CLOSED** 2026-05-13 (TASK 1 accepted, commit `9793d5d`, worktree merged в main).
 - **Phase 2** (hard acceptance assertions) — **CLOSED** 2026-05-13 (TASK 2 accepted, commit `fb47aca`, 29 hard assertions с xfail-strict).
-- **Phase 3** (transit horizon split) — **TASK 3 готов, ждёт ack пользователя.** Tier C с эскалацией до Tier A при изменении schema/core. После landing: 5 xfail tests должны flip → passed.
+- **Phase 3** (transit horizon split) — **CLOSED** 2026-05-13 (TASK 3 accepted, commit `70185b0`, Path B presentation-level, 4 xfail flips).
+- **Phase 4** (outer-planet cards generator) — **TASK 4 готов, ждёт ack пользователя.** Tier C, Marina-reference oracle pp. 17-22. После landing: 11 xfail tests должны flip → passed.
 - **Phase 4** (outer-planet cards generator) — только для тех outer-aspects, что представлены в эталоне как карточки.
 - **Phase 5** (rulership-expanded target houses) — Tier C с эскалацией до Tier A при shared core helper.
 - **Phase 6** (per-context cutoff policy) — explicit clipping rules.
