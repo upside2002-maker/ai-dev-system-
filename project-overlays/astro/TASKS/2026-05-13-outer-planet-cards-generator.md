@@ -1,7 +1,7 @@
 # TASK: outer-planet-cards-generator
 
 - Status: open
-- Ready: no
+- Ready: yes
 - Date: 2026-05-13
 - Project: astro
 - Layer: services
@@ -35,41 +35,49 @@ Phase 4 программы Transit Section Recovery (`ARCHITECTURE/transit-secti
 
 Задача — добавить генератор outer-planet cards в `transit_themes.py` (или новый модуль) + render их в template после общего блока «Аспекты», но до календаря. Использовать `loop_transit_windows` view (Phase 3 reserved name) — карточкам нужен **full-loop horizon** включая касания за пределами солярного года (Нептун-Юпитер уходит до 2028, Нептун-Нептун начинается в 2024).
 
-После закрытия TASK 4 → 11 xfail tests должны flip → passed (см. § Test contract).
+После закрытия TASK 4 → **9 xfail tests** должны flip → passed (см. § Test contract).
 
 ## Scope discipline — какие именно карточки генерировать
 
-**ТОЛЬКО** outer-transit aspects, которые Marina reference показывает как card. Для Натальи — те три, перечисленные выше.
+**Allowlist-based selection.** Для Натальи генерируются **строго эти 3 triples** (planet, aspect, target):
 
-**НЕ** генерировать карточку для:
-- **`Уран 150° Юпитер`** — он в эталоне Марины присутствует только в календаре (стр. 23, строка июня-июля 2026), не в card-блоке. Остаётся календарным пунктом.
-- Любого outer-transit aspect которого Marina reference не показывает как card.
+1. `(Uranus, Square, Venus)` — Уран ⬜ Венера.
+2. `(Neptune, Square, Jupiter)` — Нептун ⬜ Юпитер.
+3. `(Neptune, Square, Neptune)` — Нептун ⬜ Нептун.
 
-**Identification rule** для карточек (выводимо из engine output):
-- transit planet ∈ {Uranus, Neptune, Pluto};
-- aspect ∈ {Conjunction, Square, Opposition, Trine, Sextile} (Marina-style major; Quincunx out);
-- aspect intensity / Marina criterion: **3 касания (D → R → DR)** в `loop_transit_windows` view + значимый target (планета или Asc/MC).
+Любой другой outer-transit aspect — **в карточки не идёт**. Особо:
 
-Дополнительный фильтр (для NATALYA specifically — Worker уточняет через сверку с эталоном): **target ∈ значимые натальные точки**. Для Натальи — Венера (12 дом, очень indicated), Юпитер (стеллиум в Стрельце, ruler соляра), Нептун (Neptune square Neptune — generation transit).
+- **`(Uranus, Quincunx, Jupiter)`** (Уран 150° Юпитер) — остаётся **только в календаре** (Marina эталон показывает его на стр. 23 в календарной строке июня-июля 2026, **не в card-блоке**). Worker не создаёт карточку для этого аспекта.
 
-Если engine эмитит outer-transit aspect 3-касания которого нет в Marina reference как карточка — **НЕ генерировать**. Worker формализует identification rule в HANDOFF и применяет его. Если rule даёт > 3 карточек для Натальи — обсуждать с TL до landing.
+**Allowlist-config:** Worker реализует allowlist как явный configuration (per case_id) — например, dict `OUTER_CARD_ALLOWLIST = {"08-natalya-2025-2026": [...]}`. Так разные case'ы получат свои списки в Phase 7 calibration без переписывания generator'а.
+
+**Generic detector — auxiliary, не extending list.** Worker может реализовать generic detector (transit planet ∈ {Uranus, Neptune, Pluto}, aspect ∈ Marina-major, 3 касания D→R→DR в loop_transit_windows) для понимания engine output и self-check. Но **generic detector НЕ расширяет allowlist** — это два разных concept'а:
+
+- **Allowlist** = что Marina показывает как card.
+- **Generic detector** = что engine эмитит как 3-passes outer-transit aspect.
+
+Detector может найти больше aspects чем allowlist (например, Uranus 150° Jupiter — у нас в engine есть 3 касания, но Marina не показывает как card). В этом случае detector НЕ перекрывает allowlist — allowlist primary, detector только для diagnostic покрытия в HANDOFF.
+
+Если generic detector находит aspect **не в allowlist** для Натальи — это **сигнал** (engine эмитит того что Marina не считает card-worthy), Worker отмечает в HANDOFF но **не создаёт карточку**.
 
 ## Files
 
 - new:
-  - `services/api-python/app/pdf/outer_cards.py` — главный generator (alternative: extend `transit_themes.py` если Worker предпочитает; default — отдельный модуль для cleanliness). Содержит:
-    - `identify_outer_cards(loop_transit_windows, natal_chart, marina_filter)` → list of card-eligible aspects.
-    - `build_outer_card(planet, target, aspect, loop_data, natal_data, rulership_data)` → structured dict со всеми 5 секциями карточки.
-    - Closed-dictionary text для:
-      - aspect typology (Conjunction = «соединение», Square = «квадрат» etc.);
-      - psychology level templates (per planet × aspect combinations Marina'иной reference);
-      - event level templates (per Marina'иной reference).
-  - `services/api-python/app/pdf/outer_cards_text.py` — closed-dictionary text для интерпретаций (psychology / event level). Worker может объединить с outer_cards.py если хочет (single-file модуль).
+  - **`services/api-python/app/pdf/outer_cards.py`** — **обязательно отдельный модуль**, не extension `transit_themes.py`. `transit_themes.py` это Phase 3 artifact, дополнительные правки в нём — лишний риск. Worker может **импортировать** публичные helpers из `transit_themes` (например `loop_transit_windows`, `_solar_year_jd_window` если оно publicly exported), но НЕ модифицирует `transit_themes.py`.
+
+    Модуль содержит:
+    - `OUTER_CARD_ALLOWLIST: dict[str, list[tuple[str, str, str]]]` — explicit per-case allowlist. Для `08-natalya-2025-2026` — 3 triples перечисленных выше.
+    - `identify_cards_for_case(case_id, annual_transit_table) → list[tuple]` — читает allowlist для case_id, фильтрует engine output, возвращает eligible triples с loop data.
+    - `build_outer_card(triple, loop_data, natal_data, golden_rule_facts) → dict` — структурированный dict со всеми 5 секциями карточки.
+    - **Closed-dictionary text** для интерпретаций (psychology / event level) — **Marina-style paraphrase** (NOT verbatim chunks из эталона); 2-4 предложения per уровень, в Marina's второй-личной форме, без свободной prose.
+  - `services/api-python/app/pdf/outer_cards_text.py` (опционально, Worker выбирает) — closed-dictionary text если выделяется в отдельный модуль для cleanliness. Если объединено с `outer_cards.py` — этот файл не нужен.
 
 - modify:
-  - `services/api-python/app/pdf/builder.py` — register `outer_cards` Jinja global; pass natal_chart + rulership data.
+  - `services/api-python/app/pdf/builder.py` — register `outer_cards` Jinja global; pass natal_chart данные для рендера карточек.
   - `services/api-python/app/pdf/templates/solar.html.j2` — render outer cards loop после блока «Аспекты транзитных социальных и высших планет», до «Календарь транзитных аспектов».
-  - `services/api-python/tests/test_natalya_transits_acceptance.py` — **unmark `@pytest.mark.xfail`** для 11 tests которые ожидают flip после Phase 4 (см. Test contract ниже). НЕ менять Phase 5/6 xfails.
+  - `services/api-python/tests/test_natalya_transits_acceptance.py` — **unmark `@pytest.mark.xfail`** для **9 tests** которые flip после Phase 4 (см. Test contract ниже). **НЕ менять Phase 5/6 xfails** — особенно Phase 5 target-house xfails остаются untouched.
+
+**Запрет на `transit_themes.py` modifications:** новые правки в нём — out of scope для TASK 4. Phase 3 baseline зафиксирован.
 
 - delete: —
 
@@ -113,7 +121,7 @@ Phase 4 программы Transit Section Recovery (`ARCHITECTURE/transit-secti
 
 ### Test contract (Phase 4 xfail flips → passed)
 
-После landing TASK 4 `pytest tests/test_natalya_transits_acceptance.py -v` показывает 11 xfail tests перешли в **passed**, Worker unmark'нул их декораторы:
+После landing TASK 4 `pytest tests/test_natalya_transits_acceptance.py -v` показывает **9 xfail tests** перешли в **passed**, Worker unmark'нул их декораторы:
 
 Category 3 (outer-planet structure, 6 xfail Phase 4):
 - `test_pdf_contains_uranus_square_venus_card` → passed
@@ -127,18 +135,38 @@ Category 4 (outer-planet intervals, 2 xfail Phase 4 — `Уран-Венера` 
 - `test_neptune_square_jupiter_three_touches_tolerance_2d` → passed
 - `test_neptune_square_neptune_three_touches_tolerance_2d` → passed
 
-Category 7 (regression bans, 1 xfail Phase 4 + 1 should-stay-passing):
+Category 7 (regression bans, 1 xfail Phase 4):
 - `test_outer_cards_always_present_when_marina_shows_them` → passed (unmark xfail)
-- Category 3 `test_pdf_contains_outer_transits_section_heading` — was passing already, must stay passing.
+- (Category 3 `test_pdf_contains_outer_transits_section_heading` — was passing already, остаётся passing.)
 
-Phase 5/6 xfails остаются xfail. Worker не трогает их.
+**Итого 9 xfail flips:** 6 + 2 + 1 = 9. Phase 5/6 xfails (Category 5 calendar clipping + Category 6 target houses) **остаются xfail**. Worker НЕ трогает их.
 
-**Если Worker наблюдает xpass на тестах **ВНЕ** Phase 4 mapping (например, в Phase 5 или Phase 6) — это сигнал, investigate, НЕ unmark.**
+**Phase 5 target-house xfails — особое внимание:** golden-rule таблица каждой карточки содержит ссылки на дома (radix дома цели, ruled дома). Worker реализует их через **closed card-facts (per case_id)** из Marina oracle pp. 18/20/21 — НЕ через generic rulership-expanded helper (это работа Phase 5). Поэтому Phase 5 xfails (`test_target_houses_not_placement_only_for_multi_house_targets`, `test_target_houses_distinguish_placement_from_rulership` и др.) остаются xfail — они проверяют generic API surface, который Phase 4 не строит.
+
+**Если Worker наблюдает xpass на тестах ВНЕ Phase 4 mapping (Phase 5, Phase 6) — это сигнал, investigate, НЕ unmark.**
+
+### Preflight check для Neptune interval tests (Category 4)
+
+Два xfail-теста — `test_neptune_square_jupiter_three_touches_tolerance_2d` и `test_neptune_square_neptune_three_touches_tolerance_2d` — читают **fact-level данные** из engine output (loop_transit_windows → annual_transit_table). Прежде чем строить карточку и unmark эти xfail-теги, Worker делает **preflight check**:
+
+1. Запустить `pytest tests/test_natalya_transits_acceptance.py::test_neptune_square_jupiter_three_touches_tolerance_2d --runxfail -v` — увидеть actual failure trace.
+2. Запустить `pytest tests/test_natalya_transits_acceptance.py::test_neptune_square_neptune_three_touches_tolerance_2d --runxfail -v` — увидеть actual failure trace.
+3. Анализ failure:
+   - **Если факты есть в engine output (annual_transit_table содержит 3 касания с правильными датами в пределах ±2 дня от reference) и провал теста — только в presentation layer**: продолжать Phase 4, fix presentation, unmark xfail.
+   - **Если факты в engine output не совпадают с reference** (например, engine эмитит 5 touches вместо 3, или даты вне ±2 дней, или порядок фаз не D→R→DR): **STOP**. Это **contract mismatch на engine/facts уровне**, НЕ Phase 4 presentation. Worker заполняет **contract-mismatch memo** в HANDOFF:
+     - Какие именно факты engine эмитит (raw из annual_transit_table).
+     - Что ожидает Marina reference.
+     - Гипотеза о root cause (orb width? sample window? clipping? quincunx scope?).
+     - Recommendation: separate Tier A/Tier C TASK для engine adjustment.
+   - Submit HANDOFF с `BLOCKED — Phase 4 contract mismatch (Neptune intervals)`.
+   - **Worker НЕ исправляет contract mismatch хардкодом** в presentation, НЕ перезаписывает `expected.json`.
+
+Запрет § 7 архитектурного документа явен: «Не перезаписывать `expected.json`», «Не считать зелёные snapshot tests достаточным доказательством близости к Марине». Worker Phase 4 — presentation layer. Если facts нарушены — это другая task'а.
 
 ### Common acceptance
 
-- [ ] `cabal build` сделан (Phase 2 lesson) — даже если Path B не трогает core.
-- [ ] `cd services/api-python && .venv/bin/pytest --tb=no -q` — green; ожидание `117+ passed + 6- xfailed` (Phase 4 flips увеличивают passed на 11 единиц, xfail уменьшают на 11).
+- [ ] `cabal build` сделан (Phase 2 lesson) — даже если presentation-only не трогает core.
+- [ ] `cd services/api-python && .venv/bin/pytest --tb=no -q` — green; ожидание `~115 passed + ~8 xfailed` (Phase 4 flips увеличивают passed на 9 единиц, xfailed уменьшают на 9: было 106 passed + 17 xfailed → стало 115 passed + 8 xfailed).
 - [ ] `git status --short` чисто **для intended product changes**.
 - [ ] Один commit (или ≤ 2 при чистой границе: generator module отдельно от template wiring + tests unmark).
 - [ ] Push на backup, parity verified.
@@ -182,6 +210,8 @@ Worker внимательно изучает эти страницы для unde
 
 **Cabal build hygiene:** работа Path B не трогает core, но `cabal build` рекомендуется перед тестами (Phase 2 lesson о stale cache).
 
-**Default тон interpretations:** Marina psychology/event level в эталоне написан в **второй личной** форме («Аспект приносит внезапные перемены...»), сжато (2-4 предложения per уровень), без bizdev/metafизики. Worker сверяет тон с эталоном, не выдумывает свободную прозу.
+**Default тон interpretations:** Marina psychology/event level в эталоне написан в **второй личной** форме («Аспект приносит внезапные перемены...»), сжато (2-4 предложения per уровень), без bizdev/метафизики. Тексты — **Marina-style paraphrase**, **НЕ дословные куски** из эталона (IP discipline + closed-dictionary дизайн). Worker сверяет тон с эталоном, не выдумывает свободную прозу.
+
+**Не смешивать Phase 4 и Phase 5.** Phase 4 владеет outer card structure + closed card-facts per case (включая дома цели в golden-rule таблице для 3 карточек Натальи). Phase 5 владеет **generalized rulership-expanded `Дома цели`** для календаря аспектов и любых других контекстов. Если Phase 4 Worker нашёл что нужна generic rulership API — STOP, открываем Phase 5 первым через TL. Phase 5 xfail-теги (`test_target_houses_*`) остаются untouched в Phase 4.
 
 **Ready: no** — TL flip'ает в `yes` после ack пользователя.
