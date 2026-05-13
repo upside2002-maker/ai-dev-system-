@@ -33,13 +33,13 @@
 
 - `recordEvent` на `manual_expense` insert (Tier A backend, ~10-15 LOC) — чтобы CashboxWidget refreshed после manual expense (currently не event-driven). **Codex audit 2026-05-06 confirmed** через grep: `Treasury.hs:503` `createManualExpense` без `recordEvent`, `CashboxWidget.tsx:31` doc-comment подтверждает event-stream subscription. Сложность: `manual_expense` без `dealId` — нужно либо ALLOW NULL FK на event, либо использовать sentinel deal или новый event scope. Требует grounding read `Domain.Lead.Event` / `recordEvent` shape прежде чем оформить TASK.
 
-## Parser calculator follow-ups (после PR #83, 2026-05-13)
+## Parser calculator follow-ups (после PR #83 / #84, 2026-05-13)
 
-- **Защита `usdRate < 0` в `QuoteCalculator.parseInputs`** — сейчас `<= 0` ловится только для `=== 0`. Отрицательный курс пропускается, даёт finite бессмысленный результат (минусовые рубли в breakdown). Не нарушает acceptance, но защита одной строкой `if (values.usdRate <= 0)` Tier C, ~1-3 LOC.
+- **Защита `usdRate < 0` в `QuoteCalculator.parseInputs`** — сейчас `<= 0` ловится только для `=== 0`. Отрицательный курс пропускается, даёт finite бессмысленный результат (минусовые рубли в breakdown). Не нарушает acceptance, но защита одной строкой `if (values.usdRate <= 0)` Tier C, ~1-3 LOC. Reviewer PR #84 отдельно подтвердил остаточный риск.
 
-- **`workspace.css .parser-calculator-submit` cleanup + неиспользуемый prop `offerSavedCount`** — класс был спроектирован под вечный `disabled` (`cursor: not-allowed`, muted цвет). Worker подменил критичные свойства inline в TSX. Чистый рефактор: переписать класс под двойной режим (живая/disabled), убрать inline-style override + убрать `offerSavedCount` prop из `QuoteCalculator` Props и из вызова в `ParserScreen.tsx`. Tier C, ~20-30 LOC.
+- **`workspace.css .parser-calculator-submit` cleanup + неиспользуемый prop `offerSavedCount`** — класс был спроектирован под вечный `disabled` (`cursor: not-allowed`, muted цвет). Worker подменил критичные свойства inline в TSX (PR #83, сохранено в PR #84). Чистый рефактор: переписать класс под двойной режим (живая/disabled), убрать inline-style override + убрать `offerSavedCount` prop из `QuoteCalculator` Props и из вызова в `ParserScreen.tsx`. Tier C, ~20-30 LOC.
 
-- **Exchange buffer в калькуляторе.** Сейчас оператор должен сам ввести «эффективный» курс с учётом buffer (типично 5%). `Engine.Pricing.usdToRub` вычисляет `RUB = USD * rate * (1 + buffer/100)`, калькулятор использует только `RUB = USD * rate`. На типичном `buffer=5%` без явной правки оператора цена клиенту окажется заниженной на ~5% от USD-компонентов (~1750 ₽ на тестовом примере). Решение — либо отдельный input «Курсовой буфер %» с дефолтом из settings, либо явный hint в UI («курс задан как банковский + buffer, поправь под текущий»). Tier C, ~10-30 LOC. Только после явного запроса оператора — пока не приоритет.
+- ~~**Exchange buffer в калькуляторе.**~~ Закрыто PR #84 (`f048c9b`) — седьмое поле «Буфер курса, %» с дефолтом из `psExchangeBuffer`, эффективный курс = банковский × (1 + буфер/100), все USD→RUB конверсии через эффективный.
 
 ## Hygiene / code quality
 

@@ -1,8 +1,8 @@
 # Sitka Office — Current State
 
-Дата: 2026-05-12
-Snapshot commit: `936ccdb` (`feat(parser): рабочий QuoteCalculator с расчётом, валидацией и копированием итога (#83)`). Perimeter fix задеплоен 2026-05-11. После него: PR #82 (portable `~/Projects/...` пути в `.claude/`) и PR #83 (рабочий калькулятор парсера) — оба в master.
-Repo: `/Users/ilya/Projects/sitka-office`
+Дата: 2026-05-13
+Snapshot commit: `19ddeef` (`chore(codeowners): expand to 2-tier protection model (#85)`). Perimeter fix задеплоен 2026-05-11. После него в master: PR #82 (portable `~/Projects/...` пути в `.claude/`), PR #83 (рабочий калькулятор парсера, master `936ccdb`), PR #84 (буфер курса в калькуляторе парсера, master `f048c9b`), PR #85 (расширение CODEOWNERS до 2-tier protection model, master `19ddeef`).
+Repo: `~/Projects/sitka-office`
 
 ## Phase status
 

@@ -1,6 +1,6 @@
 # TASK: parser-quote-calculator-exchange-buffer
 
-- Status: open
+- Status: done
 - Ready: yes
 - Date: 2026-05-13
 - Project: sitka-office
