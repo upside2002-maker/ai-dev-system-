@@ -1,6 +1,6 @@
 # TASK: multi-case-calibration
 
-- Status: open
+- Status: done
 - Ready: yes
 - Date: 2026-05-13
 - Project: astro
