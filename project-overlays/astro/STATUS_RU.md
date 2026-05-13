@@ -92,9 +92,23 @@ Worker validated TL pre-mapped Marina inventory (3/3 cases confirmed, return_jd 
 
 **Phase 7b (Multi-case calibration — Stage A re-validation + Stage B) — deferred until TASK 7a fix lands.**
 
-**TASK 7a (Transit monthly table label-arithmetic fix) — spec готов, Ready: no, ждёт ack пользователя.** TASK `2026-05-13-transit-monthly-table-label-arithmetic.md`. Tier C / Mode normal / Layer services. Single-file fix в `transit_themes.py:transit_matrix_by_month` (~10 lines), use calendar-month-advance pattern (existing template на line 687 для `transit_aspects_by_month`). Regression test case 07 (13 unique consecutive month labels). Preserve Natalya 149 baseline.
+**TASK 7a (Transit monthly table label-arithmetic fix) — ACCEPTED.** Commit `8a4865e` на main:
+- Fix: integer calendar-month advance в `transit_matrix_by_month` (lines 546-588, 24 ins / 11 del). `datetime(y, m, 15, UTC)` для mid-month anchor; `[1st, next-1st)` для window. No new deps.
+- Regression test `test_mariya_transit_matrix.py`: full equality `actual_labels == [Июль 2025, ..., Июль 2026]` (13 unique consecutive).
+- Natalya baseline preserved 1:1 (mid-15 UTC anchor identical pre/post fix для Натальи early-UT solar return).
+- Tests: **149/0/0 → 150/0/0** (regression test добавлен).
 
-**Production-readiness gate:** PDF Марине **не показывается до**: (1) TASK 7a fix landed; (2) TASK 7b Phase 7 re-validation passes; (3) Stage B closed-config calibration (allowlist extensions для 05/10); (4) **явного user ack** на updated calibration report.
+**TASK 7b (Phase 7 Stage A re-validation + Stage B closed-config calibration) — spec готов, Ready: no, ждёт ack пользователя.** TASK `2026-05-13-phase-7-stage-b-closed-config-calibration.md`. Финальная implementation TASK программы. Tier C / Mode normal / Layer services.
+
+Stage A.2 re-validation: case 07 monthly table expected 13/13 cells post-fix; case 05/10 без regression. Stage B closed-config:
+- Extend `outer_cards.py:OUTER_CARD_ALLOWLIST` для 05-ekaterina (3 triples per Marina pp. 34-37) и 10-danila (3 triples per Marina pp. 16-19). Closed card-facts populated.
+- Case 10 card 3 = 4 windows (не 3) — generalize `_assert_three_phase_intervals` helper для parametrized window count.
+- Create `services/api-python/scripts/render_case.py` (parametrized canonical render).
+- Single parameterised test файл `test_multi_case_calibration.py`.
+- Update calibration report § 3/4/5/6 с post-Stage-B results.
+- Final production-readiness verdict.
+
+**Production-readiness gate:** PDF Марине **не показывается до**: (1) TASK 7b closes с verdict «Ready for Marina show — pending user ack»; (2) **явный отдельный user ack** на updated calibration report.
 
 **Известный editorial разрыв (документировать честно):** Path 4 закрывает **тестовую дисциплину**, не превращает 2 даты в «совпавшие». PDF продолжает рендерить engine-derived dates; Marina при показе видит engine boundaries для 2 Neptune windows, не свои эталонные. Это **known editorial divergence, accepted TL/user 2026-05-13**, не regression и не engine bug.
 
@@ -127,7 +141,7 @@ Worker validated TL pre-mapped Marina inventory (3/3 cases confirmed, return_jd 
 
 ## Ждёт твоего решения
 
-- **Ack на TASK 7a spec.** Прочитать `project-overlays/astro/TASKS/2026-05-13-transit-monthly-table-label-arithmetic.md`. Single-file bug fix (~10 lines) + regression test. Phase 7 calibration выявил blocker; нужен fix перед re-validation. Без ack Worker не стартует — Ready: no.
+- **Ack на TASK 7b spec.** Прочитать `project-overlays/astro/TASKS/2026-05-13-phase-7-stage-b-closed-config-calibration.md`. Stage A.2 re-validation + Stage B closed-config calibration (allowlist extensions для 05/10 + render_case.py + multi-case tests + calibration report update + final production-readiness verdict). После closing + явного user ack → recovery program closes; PDF Марине можно показывать.
 - **Когда показывать Марине** — после закрытия всей программы (Phase 0-7) и финального ack пользователя. До этого PDF — внутренний debug/QA артефакт. Известный editorial разрыв на 2 Neptune boundaries (N-J W3 +17d, N-N W1 +178d) **будет видно Марине при показе**; это accepted divergence, но Marina об этом не знает заранее — TL подготовит ей framing в момент показа.
 
 Локальная ветка `claude/dreamy-moore-46f5eb` остаётся (deferred cleanup) — не блокер.
@@ -159,7 +173,8 @@ Worker validated TL pre-mapped Marina inventory (3/3 cases confirmed, return_jd 
 - **Phase 5** (rulership-expanded target houses) — **CLOSED** 2026-05-13 (TASK 5 accepted, commit `1d59431`, Path B presentation-level, 4 xfail flips, 26 new helper tests).
 - **Phase 6** (per-context cutoff policy) — **CLOSED** 2026-05-13 (TASK 6 accepted, commit `a1891cc`, 4 Phase 6 xfail flips, two-window-pair architecture).
 - **Phase 7 Stage A** (multi-case calibration validation) — **CLOSED** 2026-05-13 с verdict «Blockers identified» (TYPE-B regression в case 07 monthly table; calibration report committed). Stage B deferred.
-- **TASK 7a** (transit monthly table label-arithmetic fix) — **готов, ждёт ack пользователя.** Tier C, single-file fix `transit_themes.py:transit_matrix_by_month`, ~10 lines + regression test case 07. После landing → reopen Phase 7 Stage A re-validation + Stage B (отдельный TASK 7b).
+- **TASK 7a** (transit monthly table label-arithmetic fix) — **CLOSED** 2026-05-13 (commit `8a4865e`, 149/0/0 → 150/0/0, Natalya baseline preserved, case 07 13 labels validated).
+- **TASK 7b** (Phase 7 Stage A re-validation + Stage B closed-config calibration) — **готов, ждёт ack пользователя.** Финальная implementation TASK программы. После closing + user ack → recovery program closes; PDF можно показывать Марине.
 - **Phase 4** (outer-planet cards generator) — только для тех outer-aspects, что представлены в эталоне как карточки.
 - **Phase 5** (rulership-expanded target houses) — Tier C с эскалацией до Tier A при shared core helper.
 - **Phase 6** (per-context cutoff policy) — explicit clipping rules.
