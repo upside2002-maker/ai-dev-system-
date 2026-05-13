@@ -1,0 +1,423 @@
+# Transit Section Multi-Case Calibration Report — Phase 7 (Stage A)
+
+Дата: 2026-05-13
+Author: Worker subagent (Phase 7, TASK `2026-05-13-multi-case-calibration`)
+Owner: Project Tech Lead
+
+Repo state: `main @ a1891cc` (Phase 6 closed). Tests baseline `149 passed / 0 xfailed / 0 failed`.
+
+Architecture SoT: `project-overlays/astro/ARCHITECTURE/transit-section-program-2026-05-13.md`.
+
+Stage A scope (read-only validation): inventory mapping confirm, render per case via
+canonical-equivalent path, per-section diff against Marina, divergence classification,
+override count + Phase 4b gate check, production-readiness verdict. **No product changes.**
+
+---
+
+## § 1 Marina inventory mapping confirmation
+
+TL pre-mapped the four 2025-2026 PDFs to golden-case IDs via solar return time. Worker
+validated each by converting the expected.json `solar_chart.return_jd` to UTC and
+comparing to Marina's "Время запуска" caption on PDF p.1 (in case file's local timezone).
+
+| Case ID | Marina PDF | Marina "Время запуска" (local) | UTC equivalent | Our `return_jd` → UTC | Match |
+|---|---|---|---|---|---|
+| 05-ekaterina-2025-2026 | `Соляр 2025-2026_2.pdf` | 11.03.2025 09:34:30 (GMT+3) | 11.03.2025 06:34:30 | 11.03.2025 06:33:45 | YES (Δ ≈ 45s) |
+| 07-mariya-2025-2026 | `Соляр 2025-2026_4.pdf` | 01.07.2025 22:11 (GMT+3) | 01.07.2025 19:11 | 01.07.2025 19:11:07 | YES (Δ < 60s) |
+| 08-natalya-2025-2026 | `Соляр 2025-2026_5.pdf` | — (Phase 1-6 oracle, no change) | 07.08.2025 02:13 | 07.08.2025 02:13:40 | YES (anchor) |
+| 09-anastasiya-2025-2026 | `Соляр 2025-2026 для Анастасии.pdf` | (not validated — fallback only) | 14.05.2025 09:54 | 14.05.2025 09:54:03 | (fallback unused) |
+| 10-danila-2025-2026 | `Соляр 2025-2026 для Данилы.pdf` | 05.08.2025 10:44:12 (GMT+3) | 05.08.2025 07:44:12 | 05.08.2025 07:44:12 | YES (exact) |
+
+All three default cases (05, 07, 10) validated within Δ ≤ 60s of Marina's stated solar
+return moment — well within ephemeris rounding tolerance. The TL pre-mapping is confirmed
+for Stage A. The 09-anastasiya fallback was therefore not exercised; it remains validated
+against `expected.json` for any future use.
+
+---
+
+## § 2 Selected cases
+
+Worker uses the architecture-default trio **05-ekaterina, 07-mariya, 10-danila** per § 8
+TASK 7 / § 5 Phase 7. Rationale: all three Marina-PDF mappings pre-validated by TL and
+re-confirmed by Worker via return_jd matching. No fallback to 09-anastasiya needed.
+
+Per-case render: a Stage A read-only ad-hoc Python harness (`/tmp/stage_a_render_case.py`)
+invoked `app.pdf.builder.write_solar_pdf` directly per case_id, calling `collect_provenance`
+with the correct `case_label` extra. This is **Worker-side throwaway** — no product code
+under `services/api-python` was modified for Stage A. The canonical `render_natalya.py`
+hardcodes `case_label="08-natalya-..."` (Phase 1 design); using it directly for cases
+05/07/10 would either suppress outer-cards entirely or render Natalya's allowlist on the
+wrong facts, producing diagnostically useless PDFs. Stage B (if authorized) would
+introduce `services/api-python/scripts/render_case.py` to formalise this.
+
+Stage A PDFs (one per case):
+
+- `/tmp/05-ekaterina-phase7.pdf` + `.provenance.json`
+- `/tmp/07-mariya-phase7.pdf` + `.provenance.json`
+- `/tmp/10-danila-phase7.pdf` + `.provenance.json`
+
+Render mode: `fixture-render`. Provenance sidecars carry the correct case_label, repo
+SHA `a1891ccc2734` (main), branch `main`.
+
+---
+
+## § 3 Per-case section diff
+
+### § 3.1 Case 05 (Екатерина) — Solar 2025-2026
+
+**Solar return**: 11.03.2025 09:33:45 (GMT+3), Москва. Marina PDF: `Соляр 2025-2026_2.pdf`.
+
+#### Monthly transit table (Транзиты планет по домам)
+
+Marina labels rows `11.MM.YYYY` (day-of-month = solar return day). Our PDF labels rows as
+Russian-month strings (e.g. «Март 2025»). Both span 13 calendar months. Cell-by-cell
+comparison (our cells use «mid-month-15» convention, Marina pp. 7-8 convention):
+
+| Period | Marina (M/S/J/V) | Our (M/S/J/V) | Match |
+|---|---|---|---|
+| 11.03.2025 / Март 2025 | 6 / 1 / 4 / 1 | 6 / 1 / 4 / 1 | YES |
+| 11.04.2025 / Апрель 2025 | 6 / 1 / 4 / 1 | 6 / 1 / 4 / 1 | YES |
+| 11.05.2025 / Май 2025 | 7 / 1 / 4 / 1 | 7 / 1 / 4 / 1 | YES |
+| 11.06.2025 / Июнь 2025 | 7 / 1 / 5 / 2 | 7 / 1 / 5 / 2 | YES |
+| 11.07.2025 / Июль 2025 | 7 / 1 / 5 / **3** | 7 / 1 / 5 / **4** | Venus diff (1) |
+| 11.08.2025 / Август 2025 | 7 / 1 / 6 / 6 | 7 / 1 / 6 / 6 | YES |
+| 11.09.2025 / Сентябрь | 8 / 1 / 6 / 7 | 8 / 1 / 6 / 7 | YES |
+| 11.10.2025 / Октябрь | 8 / 1 / 6 / 7 | 8 / 1 / 6 / 7 | YES |
+| 11.11.2025 / Ноябрь | 9 / 1 / 6 / 8 | 9 / 1 / 6 / 8 | YES |
+| 11.12.2025 / Декабрь | 11 / 1 / 6 / 10 | 11 / 1 / 6 / 10 | YES |
+| 11.01.2026 / Январь | 12 / 1 / 6 / 12 | 12 / 1 / 6 / 12 | YES |
+| 11.02.2026 / Февраль | 1 / 1 / 6 / 1 | 1 / 1 / 6 / 1 | YES |
+| 11.03.2026 / Март | 1 / 1 / 6 / 1 | 1 / 1 / 6 / 1 | YES |
+
+**51/52 cells match.** Single diverging cell (Venus, Jul 2025: Marina 3 / our 4) — fast
+mover boundary; Marina snapshots on 11.07.2025 while our mid-15 convention reads 15.07.2025
+— Venus moves ~1 sign/day so the 4-day gap straddles the h3/h4 cusp.
+
+#### Per-house interpretations
+
+Marina (pp. 11-18): Сатурн по 1 дому (only); Юпитер по 4/5/6 дому; Марс — 7 houses
+listed; Венера — 12 houses listed; Уран — 3 дом; Нептун — 1 дом.
+Our PDF: matches Marina's set exactly. No out-of-year stale dates observed.
+
+#### Outer-planet cards
+
+**Marina cards (pp. 34-38) — 3 deep-dive cards:**
+
+1. **тр Уран в квадрате с нат Луной** — 3 display windows: 21.07.2025-24.10.2025 /
+   06.05.2026-09.06.2026 / 25.12.2026-25.03.2027. Golden-rule: transit_h=8, target_h=7,
+   transit_ruled=[1,12], target_ruled=[6], walks=h3.
+2. **тр Уран в секстиле с нат Юпитером** — 3 windows: 05.06.2025-14.07.2025 /
+   31.10.2025-20.12.2025 / 21.03.2026-01.05.2026. Golden-rule: transit_h=8, target_h=6,
+   transit_ruled=[1,12], target_ruled=[10,1,11], walks=h3.
+3. **тр Нептун в тригоне с нат Юпитером** — 3 windows: 12.04.2024-28.09.2024 /
+   12.02.2025-08.04.2025 / 10.10.2025-07.02.2026. Golden-rule: transit_h=10, target_h=6,
+   transit_ruled=[1,10,11], target_ruled=[10,1,11], walks empty.
+
+**Our PDF**: outer-cards block is empty (no «тр X в Y с нат Z» headings). `OUTER_CARD_ALLOWLIST`
+has no entry for `05-ekaterina-2025-2026`. This is a **TYPE-A closed-config gap** —
+Stage B authorized to extend allowlist + add card-facts.
+
+#### Calendar (КАЛЕНДАРЬ транзитных аспектов)
+
+Our PDF: present, multi-month, social + outer planet aspects with `Дома цели` derived
+via Phase 5 rulership_houses helper. Examples in our case 05 calendar:
+- «Нептун 120° Юпитер — 11.03.2025–08.04.2025 → Дома цели: 6, 10, 11» — matches
+  Marina's golden-rule table on p.36 (target Юпитер ruled houses 10, 1, 11 — and h6
+  placement).
+- «Уран 60° Юпитер — 04.06.2025–14.07.2025 → Дома цели: 6, 10, 11» — likewise.
+Calendar window dates engine-derived, clipped at solar-year boundaries per Phase 6.
+
+### § 3.2 Case 07 (Мария) — Solar 2025-2026
+
+**Solar return**: 01.07.2025 22:11 (GMT+3), Москва. Marina PDF: `Соляр 2025-2026_4.pdf`.
+
+#### Monthly transit table — **REGRESSION FOUND**
+
+Marina labels rows `01.MM.YYYY` (day-of-month = 01, day-of-solar-return). Our PDF
+labels rows by Russian-month string. Marina has 13 rows: Jul 2025 through Jul 2026
+consecutive. Our PDF has 13 rows but **labels duplicate Aug 2025 / Oct 2025 and skip
+Sep 2025 / Feb 2026**:
+
+| Marina | Marina cells (M/S/J/V) | Our label | Our cells (M/S/J/V) | Match |
+|---|---|---|---|---|
+| 01.07.2025 | 12 / 7 / 10 / 9 | Июль 2025 | 12 / 7 / 10 / 9 | YES |
+| 01.08.2025 | 1 / 7 / 10 / 10 | Август 2025 | 1 / 7 / 10 / 10 | YES |
+| 01.09.2025 | 2 / 7 / 10 / 11 | **Август 2025 (dup)** | 1 / 7 / 10 / 10 (wrong) | NO |
+| 01.10.2025 | 3 / 7 / 10 / 1 | Октябрь 2025 | 3 / 7 / 10 / 1 | YES |
+| 01.11.2025 | 3 / 7 / 10 / 2 | **Октябрь 2025 (dup)** | 3 / 7 / 10 / 1 (wrong) | NO |
+| 01.12.2025 | 4 / 7 / 10 / 3 | Ноябрь 2025 | 3 / 7 / 10 / 2 | NO (label drift) |
+| 01.01.2026 | 4 / 7 / 10 / 4 | Декабрь 2025 | 4 / 7 / 10 / 3 | NO (label drift) |
+| 01.02.2026 | 5 / 7 / 10 / 6 | Январь 2026 | 4 / 7 / 10 / 4 | NO (label drift) |
+| 01.03.2026 | 6 / 7 / 10 / 7 | Март 2026 | 6 / 7 / 10 / 7 | YES |
+| 01.04.2026 | 7 / 7 / 10 / 9 | Апрель 2026 | 7 / 7 / 10 / 9 | YES |
+| 01.05.2026 | 8 / 7 / 10 / 10 | Май 2026 | 8 / 7 / 10 / 10 | YES |
+| 01.06.2026 | 8 / 7 / 10 / 10 | Июнь 2026 | 9 / 7 / 10 / 11 | NO (Mars diff) |
+| 01.07.2026 | 9 / 7 / 11 / 11 | Июль 2026 | 9 / 8 / 11 / 12 | NO (Sat/Ven diff) |
+
+**Root cause** (verified by reading `services/api-python/app/pdf/transit_themes.py`
+function `transit_matrix_by_month`, lines 553-568): the iteration uses
+`m_start = sr + i * 30.4375` with label derived via `_jd_to_year_month(m_start)`.
+For sr = 01.07.2025 19:11 UT, `sr + i*30.4375` for i=0..12 lands in calendar months:
+
+```
+i= 0 → 01.07.2025  → "Июль 2025"
+i= 1 → 01.08.2025  → "Август 2025"
+i= 2 → 31.08.2025  → "Август 2025"   ← duplicate (drifted)
+i= 3 → 01.10.2025  → "Октябрь 2025"  ← skipped Sept
+i= 4 → 31.10.2025  → "Октябрь 2025"  ← duplicate
+i= 5 → 30.11.2025  → "Ноябрь 2025"
+i= 6 → 31.12.2025  → "Декабрь 2025"
+i= 7 → 30.01.2026  → "Январь 2026"
+i= 8 → 02.03.2026  → "Март 2026"     ← skipped Feb
+i= 9..12 → continue
+```
+
+Because `(y, m)` becomes the basis for `mid_dt = datetime(y, m, 15)`, **the
+mid-month-15 snapshot is also collapsed** — i=1 and i=2 both snapshot at 15.08.2025;
+i=3 and i=4 both snapshot at 15.10.2025. Sept and Feb mid-month snapshots never appear.
+This is the source of NO-match rows 3, 5, 6, 7, 8, 12, 13 above.
+
+Case 08 (Натальи) sr = 07.08.2025 02:13 UT — iterations land cleanly in consecutive
+calendar months because sr-day-of-month is early. Case 10 (Данила) sr = 05.08.2025
+07:44 UT — same: clean iteration. Case 05 (Екатерина) sr = 11.03.2025 06:33 UT — same.
+**Only case 07 trips this bug** because its sr-day-of-month is 01 + sr-time 22:11 local
+(19:11 UT), so `sr + 30.4375` and `sr + 60.875` land on month-boundaries (end-of-Jul/
+end-of-Aug) which then `_jd_to_year_month` rounds to the calendar-previous month.
+
+**Classification: TYPE-B (generic logic bug, `transit_themes.py:transit_matrix_by_month`
+label arithmetic).** Not fixable through closed-config additions.
+
+#### Per-house interpretations
+
+Marina (pp. 8-9): Сатурн по 7 дому, Юпитер по 10 дому (then Юпитер по 11 дому
+implied via monthly Sat=11 only on last row — actually Marina's table shows Jup=11
+only on Jul 2026 row, but Sat=7 throughout). Marina lists Марс in many houses.
+Our PDF: Сатурн в 7 доме (h7 only — matches Marina's "1 house"); Юпитер в 10 доме
++ 11 доме (matches Marina's monthly table showing Jup=10 for 12 rows and Jup=11 on
+last row); Марс — 12 houses listed. No out-of-year dates observed.
+
+Per-house section structurally CORRECT; matches Marina's house enumeration.
+
+#### Outer-planet cards
+
+Marina explicit statement (p.15): **«В текущем году у вас не будет транзитных аспектов
+от высших планет (т.е. от Урана, Нептуна и Плутона). Будут — только социальные.»**
+
+Our PDF: outer-cards block is empty — no «тр X в Y с нат Z» headings appear. This is
+**EXACTLY what Marina expects**: case 07 has NO outer cards by Marina's editorial
+choice. **Allowlist gap is CORRECT for case 07** — no Stage B card additions needed.
+Mismatch is zero.
+
+#### Calendar
+
+Our PDF: present, multi-month, social planet aspects + rulership-expanded `Дома цели`.
+Marina case 07 calendar is exclusively social-planet (Юпитер + Сатурн) — matches our
+output structure.
+
+### § 3.3 Case 10 (Данила) — Solar 2025-2026
+
+**Solar return**: 05.08.2025 10:44:12 (GMT+3), Москва. Marina PDF: `Соляр 2025-2026 для Данилы.pdf`.
+
+#### Monthly transit table
+
+| Marina | Marina cells (M/S/J/V) | Our label | Our cells (M/S/J/V) | Match |
+|---|---|---|---|---|
+| Aug 2025 | 10 / 3 / 8 / 8 | Август 2025 | 10 / 3 / 8 / 8 | YES |
+| Sep 2025 | 10 / 3 / 8 / 9 | Сентябрь 2025 | 10 / 3 / 8 / 9 | YES |
+| Oct 2025 | 11 / 3 / 8 / 9 | Октябрь 2025 | 11 / 3 / 8 / 9 | YES |
+| Nov 2025 | 1 / 3 / 8 / 11 | Ноябрь 2025 | 1 / 3 / 8 / 11 | YES |
+| Dec 2025 | 1 / 3 / 8 / 1 | Декабрь 2025 | 1 / 3 / 8 / 1 | YES |
+| Jan 2026 | 2 / 3 / 8 / 2 | Январь 2026 | 2 / 3 / 8 / 2 | YES |
+| Feb 2026 | 2 / 3 / 8 / 3 | Февраль 2026 | 2 / 3 / 8 / 3 | YES |
+| Mar 2026 | 3 / 4 / 8 / 4 | Март 2026 | 3 / 4 / 8 / 4 | YES |
+| Apr 2026 | 4 / 4 / 8 / 6 | Апрель 2026 | 4 / 4 / 8 / 6 | YES |
+| May 2026 | 4 / 4 / 8 / 7 | Май 2026 | 4 / 4 / 8 / 7 | YES |
+| Jun 2026 | 6 / 4 / 8 / 8 | Июнь 2026 | 6 / 4 / 8 / 8 | YES |
+| Jul 2026 | 7 / 4 / 8 / 9 | Июль 2026 | 7 / 4 / 8 / 9 | YES |
+| Aug 2026 | 7 / 4 / 8 / 10 | Август 2026 | 7 / 4 / 8 / 10 | YES |
+
+**52/52 cells match exactly.** Zero divergence.
+
+#### Per-house interpretations
+
+Marina (p.10-12): «Сатурн затрагивает два дома: 3 и 4», «Юпитер только 8 дом». Our PDF:
+Сатурн в 3 доме + Сатурн в 4 доме; Юпитер в 8 доме — exact match. Per-house section
+also includes Марс across 1-12 (10 houses), Венера across 1-12, Уран в 6, Уран в 7,
+Нептун в 3, Нептун в 4, Плутон в 2. No out-of-year dates.
+
+#### Outer-planet cards — **TYPE-A closed-config gap**
+
+**Marina cards (pp. 16-19) — 3 deep-dive cards:**
+
+1. **тр Уран в квадрате с нат Луной** — 3 windows: 11.07.2024-25.10.2024 /
+   28.04.2025-02.06.2025 / 25.12.2025-16.03.2026. Golden-rule: transit_h=2, target_h=3,
+   transit_ruled=[2,3], target_ruled=[8], walks=h7.
+2. **тр Нептун в квадрате с нат Венерой** — 3 windows: 14.05.2026-02.09.2026 /
+   13.03.2027-07.05.2027 / 15.09.2027-07.03.2028. Golden-rule: transit_h=2, target_h=7,
+   transit_ruled=[1,3], target_ruled=[6,10,11], walks=h4.
+3. **тр Нептун в квадрате с нат Юпитером** — **FOUR windows** (Marina explicitly says
+   «четвертое касание»): 30.05.2026-15.08.2026 / 24.03.2027-22.05.2027 /
+   30.08.2027-20.11.2027 / 09.01.2028-18.03.2028. Golden-rule: transit_h=2, target_h=7,
+   transit_ruled=[1,3], target_ruled=[1,3], walks=h4.
+
+Our PDF: outer-cards block empty. **TYPE-A closed-config gap** — Stage B authorized to
+extend `OUTER_CARD_ALLOWLIST` with these 3 case-10 entries + their card-facts.
+
+Note: card 3 has 4 windows (Marina convention says «4 касание» plural; the Phase 4
+acceptance helper `_assert_three_phase_intervals` is fixed at 3-windows — Stage B card
+3 tests would either parametrise window count or use a per-case variant. This is a
+Stage B implementation detail, not Stage A blocker.)
+
+#### Calendar
+
+Our PDF: structured, multi-month. Each row has rulership-expanded `Дома цели` (Phase 5
+helper output). Examples — «Уран 90° Луна (напряжённый) — 25.12.2025–16.03.2026 →
+Дома цели: 3 — общение/поездки/документы/курсы; 8 — кризисы/кредиты/интим.» — matches
+Marina's golden-rule table on p.16 (Луна placement=h3, ruled=h8 ⇒ {3, 8}).
+
+---
+
+## § 4 Divergence classification
+
+Aggregating across all three cases:
+
+### TYPE-A (acceptable / closed-config gap; Stage B can fix)
+
+1. **Case 05 outer cards** — Marina shows 3 deep-dive cards (Уран кв Луне, Уран секст
+   Юпитеру, Нептун триг Юпитеру), `OUTER_CARD_ALLOWLIST` empty for `05-ekaterina-2025-2026`.
+   Stage B fix: extend allowlist + add card-facts read from Marina pp. 34-37.
+
+2. **Case 10 outer cards** — Marina shows 3 cards (Уран кв Луне, Нептун кв Венере,
+   Нептун кв Юпитеру), `OUTER_CARD_ALLOWLIST` empty for `10-danila-2025-2026`. Stage B
+   fix: extend allowlist + card-facts from Marina pp. 16-19. (Note: card 3 «Нептун кв
+   Юпитеру» has 4 display windows, not 3 — Stage B card-3 test would need parameterised
+   window count.)
+
+3. **Case 05 Venus Jul 2025 cell** — Marina shows Venus h3, our PDF shows h4 (Δ=1
+   house). Fast-mover boundary: Marina anchors monthly snapshot at 11.07.2025 (day-of-sr);
+   we anchor at mid-15. Venus moves ~1 sign/day, so the 4-day gap straddles the h3/h4
+   cusp. Stage B fix would be a per-case `tolerance_overrides` entry on a monthly-cell
+   assertion (Phase 4b structured exception pattern).
+
+### TYPE-B (generic logic regression; STOP, escalate)
+
+1. **Monthly transit table label arithmetic bug — manifests on case 07**. Function
+   `services/api-python/app/pdf/transit_themes.py:transit_matrix_by_month` (lines 546-578)
+   uses `m_start = sr + i * 30.4375` for both label derivation AND for the basis of
+   `mid_dt = datetime(y, m, 15)`. When sr-day-of-month is 01 with late-UT time (case 07
+   sr = 01.07.2025 19:11 UT), the arithmetic drift makes `i=2` land on 31.08.2025 still
+   in August calendar-wise; consequence: label duplicates AND the September mid-15
+   snapshot never gets computed (similarly for Oct/Nov/Dec/Jan and Feb 2026). Result:
+   case 07 monthly table has 2 duplicate-month rows and 2 skipped-month rows; 6 of 13
+   cell rows have wrong values vs Marina.
+
+   **Why not closed-config**: the fix requires replacing the iteration with calendar-
+   arithmetic month advance (e.g. `(start_year, start_month + i)` modulo 12 with
+   year-wrap), which is a change to **generic Phase 5 logic**. Per TASK § «Запрещены
+   modifications в Stage B»: `transit_themes.py` Phase 5/6 logic must remain generic
+   and unmodified during multi-case calibration. Any change here is a TYPE-B regression
+   even if the diff is small.
+
+   Recommendation: open a separate Tier-C TASK `transit-monthly-table-label-arithmetic`
+   with isolated scope (~10 lines of label derivation, with a regression test for case
+   07 specifically) before reopening Stage B of Phase 7.
+
+### TYPE-C (Marina-specific editorial; document only)
+
+1. **Card 3 «Нептун кв Юпитеру» for case 10 has 4 display windows, not 3**. Marina
+   explicitly writes «четвертое касание». Phase 4 design fixed the card-test helper at
+   3 windows. Marina convention extends to multi-touch outer-planet loops when
+   loop-time exceeds ~2 years. This is editorial, not engine — engine raw hits may
+   already emit 4 distinct orb-windows; Phase 4 aggregator collapses to 3 only in
+   Натальи's loop pattern. Stage B (if reopened post-TYPE-B fix) needs per-case window-
+   count parameter in the test helper.
+
+2. **Marina case 07 NO outer cards by editorial choice** — Marina explicitly states
+   "не будет транзитных аспектов от высших планет". Our empty allowlist for case 07
+   produces a no-card PDF which CORRECTLY matches Marina. No code change needed.
+
+---
+
+## § 5 Total override count + Phase 4b gate clause check
+
+Per architecture § 7 запрет 7 / TASK 4b spec, the gate triggers at:
+- > 5 tolerance_overrides per single case, or
+- > 10 tolerance_overrides across all cases.
+
+| Case | Existing overrides (baseline) | Stage A additions | Total |
+|---|---|---|---|
+| 08-natalya-2025-2026 | 2 (Phase 4b: N-J W3 end ±20d, N-N W1 start ±200d) | 0 | 2 |
+| 05-ekaterina-2025-2026 | 0 | 0 | 0 |
+| 07-mariya-2025-2026 | 0 | 0 | 0 |
+| 10-danila-2025-2026 | 0 | 0 | 0 |
+| **Total** | **2** | **0** | **2** |
+
+**Gate status**: WITHIN threshold (2 ≤ 5 per case; 2 ≤ 10 total). No structural concern
+about override accumulation at this point.
+
+Phase 4b structured-exception pattern remains a viable closed-config strategy for the
+fast-mover monthly boundary case (TYPE-A item 3, Case 05 Venus Jul 2025) — would push
+total to 3 if Stage B applied it. Still well within both thresholds.
+
+---
+
+## § 6 Production-readiness verdict
+
+### Verdict: **Blockers identified — program NOT production-ready**
+
+**Rationale**: One TYPE-B regression identified (case 07 monthly transit table label
+arithmetic, see § 4 TYPE-B item 1). Per Phase 7 Stage A → Stage B gate (TASK § Two-stage
+execution discipline):
+
+> «Stage B авторизован только если Stage A diff показывает: нет TYPE-B regressions
+> (если есть TYPE-B → STOP, escalate; Phase 7 closes как "Blockers identified")».
+
+Stage B is **NOT authorized**. Phase 7 closes with this verdict. PDFs for cases 05/07/10
+are diagnostic artifacts only — **not for client (Marina) showing**.
+
+### Required follow-up before reopening Phase 7
+
+1. **Open Tier-C TASK `transit-monthly-table-label-arithmetic`** to fix the label-
+   arithmetic bug in `transit_themes.py:transit_matrix_by_month`. Scope: replace
+   `_jd_to_year_month(sr + i*30.4375)` with calendar-month-advance arithmetic.
+   Acceptance: case 07 monthly table renders 13 distinct consecutive labels Jul 2025
+   through Jul 2026; cell values match Marina's table per row.
+
+2. After TASK above lands and Натальи acceptance (149 baseline) remains green:
+   **reopen Phase 7 Stage A re-validation** on case 07 with the fix. If clean, proceed
+   to Stage B per original task plan.
+
+3. Stage B closed-config work to do (TYPE-A items from § 4):
+   - Extend `app/pdf/outer_cards.py:OUTER_CARD_ALLOWLIST` with case-05 and case-10
+     entries (3 cards each) and populate `_OUTER_CARD_FACTS` from Marina pp. 34-37
+     (case 05) and pp. 16-19 (case 10).
+   - Note case-10 card 3 has 4 display windows; Phase 4 helper `_assert_three_phase_intervals`
+     needs parametrised window count or a per-case variant.
+   - Add per-case acceptance test file(s).
+   - Create `services/api-python/scripts/render_case.py` to formalise per-case canonical
+     render (replacing the Stage A throwaway `/tmp/stage_a_render_case.py`).
+   - Optionally apply structured tolerance override for case 05 Venus Jul 2025 cell.
+
+### Production-readiness semantics
+
+Per TASK § Phase 6 Acceptance:
+
+> «Blockers identified — program NOT production-ready»: найдены TYPE-B regressions
+> либо override count exceeded threshold. Phase 7 closes с этим verdict; PDF Марине
+> **не показывается**; recovery program остаётся open для resolution.
+
+Recovery program **remains open**. PDF must NOT be shown to Marina until the TYPE-B
+fix lands AND a fresh Phase 7 Stage A re-validation produces a clean verdict AND a
+follow-up Stage B closes the TYPE-A allowlist gaps AND user provides explicit ack on
+the calibration report.
+
+---
+
+## Appendix: Artifacts produced
+
+- `/tmp/05-ekaterina-phase7.pdf` + `/tmp/05-ekaterina-phase7.pdf.provenance.json`
+- `/tmp/07-mariya-phase7.pdf` + `/tmp/07-mariya-phase7.pdf.provenance.json`
+- `/tmp/10-danila-phase7.pdf` + `/tmp/10-danila-phase7.pdf.provenance.json`
+- `/tmp/stage_a_render_case.py` (Worker-side throwaway; for diagnostic context only,
+  not committed to product repo).
+- This report: `project-overlays/astro/ARCHITECTURE/transit-multi-case-calibration-report-2026-05-13.md`.
