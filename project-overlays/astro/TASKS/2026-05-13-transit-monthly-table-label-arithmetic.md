@@ -1,7 +1,7 @@
 # TASK: transit-monthly-table-label-arithmetic
 
 - Status: open
-- Ready: no
+- Ready: yes
 - Date: 2026-05-13
 - Project: astro
 - Layer: services
@@ -39,12 +39,28 @@ m_end   = sr + (i + 1) * 30.4375
 ## Files
 
 - modify:
-  - **`services/api-python/app/pdf/transit_themes.py:transit_matrix_by_month`** — fix iteration: вместо `sr + i * 30.4375` использовать calendar-month-advance pattern (как в `transit_aspects_by_month`, line 687). Конкретный approach Worker выбирает (один из):
-    - Option A: Generate `(year, month)` pairs starting from sr's calendar month, advance by `relativedelta(months=1)` (если doesn't break Phase 5 logic).
-    - Option B: Use sr-based JD for sub-day precision but advance label by calendar month (decouple label from JD-fraction-based snapshot).
-    - Option C: pre-compute 13 anchor JDs (`sr_jd`, `month_start(sr_year, sr_month+1)`, `month_start(sr_year, sr_month+2)`, ...) using calendar arithmetic.
-    
-    Worker chooses option, documents в HANDOFF rationale.
+  - **`services/api-python/app/pdf/transit_themes.py:transit_matrix_by_month`** — fix iteration: вместо `sr + i * 30.4375` использовать **calendar label + mid-month JD** pattern (минимально-инвазивный, без новых зависимостей):
+
+    **Preferred approach (no new deps):**
+    ```python
+    # Pseudocode — Worker adapts to actual function structure
+    sr_dt = jd_to_utc_datetime(sr_jd)
+    y, m = sr_dt.year, sr_dt.month
+    for i in range(13):
+        label = format_ru_label(y, m)                    # "Июль 2025", etc.
+        mid_dt = datetime(y, m, 15, tzinfo=UTC)          # canonical mid-month
+        mid_jd = utc_datetime_to_jd(mid_dt)              # for snapshot
+        m_start_dt = datetime(y, m, 1, tzinfo=UTC)
+        m_end_dt = datetime(next_year(y, m), next_month(m), 1, tzinfo=UTC)
+        m_start, m_end = jd(m_start_dt), jd(m_end_dt)
+        # ... use mid_jd for cell value, [m_start, m_end) for fallback overlap
+        m += 1
+        if m > 12:
+            m = 1
+            y += 1
+    ```
+
+    Integer month advance + `datetime(y, m, 15, UTC)` для mid-month анкера + `[1st of month, 1st of next month)` для window fallback. Никакого `relativedelta` или новых dependencies. Существующие utility функции для JD↔datetime conversion в transit_themes уже есть (Phase 6 timezone handling); reuse.
 
 - new (mandatory):
   - **Regression test в `services/api-python/tests/`** — Worker выбирает где (`test_natalya_transits_acceptance.py` extension OR new `test_mariya_transit_matrix.py`). Test asserts:
@@ -76,9 +92,21 @@ m_end   = sr + (i + 1) * 30.4375
 
 ### Regression test (case 07 Мария)
 
-- [ ] Test asserts case 07 monthly table = 13 unique consecutive month labels.
-- [ ] Test asserts no duplicate labels (e.g. «Август 2025» appears exactly once).
-- [ ] Test asserts monotonic month ordering (Jul/Aug/Sep/Oct/.../Jul next year).
+- [ ] Test asserts case 07 monthly table содержит **строго эту последовательность 13 month labels**:
+  1. `Июль 2025`
+  2. `Август 2025`
+  3. `Сентябрь 2025`
+  4. `Октябрь 2025`
+  5. `Ноябрь 2025`
+  6. `Декабрь 2025`
+  7. `Январь 2026`
+  8. `Февраль 2026`
+  9. `Март 2026`
+  10. `Апрель 2026`
+  11. `Май 2026`
+  12. `Июнь 2026`
+  13. `Июль 2026`
+- [ ] Assertion как `actual_labels == EXPECTED_07_MARIYA_LABELS` (полное equality, не subset). Снимает off-by-one + duplicate ambiguity.
 - [ ] Test uses canonical fixture path `packages/test-fixtures/golden-cases/07-mariya-2025-2026.expected.json`.
 
 ### Natalya baseline preservation
