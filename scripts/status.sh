@@ -8,7 +8,7 @@ set -euo pipefail
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 SLUG="${1:-sitka-office}"
 OVERLAY="${ROOT_DIR}/project-overlays/${SLUG}"
-REPO_PATH="${REPO_PATH:-/Users/ilya/Projects/${SLUG}}"
+REPO_PATH="${REPO_PATH:-${HOME}/Projects/${SLUG}}"
 
 if [[ ! -d "${OVERLAY}" ]]; then
   echo "ERROR: overlay not found: ${OVERLAY}" >&2

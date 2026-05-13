@@ -16,13 +16,13 @@
 # Usage:
 #   bash scripts/check-overlay-consistency.sh <slug> [<repo-path>]
 #
-# Defaults: slug=sitka-office, repo-path=/Users/ilya/Projects/<slug>.
+# Defaults: slug=sitka-office, repo-path=$HOME/Projects/<slug>.
 
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 SLUG="${1:-sitka-office}"
-REPO_PATH="${2:-/Users/ilya/Projects/${SLUG}}"
+REPO_PATH="${2:-${HOME}/Projects/${SLUG}}"
 OVERLAY_DIR="${ROOT_DIR}/project-overlays/${SLUG}"
 
 fail() {

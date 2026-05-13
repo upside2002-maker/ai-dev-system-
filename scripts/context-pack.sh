@@ -24,7 +24,7 @@
 #   - missing or unknown .overlay-maturity
 #
 # Notes:
-#   - Default product repo path is /Users/ilya/Projects/<SLUG>. Overridable
+#   - Default product repo path is $HOME/Projects/<SLUG>. Overridable
 #     by exporting PRODUCT_REPO=<path> before invocation. If the directory
 #     does not exist, product-repo sections degrade to a "(not found)"
 #     placeholder rather than failing.
@@ -45,7 +45,7 @@ Usage: $0 SLUG
 Output: markdown context pack to stdout, length capped at ${MAX_LINES} lines.
 
 Environment:
-  PRODUCT_REPO — override product repo path (default: /Users/ilya/Projects/<SLUG>)
+  PRODUCT_REPO — override product repo path (default: $HOME/Projects/<SLUG>)
 EOF
 }
 
@@ -80,7 +80,7 @@ case "${MATURITY}" in
     ;;
 esac
 
-PRODUCT_REPO="${PRODUCT_REPO:-/Users/ilya/Projects/${SLUG}}"
+PRODUCT_REPO="${PRODUCT_REPO:-${HOME}/Projects/${SLUG}}"
 PRODUCT_REPO_NOTE=""
 if [[ ! -d "${PRODUCT_REPO}" ]]; then
   PRODUCT_REPO_NOTE=" — (not found)"
