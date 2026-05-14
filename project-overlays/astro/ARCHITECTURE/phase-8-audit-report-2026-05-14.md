@@ -142,6 +142,55 @@ Reference page numbers in Marina PDFs:
 
 Both Данила OUT-of-tolerance windows terminate at the same engine `orb_exit_jd` (2461798.822368622 = 28.01.2028 10:44 GMT+3). This is a single root cause (engine sample horizon cutoff), affecting two distinct outer cards. Marina's W3 end (Венере, 07.03.2028) and W4 end (Юпитеру, 18.03.2028) are 38 + 49 days past our horizon. Difference between the two is explained by aspect orb width × planet speed at exit.
 
+### § A.2.1.post — Post-fix table (Phase 8B closure, 2026-05-14)
+
+Refresh of § A.2.1 boundary table after TASK 8B Stage B2 horizon extension landed (`_TRANSIT_SAMPLE_BUFFER_DAYS_AFTER = 540 → 730` in `services/api-python/app/ephemeris/bridge.py`; sample window SR + 906d → SR + 1096d ≈ 3 solar years). Per Path 1 amendment: N-J W3 end reclassified from «Phase 4b accepted editorial» to «horizon truncation» (Phase 4a memo Erratum subsection documents the reclassification).
+
+| case | card | W | Marina start | Marina end | our start | our end | Δ start (d) | Δ end (d) | status |
+|------|------|---|--------------|------------|-----------|---------|-------------|-----------|--------|
+| 05 | Uranus Square Moon | W1 | 2025-07-21 | 2025-10-24 | 2025-07-20 | 2025-10-24 | -1 | 0 | OK |
+| 05 | Uranus Square Moon | W2 | 2026-05-06 | 2026-06-09 | 2026-05-05 | 2026-06-09 | -1 | 0 | OK |
+| 05 | Uranus Square Moon | W3 | 2026-12-25 | 2027-03-25 | 2026-12-24 | 2027-03-25 | -1 | 0 | OK |
+| 05 | Uranus Sextile Jupiter | W1 | 2025-06-05 | 2025-07-14 | 2025-06-04 | 2025-07-14 | -1 | 0 | OK |
+| 05 | Uranus Sextile Jupiter | W2 | 2025-10-31 | 2025-12-20 | 2025-10-30 | 2025-12-20 | -1 | 0 | OK |
+| 05 | Uranus Sextile Jupiter | W3 | 2026-03-21 | 2026-05-01 | 2026-03-20 | 2026-05-01 | -1 | 0 | OK |
+| 05 | Neptune Trine Jupiter | W1 | 2024-04-12 | 2024-09-28 | 2024-04-12 | 2024-09-28 | 0 | 0 | OK |
+| 05 | Neptune Trine Jupiter | W2 | 2025-02-12 | 2025-04-08 | 2025-02-12 | 2025-04-08 | 0 | 0 | OK |
+| 05 | Neptune Trine Jupiter | W3 | 2025-10-10 | 2026-02-07 | 2025-10-09 | 2026-02-07 | -1 | 0 | OK |
+| 08 | Uranus Square Venus | W1 | 2025-06-03 | 2025-07-12 | 2025-06-03 | 2025-07-12 | 0 | 0 | OK |
+| 08 | Uranus Square Venus | W2 | 2025-11-02 | 2025-12-22 | 2025-11-02 | 2025-12-22 | 0 | 0 | OK |
+| 08 | Uranus Square Venus | W3 | 2026-03-19 | 2026-04-30 | 2026-03-18 | 2026-04-30 | -1 | 0 | OK |
+| 08 | Neptune Square Jupiter | W1 | 2026-04-21 | 2026-09-28 | 2026-04-21 | 2026-09-28 | 0 | 0 | OK |
+| 08 | Neptune Square Jupiter | W2 | 2027-02-21 | 2027-04-16 | 2027-02-21 | 2027-04-16 | 0 | 0 | OK |
+| 08 | Neptune Square Jupiter | W3 | 2027-10-10 | 2028-02-16 | 2027-10-09 | **2028-02-16** | -1 | **0** | **OK (Phase 8B reclassified — was -17d pre-fix, now converged; Phase 4b N-J W3 ±20d override REMOVED)** |
+| 08 | Neptune Square Neptune | W1 | 2024-09-27 | 2024-10-12 | 2024-04-02 | 2024-10-12 | **-178** | 0 | **OUT-start** (true Marina-editorial — ours at SR-491d, within 540d BEFORE buffer, not on horizon boundary; Phase 4b N-N W1 start ±200d structured override STAYS) |
+| 08 | Neptune Square Neptune | W2 | 2025-01-31 | 2025-03-29 | 2025-01-31 | 2025-03-29 | 0 | 0 | OK |
+| 08 | Neptune Square Neptune | W3 | 2025-10-25 | 2026-01-24 | 2025-10-24 | 2026-01-24 | -1 | 0 | OK |
+| 10 | Uranus Square Moon | W1 | 2024-07-11 | 2024-10-25 | 2024-07-11 | 2024-10-25 | 0 | 0 | OK |
+| 10 | Uranus Square Moon | W2 | 2025-04-28 | 2025-06-02 | 2025-04-28 | 2025-06-01 | 0 | -1 | OK |
+| 10 | Uranus Square Moon | W3 | 2025-12-25 | 2026-03-16 | 2025-12-24 | 2026-03-16 | -1 | 0 | OK |
+| 10 | Neptune Square Venus | W1 | 2026-05-14 | 2026-09-02 | 2026-05-13 | 2026-09-02 | -1 | 0 | OK |
+| 10 | Neptune Square Venus | W2 | 2027-03-13 | 2027-05-07 | 2027-03-12 | 2027-05-07 | -1 | 0 | OK |
+| 10 | Neptune Square Venus | W3 | 2027-09-15 | **2028-03-07** | 2027-09-14 | **2028-03-07** | -1 | **0** | **OK (Phase 8B Данила target — was -39d pre-fix, now converged)** |
+| 10 | Neptune Square Jupiter | W1 | 2026-05-30 | 2026-08-15 | 2026-05-30 | 2026-08-15 | 0 | 0 | OK |
+| 10 | Neptune Square Jupiter | W2 | 2027-03-24 | 2027-05-22 | 2027-03-23 | 2027-05-22 | -1 | 0 | OK |
+| 10 | Neptune Square Jupiter | W3 | 2027-08-30 | 2027-11-20 | 2027-08-29 | 2027-11-20 | -1 | 0 | OK |
+| 10 | Neptune Square Jupiter | W4 | 2028-01-09 | **2028-03-18** | 2028-01-08 | **2028-03-18** | -1 | **0** | **OK (Phase 8B Данила target — was -50d pre-fix, now converged)** |
+
+**Aggregate status (post Phase 8B):**
+
+| Aspect | Tolerance (±2d date-only) | Out-of-tolerance windows |
+|---|---|---|
+| 05 boundaries | 9 windows × 2 sides = 18 boundary assertions | 0 |
+| 08 boundaries | 9 windows × 2 sides = 18 boundary assertions | 1 (N-N W1 start; true Marina-editorial; structured override in Натальи suite stays) |
+| 10 boundaries | 10 windows × 2 sides = 20 boundary assertions | 0 (both Phase 8B Данила targets converged; xfail markers removed) |
+| **Total** | **56 boundary assertions across 28 windows** | **1 OUT-of-tolerance (true editorial; sole survivor; structured override stays)** |
+
+**Δ from pre-fix:**
+- Pre-fix: 4 OUT (08 N-J W3 end -17d, 08 N-N W1 start -178d, 10 N-V W3 end -39d, 10 N-J W4 end -50d).
+- Post-fix: 1 OUT (08 N-N W1 start -178d).
+- Convergences: 3 (08 N-J W3 end, 10 N-V W3 end, 10 N-J W4 end) — all reflect engine natural output post-horizon-extension; one ((08 N-J W3 end) is the Path 1 reclassification from editorial to horizon truncation.
+
 ---
 
 ## § A.3 Classification
@@ -150,8 +199,8 @@ Aggregating across all cases inspected in Phase 8A + Phase 7 calibration report 
 
 ### TYPE-A — closed-config gap (Phase 8B Stage-B-pattern fix)
 
-1. **[New, Phase 8A]** Cases 01/02/03/04/09 outer cards — Marina shows 2-9 cards per case; our `OUTER_CARD_ALLOWLIST` entries empty for all 5 cases. Same gap as original case 05/10 had pre-Stage-B (calibration report § 4 TYPE-A items 1-2). Fix pattern: extend `OUTER_CARD_ALLOWLIST` + `_OUTER_CARD_FACTS` from Marina reference per case.
-2. **[New, Phase 8A]** Case 05 card 3 title — lexical «трине» (our) vs «тригоне» (Marina). One-word fix in aspect-locative dict in `outer_cards.py`. Affects every Trine outer card across all cases (not just case 05).
+1. **[New, Phase 8A]** Cases 01/02/03/04/09 outer cards — Marina shows 2-9 cards per case; our `OUTER_CARD_ALLOWLIST` entries empty for all 5 cases. Same gap as original case 05/10 had pre-Stage-B (calibration report § 4 TYPE-A items 1-2). Fix pattern: extend `OUTER_CARD_ALLOWLIST` + `_OUTER_CARD_FACTS` from Marina reference per case. **Status: TASK 8D scope (separate from Phase 8B).**
+2. **[New, Phase 8A]** Case 05 card 3 title — lexical «трине» (our) vs «тригоне» (Marina). One-word fix in aspect-locative dict in `outer_cards.py`. Affects every Trine outer card across all cases (not just case 05). **Status: RESOLVED via TASK 8B Stage B1 (2026-05-14).**
 3. **[Phase 7]** Case 05 Venus Jul 2025 monthly cell — anchor-convention boundary divergence (mid-15 vs 01st). Documented note per calibration report § 4 item 3.
 4. **[Phase 7]** Case 07 rows 12-13 monthly cells (Июнь/Июль 2026) — same anchor convention. Documented notes per calibration report § 4 items 4-5.
 
@@ -163,12 +212,14 @@ No new TYPE-B identified by Phase 8A.
 
 ### TYPE-B-equivalent — finite-horizon truncation (Phase 8B engine-or-presentation fix)
 
-1. **[New, Phase 8A]** Case 10 Данила Neptune outer cards W3 end (Venus) + W4 end (Jupiter) — both terminate at identical engine `orb_exit_jd` = 2461798.822368622 = 28.01.2028 10:44 GMT+3. Marina W3 end = 07.03.2028 (+39d past horizon); Marina W4 end = 18.03.2028 (+50d past horizon). **Per user directive 2026-05-14: NOT accepted divergence.** Per Phase 8.0 audit findings: «engine finite-horizon sample window truncation, not Marina editorial». Distinct from Phase 4b 08 accepted (which is Marina-editorial). Phase 8B options (Path A engine horizon extension vs Path B presentation truncation marker) — see § A.4 item 3 below.
+1. **[New, Phase 8A]** Case 10 Данила Neptune outer cards W3 end (Venus) + W4 end (Jupiter) — both terminate at identical engine `orb_exit_jd` = 2461798.822368622 = 28.01.2028 10:44 GMT+3. Marina W3 end = 07.03.2028 (+39d past horizon); Marina W4 end = 18.03.2028 (+50d past horizon). **Per user directive 2026-05-14: NOT accepted divergence.** Per Phase 8.0 audit findings: «engine finite-horizon sample window truncation, not Marina editorial». Distinct from Phase 4b 08 accepted (which is Marina-editorial). **Status: RESOLVED via TASK 8B Stage B2 (2026-05-14)** — Path A chosen (engine sample horizon extension); `_TRANSIT_SAMPLE_BUFFER_DAYS_AFTER 540 → 730` in `services/api-python/app/ephemeris/bridge.py`; both Данила boundaries converge to Marina ±2d post-fix.
+
+2. **[Reclassified Phase 8B Path 1, 2026-05-14]** Case 08 Натальи Neptune Square Jupiter W3 end — was originally classified Phase 4b TYPE-C (Marina-editorial divergence -17d), but Worker B2.1 trace 2026-05-14 empirically proved engine `orb_exit_jd = 2461800.5928 = SR + 906d` = sample window cutoff (identical artifact pattern to Данила). Misclassified at Phase 4a analysis (memo did not trace horizon parameter). **Status: RESOLVED via TASK 8B Stage B2 (2026-05-14)** — same horizon fix as Данила; engine output `16.02.2028 10:23 UTC` converges with Marina `16.02.2028 09:00 UTC` within 1.4 hours. Phase 4a memo gets Erratum (Phase 8B Path 1) subsection documenting reclassification; N-J W3 end +20d structured override in `test_natalya_transits_acceptance.py` REMOVED in Stage B3.2.
 
 ### TYPE-C — Marina editorial; document only (no fix)
 
 1. **[Phase 7]** Case 07 Мария — 0 outer cards by Marina editorial choice (Соляр 2025-2026_4.pdf p. 15: «у вас не будет транзитных аспектов от высших планет»). Empty allowlist entry for case 07 is correct.
-2. **[Phase 4b]** Case 08 Натальи N-J W3 end +20d, N-N W1 start +200d — Marina editorial choice on display window boundaries beyond engine 1° orb threshold; accepted divergence per Path 4 decision 2026-05-13. Already captured via structured `tolerance_overrides` in `test_natalya_transits_acceptance.py`. **Distinct from TYPE-B-equivalent Данила case: 08 is editorial; 10 is engine horizon.**
+2. **[Phase 4b, Phase 8B amended 2026-05-14]** Case 08 Натальи N-N W1 start +200d ONLY — Marina editorial choice on display window boundary (15-day tail of 193-day engine orb window); accepted divergence per Path 4 decision 2026-05-13. Captured via structured `tolerance_override` in `test_natalya_transits_acceptance.py` (W1 start ±200d). N-J W3 end ±20d structured override was **REMOVED** in Phase 8B Stage B3.2 (was misclassified — actually horizon truncation, fixed in Phase 8B Stage B2). **Final state: 1 structured editorial divergence on case 08 (was 2).**
 
 ### TYPE-D — data quality (separate from code regressions; NOT in Phase 8 scope)
 
@@ -195,9 +246,17 @@ Already in scope of this TASK. Closes the test-contract hole by adding outer-car
 - Affects all Trine outer cards across all cases — not case-05-specific.
 - Cost estimate: < 30 min Worker time.
 
+**Status: RESOLVED via TASK 8B Stage B1 (2026-05-14).**
+
 ### 3. **Boundary regression decisions for Данила** — engine horizon vs presentation marker
 
-Both 10 Neptune W3-end (Venus) and W4-end (Jupiter) terminate at identical `orb_exit_jd` (2461798.822368622 = 28.01.2028 10:44 GMT+3). Marina W3 end = 07.03.2028 (+39d), W4 end = 18.03.2028 (+50d). Single root cause: engine sample window cutoff. Per user directive 2026-05-14: **not accepted divergence**. Phase 8C marks the 2 boundary tests `xfail(strict=True, reason="Phase 8B — Данила finite scan horizon (engine sample window cutoff 2461798.822368622 = 28.01.2028)")`; Phase 8B must close them with a real fix.
+**Status: RESOLVED via TASK 8B Stage B2 (2026-05-14)** — Path A chosen.
+
+Both 10 Neptune W3-end (Venus) and W4-end (Jupiter) terminate at identical `orb_exit_jd` (2461798.822368622 = 28.01.2028 10:44 GMT+3). Marina W3 end = 07.03.2028 (+39d), W4 end = 18.03.2028 (+50d). Single root cause: engine sample window cutoff. Per user directive 2026-05-14: **not accepted divergence**. Phase 8C marked the 2 boundary tests `xfail(strict=True, reason="Phase 8B — Данила finite scan horizon (engine sample window cutoff 2461798.822368622 = 28.01.2028)")`. Phase 8B Worker (2026-05-14) implemented Path A: `_TRANSIT_SAMPLE_BUFFER_DAYS_AFTER 540 → 730` in `services/api-python/app/ephemeris/bridge.py` (sample window SR + 906d → SR + 1096d ≈ 3 solar years per `outer_card_lookahead_days = 365.25 * 3` systemic policy). Post-fix engine output: W3 end = 07.03.2028, W4 end = 18.03.2028 — both match Marina ±2d. xfail markers removed in Stage B3.1.
+
+**Path 1 amendment (2026-05-14):** Worker B2.1 trace empirically proved that Phase 4b N-J W3 end (-17d Δ Marina) was misclassified as «Marina-editorial» — actually the **same** horizon truncation pattern as Данила (engine `orb_exit_jd = SR + 906d` exactly). Phase 8B horizon extension also converges 08 N-J W3 end to Marina; +20d structured override in `test_natalya_transits_acceptance.py` REMOVED in Stage B3.2. Phase 4a memo gets Erratum (Phase 8B Path 1) subsection documenting reclassification. Final state: 08 has 1 structured editorial divergence (was 2).
+
+Original Worker analysis below preserved for audit trail.
 
 #### Path A — engine sample horizon extension
 

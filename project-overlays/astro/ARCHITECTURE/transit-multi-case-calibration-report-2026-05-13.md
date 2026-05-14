@@ -448,27 +448,19 @@ Aggregating across all three cases:
 
 #### TYPE-B-equivalent (finite-horizon truncation; Phase 8B engine-or-presentation fix)
 
-8. **Case 10 Данила Neptune outer cards — finite scan horizon truncation.** Per Phase
+8. **[RESOLVED via TASK 8B 2026-05-14]** **Case 10 Данила Neptune outer cards — finite scan horizon truncation.** Per Phase
    8A audit § A.2.1 (Marina boundary dates SoT table):
    - Нептун кв Венере W3 end: our `28.01.2028` vs Marina `07.03.2028` (Δ = −39 days).
    - Нептун кв Юпитеру W4 end: our `28.01.2028` vs Marina `18.03.2028` (Δ = −50 days).
-   - Both terminate at identical engine `orb_exit_jd = 2461798.822368622` = engine
+   - Both terminated at identical engine `orb_exit_jd = 2461798.822368622` = engine
      sample window cutoff.
    - Per user directive 2026-05-14: **NOT accepted divergence.** Distinct from Phase 4b
-     08-Натальи editorial divergences (which are Marina-chosen). This is engine-level
-     truncation that affects accuracy.
-   - **Phase 8B fix paths** (per Phase 8A audit § A.4 item 3):
-     - **Path A — engine sample horizon extension** in Haskell `Domain.TransitCalendar`
-       (Worker recommendation; engine accuracy preferable to presentation honesty when
-       engine can produce correct numbers).
-     - **Path B — presentation truncation marker** (fallback / defensive fence; render
-       «(окно truncated, sample horizon)» when interval `orb_exit_jd` equals engine
-       sample-window boundary).
-   - **Phase 8C test contract (this TASK)**: 2 boundary tests marked
-     `@pytest.mark.xfail(strict=True, reason="Phase 8B — Данила finite scan horizon
-     (engine sample window cutoff 2461798.822368622 = 28.01.2028)")` in
-     `test_multi_case_calibration.py`. Phase 8B fix will cause `xfail` → `xpass` →
-     strict flip forces Worker to unmark in the same Phase 8B TASK.
+     08-Натальи editorial divergences (which are Marina-chosen). This was engine-level
+     truncation that affected accuracy.
+   - **Resolution (Phase 8B Stage B2, 2026-05-14): Path A applied —** `_TRANSIT_SAMPLE_BUFFER_DAYS_AFTER 540 → 730` в `services/api-python/app/ephemeris/bridge.py`. Engine sample window extended from SR + 906d → SR + 1096d (~3 solar years per `outer_card_lookahead_days = 365.25 * 3` systemic policy). Post-fix engine output: W3 end = 07.03.2028 18:49 UTC, W4 end = 18.03.2028 13:46 UTC — both match Marina ±2d. xfail markers removed in Stage B3.1; pytest 221 passed + 0 xfailed + 0 failed.
+   - **Path 1 amendment co-fix (Phase 8B Stage B3.2):** Phase 4b N-J W3 end (Натальи) -17d Δ was reclassified from «Marina-editorial» to «horizon truncation» (Worker B2.1 trace proved engine `orb_exit_jd = SR + 906d` exactly = sample window cutoff, same pattern as Данила). N-J W3 end +20d structured override REMOVED. N-N W1 start +200d structured override STAYS (true editorial: our start at SR-491d, within 540d BEFORE buffer, not on horizon boundary). Phase 4a memo (`transit-contact-window-semantics-2026-05-13.md`) gets Erratum (Phase 8B Path 1) subsection documenting reclassification.
+
+9. **[CLOSED via Phase 8B 2026-05-14]** Lexical «трине» → «тригоне» fix in `services/api-python/app/pdf/outer_cards.py` aspect-locative dict (case 05 card 3 title). Affects all Trine outer cards across cases. Was Phase 8A audit § A.3 TYPE-A item 7. Resolved in TASK 8B Stage B1.
 
 #### TYPE-D (data quality; NOT in Phase 8 scope — separate data-revision sub-tasks)
 
