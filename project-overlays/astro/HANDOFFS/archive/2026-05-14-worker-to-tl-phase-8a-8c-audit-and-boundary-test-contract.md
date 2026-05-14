@@ -1,6 +1,6 @@
 # HANDOFF: worker → tl — phase-8a-8c-audit-and-boundary-test-contract
 
-- Status: open
+- Status: closed
 - Date: 2026-05-14 10:21
 - Project: astro
 - From: worker

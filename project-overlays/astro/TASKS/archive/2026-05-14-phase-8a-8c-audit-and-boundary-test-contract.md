@@ -1,6 +1,6 @@
 # TASK: phase-8a-8c-audit-and-boundary-test-contract
 
-- Status: review
+- Status: done
 - Ready: yes
 - Date: 2026-05-14
 - Project: astro
@@ -262,3 +262,53 @@ Fresh PDF + sidecar already produced on `c936dd1`. Independent of Phase 8 progre
 5. TYPE-D items (`_3.pdf`, Анастасия) — listing + short diagnostic only; не съедают Phase 8A scope.
 
 Наталя framing memo — отдельный lightweight artifact, не в этом Worker TASK (per user directive: «не смешивать delivery-to-Marina и contract repair»).
+
+## Closure (2026-05-14)
+
+**Worker delivered Phase 8A audit + Phase 8C test contract; user explicit ack received 2026-05-14.**
+
+- **Product commit:** `9740075` (`test(pdf): outer-card boundary assertions (Phase 8C)`) — single file `tests/test_multi_case_calibration.py`, 309 insertions, 0 product semantic code changes.
+- **Overlay commits:** `d58e370` (audit report + calibration report § 4 additive + STATUS_RU + HANDOFF) + `c7df283` (TASK status bump in-progress → review).
+- **Phase 8A deliverable:** `project-overlays/astro/ARCHITECTURE/phase-8-audit-report-2026-05-14.md` — 19 sections, 282 lines:
+  - § A.1 inventory: 10 Marina PDFs, 8 matched (Δ SR < 60s), 2 TYPE-D.
+  - § A.2 per-case diff for 05/07/08/10 (Phase 7 cases) + 01/02/03/04/09 (new).
+  - § A.2.1 canonical Marina boundary dates SoT — 28 windows × 2 sides = 56 boundary entries, 4 OUT-of-tolerance (2 Phase 4b accepted, 2 Данила Phase 8B target).
+  - § A.3 classification: TYPE-A items 6-7 (allowlist gap 01/02/03/04/09); TYPE-B-equivalent item 8 (Данила finite-horizon truncation, NOT accepted divergence per user directive); TYPE-D items 9-10 (listing only).
+  - § A.4 prioritized Phase 8B sub-task proposals 1-5 with **Worker recommendation Path A** (engine horizon extension primary; Path B optional defensive fence).
+- **Phase 8C deliverable:** `test_multi_case_calibration.py` extended with:
+  - `MARINA_OUTER_CARD_BOUNDARIES` dict (single SoT, copied from § A.2.1 with code-comment cross-ref).
+  - `_parse_window_bound_to_date()` helper (`datetime.date`, time-of-day dropped).
+  - 38 boundary assertions (case 05: 18; case 10: 20).
+  - 2 `@pytest.mark.xfail(strict=True, reason="Phase 8B — Данила finite scan horizon ...")` markers.
+  - 0 new tolerance_overrides; Phase 4b Натальи overrides not touched.
+
+### Acceptance summary (all checked)
+
+- ✅ Phase 8A audit report file with sections A.1 → A.4 + A.2.1 SoT.
+- ✅ § A.2.1 boundary table with 56 entries.
+- ✅ § A.3 classification TYPE-A/B/B-equivalent/C/D.
+- ✅ § A.4 Phase 8B proposals with Worker recommendation for Данила.
+- ✅ Phase 8C boundary assertions + Marina dates SoT + helpers.
+- ✅ 2 Данила xfail-strict markers correctly placed.
+- ✅ 0 product semantic code changes (only test file).
+- ✅ pytest 219 passed + 2 xfailed + 0 failed (183 baseline + 38 new boundary, 2 xfailed).
+- ✅ CI green at HEAD.
+- ✅ cabal build clean.
+- ✅ Backup parity: astro main = backup/main = `9740075`; overlay master = backup/master = `c7df283`.
+- ✅ TASK 7c xfail-strict pattern preserved (Phase 2 discipline).
+
+### User explicit ack — received 2026-05-14
+
+User confirmed all 5 refinements honored + scope clean + test contract closes the right gap.
+
+### Phase 8B ordering per user (2026-05-14)
+
+1. Lexical quick win: «трине → тригоне».
+2. Данила horizon fix: Path A primary (engine sample horizon extension), with spec requirements that extension does NOT change Phase 4b Натальи accepted semantics AND does NOT bloat calendar. Path B optional guardrail (not first fix).
+3. After horizon fix: unmark 2 Данила xfail; boundary tests become green.
+4. Separate TASK: allowlist/facts для 01/02/03/04/09 (NOT mixed with horizon fix).
+5. TYPE-D: separate data-revision backlog, вне Phase 8B implementation.
+
+### Status: done
+
+Archive to `project-overlays/astro/TASKS/archive/`. TASK 8B drafted separately.
