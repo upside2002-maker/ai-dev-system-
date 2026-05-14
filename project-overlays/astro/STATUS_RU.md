@@ -25,14 +25,14 @@
 - Полная история: `ARCHITECTURE/transit-section-program-2026-05-13.md` + `transit-multi-case-calibration-report-2026-05-13.md` + archived TASKs.
 
 **Phase 8 sub-phases:**
-- **Phase 8.0** (audit trail reopen, TL inline overlay-only): **в работе сейчас** — STATUS_RU downgrade + calibration report § 6 verdict update.
-- **Phase 8A** (read-only full-folder audit): следующий TASK после 8.0 closes. Inventory всех Marina etalon PDFs из `/Users/ilya/Downloads/Gmail (3)/`, per-case diff (outer-card count/titles/interval boundaries/golden-rule/calendar/monthly/per-house smoke), classification TYPE-A/B/C/D, prioritized fix plan.
-- **Phase 8C** (test contract first): boundary assertions в `test_multi_case_calibration.py` (start/end ±2 дня, structured overrides только где явно решено). **Must первым поймать Данилу красным.** Без этого «зелёные тесты, дырка в факте» снова повторится.
-- **Phase 8B** (fixes, отдельный TASK после 8A+8C closes): lexical «трине → тригоне»; Данила — **не accepted divergence**, либо расширить loop horizon, либо явно маркировать truncated windows; allowlist/facts 01/02/03/04/09 (отдельный подэтап после 8A inventory).
+- **Phase 8.0** (audit trail reopen, TL inline overlay-only): **CLOSED** 2026-05-14 — STATUS_RU downgrade + calibration report § 6 verdict update.
+- **Phase 8A** (read-only full-folder audit): **CLOSED via Worker 2026-05-14** — audit report `project-overlays/astro/ARCHITECTURE/phase-8-audit-report-2026-05-14.md` создан. Inventory 10 PDFs (8 matched, 2 TYPE-D). Per-case diff для матчей. § A.2.1 canonical Marina boundary dates table (single SoT, 28 windows × 2 sides = 56 boundary entries). Classification TYPE-A/B/B-equivalent/C/D. Prioritized Phase 8B sub-task proposals 1-5 с Данила Path A (engine horizon extension) vs Path B (presentation marker) cost estimates + Worker recommendation Path A.
+- **Phase 8C** (test contract first): **CLOSED via Worker 2026-05-14 одновременно с 8A** — `test_multi_case_calibration.py` extended с 38 boundary assertions для 05+10 (08 — отдельно в `test_natalya_transits_acceptance.py` Phase 4b). 36 passed + 2 xfail(strict=True) для Данила Венере W3 end + Юпитеру W4 end. 0 новых tolerance_overrides; Phase 4b Натальи overrides не тронуты.
+- **Phase 8B** (fixes, **следующий TASK** после 8A+8C ack): items proposed в audit report § A.4 — (1) Phase 8C already closed, (2) lexical «трине → тригоне» quick win, (3) Данила finite scan horizon (Path A recommended; Path B fallback), (4) allowlist expansion 01/02/03/04/09, (5) TYPE-D listing (`_3.pdf`, Анастасия) — separate data revision sub-tasks вне Phase 8.
 
-**Phase 8A+8C — один комбинированный Worker TASK** (audit + test contract — должны идти вместе, потому что 8C boundary assertions используют 8A Marina-listed dates как single source of truth).
+**Phase 8A+8C — комбинированный Worker TASK landed 2026-05-14.** Pytest: 219 passed, 2 xfailed, 0 failed (183 baseline + 38 new boundary tests, 2 xfail-strict). CI green.
 
-**Phase 8B — отдельный TASK** после 8A+8C closes (фиксы поверх audit findings).
+**Phase 8B — отдельный TASK** после 8A+8C ack (фиксы поверх audit findings).
 
 **Phase 1 (Single source of truth + render provenance) — ACCEPTED.** TASK 1 закрыт коммитом `9793d5d`, теперь на `main` (после fast-forward merge `claude/dreamy-moore-46f5eb` → `main`):
 - Canonical render entry point: `services/api-python/scripts/render_natalya.py` с CLI флагами (`--mode {fixture-render,recompute}`, `--output`, `--debug`, `--facts`, `--input`).
@@ -196,11 +196,16 @@ Path B (anchor convention convergence) deferred — strategically возможе
 
 ## Ждёт твоего решения
 
-- **Ack на TASK 8.0 closure** (audit-trail downgrade, overlay-only, TL inline). Все правки в одном commit: TASK 8.0 file + STATUS_RU downgrade + calibration report § 6 «Verdict update (post-Phase-8-audit, 2026-05-14)». Product код 0 строк; pytest baseline preserved; backup parity ✓. После ack → draft TASK Phase 8A+8C для review.
-- **Ack на TASK Phase 8A+8C spec.** TL draft'ит spec для audit + boundary test contract (combined Worker TASK). Презентация на review (Ready: no) перед Worker launch.
+- **Ack на TASK Phase 8A+8C closure** (Worker subagent 2026-05-14). Деливерes:
+  - Audit report `project-overlays/astro/ARCHITECTURE/phase-8-audit-report-2026-05-14.md` (§ A.1 inventory + § A.2/A.2.1 per-case diff + canonical Marina boundary dates SoT + § A.3 classification + § A.4 Phase 8B sub-task proposals 1-5).
+  - Test contract additions в `test_multi_case_calibration.py` (boundary parser helper + Marina dates dict с SoT cross-ref comment + 38 boundary assertions parametrized over 05+10 + 2 xfail-strict markers для Данила W3/W4 ends).
+  - Pytest: 219 passed, 2 xfailed (Данила Венере W3 end + Юпитеру W4 end), 0 failed. CI green.
+  - cabal build up-to-date; product `git status --short` clean.
+  - 0 product semantic code changes (per TASK § C.5).
+  - После ack → draft TASK Phase 8B (fixes) на основании audit § A.4 proposals.
 - **Показ Марине — parallel artifact track, доступно сейчас:**
   - **Можно (independent of Phase 8):** Только Наталю. Fresh PDF `/tmp/08-natalya-2025-2026-c936dd1.pdf` + sidecar `git_sha = c936dd15169c...` (rendered 2026-05-14 post-closure). TL подготовит framing memo для Marina про 2 Phase 4b Neptune accepted divergences (N-J W3 +17d, N-N W1 +178d) по запросу.
-  - **Нельзя:** Показывать «пакет» (05/07/08/10) или говорить «вся папка закрыта». Phase 8 ещё open; case 10 Данила имеет confirmed boundary regression (+38d, +49d); cases 01/02/03/04/09 — allowlist gap; case 05 — lexical «трине» divergence.
+  - **Нельзя:** Показывать «пакет» (05/07/08/10) или говорить «вся папка закрыта». Phase 8 ещё open; case 10 Данила имеет confirmed boundary regression (+39d, +50d); cases 01/02/03/04/09 — allowlist gap; case 05 — lexical «трине» divergence.
 
 Локальная ветка `claude/dreamy-moore-46f5eb` остаётся (deferred cleanup) — не блокер.
 

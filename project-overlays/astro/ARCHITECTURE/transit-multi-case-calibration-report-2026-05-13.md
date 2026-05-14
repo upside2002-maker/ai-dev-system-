@@ -424,6 +424,76 @@ Aggregating across all three cases:
    "не будет транзитных аспектов от высших планет". Our empty allowlist for case 07
    produces a no-card PDF which CORRECTLY matches Marina. No code change needed.
 
+### Additive items 6+ (Phase 8A — 2026-05-14)
+
+> Per Phase 8.0 audit trail discipline: § 4 items 1-5 preserved as historical record;
+> Phase 8A appends items 6-9 below covering findings from full-folder Marina etalon
+> inventory. See `phase-8-audit-report-2026-05-14.md` § A.3 for full classification
+> rationale.
+
+#### TYPE-A (closed-config gap; Phase 8B Stage-B-pattern fix)
+
+6. **Cases 01, 02, 03, 04, 09 — outer-card allowlist empty.** Per Phase 8A audit § A.2:
+   Marina shows 2-9 outer cards per case (case 01 = 5, case 02 = 2, case 03 = 9,
+   case 04 = 2, case 09 = 2); our `OUTER_CARD_ALLOWLIST` entries empty for all 5 cases.
+   Identical gap class as original case 05/10 had pre-Stage-B (resolved via TASK 7b
+   Stage B). Fix pattern: extend `OUTER_CARD_ALLOWLIST` + `_OUTER_CARD_FACTS` from
+   Marina reference per case. **Phase 8B sub-task per case (per-case scope).** Case 09
+   has additional TYPE-D dependency (SR mismatch — see item 9).
+
+7. **Case 05 card 3 title — lexical «трине» vs «тригоне».** Aspect-locative dict in
+   `services/api-python/app/pdf/outer_cards.py` maps `Trine → «трине»`; Marina PDF p. 35
+   uses «тригоне». One-word fix. Affects every Trine outer card across cases (not
+   case-05-specific). **Phase 8B quick-win sub-task.**
+
+#### TYPE-B-equivalent (finite-horizon truncation; Phase 8B engine-or-presentation fix)
+
+8. **Case 10 Данила Neptune outer cards — finite scan horizon truncation.** Per Phase
+   8A audit § A.2.1 (Marina boundary dates SoT table):
+   - Нептун кв Венере W3 end: our `28.01.2028` vs Marina `07.03.2028` (Δ = −39 days).
+   - Нептун кв Юпитеру W4 end: our `28.01.2028` vs Marina `18.03.2028` (Δ = −50 days).
+   - Both terminate at identical engine `orb_exit_jd = 2461798.822368622` = engine
+     sample window cutoff.
+   - Per user directive 2026-05-14: **NOT accepted divergence.** Distinct from Phase 4b
+     08-Натальи editorial divergences (which are Marina-chosen). This is engine-level
+     truncation that affects accuracy.
+   - **Phase 8B fix paths** (per Phase 8A audit § A.4 item 3):
+     - **Path A — engine sample horizon extension** in Haskell `Domain.TransitCalendar`
+       (Worker recommendation; engine accuracy preferable to presentation honesty when
+       engine can produce correct numbers).
+     - **Path B — presentation truncation marker** (fallback / defensive fence; render
+       «(окно truncated, sample horizon)» when interval `orb_exit_jd` equals engine
+       sample-window boundary).
+   - **Phase 8C test contract (this TASK)**: 2 boundary tests marked
+     `@pytest.mark.xfail(strict=True, reason="Phase 8B — Данила finite scan horizon
+     (engine sample window cutoff 2461798.822368622 = 28.01.2028)")` in
+     `test_multi_case_calibration.py`. Phase 8B fix will cause `xfail` → `xpass` →
+     strict flip forces Worker to unmark in the same Phase 8B TASK.
+
+#### TYPE-D (data quality; NOT in Phase 8 scope — separate data-revision sub-tasks)
+
+9. **`Соляр 2025-2026_3.pdf`** — SR 05.09.2025 09:16:30 UTC, no matching fixture.
+   Natal metadata cannot be reproduced from current fixture set. Page 1 shows Asc
+   Скорпион / MC Дева. **Diagnostic:** either create new fixture from PDF + natal
+   back-resolution, or exclude from package scope. **Separate data-revision task,
+   not in Phase 8 scope.**
+
+10. **`Соляр 2025-2026 для Анастасии.pdf`** — SR 14.05.2025 10:53:45 UTC vs fixture
+    `09-anastasiya-2025-2026` SR 09:54:03 UTC. **Δ ≈ 60 min** (likely DST or birth-time/
+    timezone ambiguity). **Diagnostic:** re-resolve `09-anastasiya-2025-2026` fixture's
+    birth_time + timezone via Python's `timezonefinder` and manual verification against
+    Marina's intended reference. Until this is closed, allowlist work for case 09
+    is blocked. **Separate data-revision task, not in Phase 8 scope.**
+
+#### Cross-reference
+
+- Full Phase 8A audit: `project-overlays/astro/ARCHITECTURE/phase-8-audit-report-2026-05-14.md`.
+- Phase 8C test contract: `services/api-python/tests/test_multi_case_calibration.py`
+  block `Phase 8C — Outer-card boundary assertions vs Marina (date-only, ±2d)`
+  (search «MARINA_OUTER_CARD_BOUNDARIES»).
+- Phase 8.0 reopen: `project-overlays/astro/TASKS/archive/2026-05-14-phase-8-0-reopen-audit-trail.md`.
+- Recovery program SoT: `project-overlays/astro/ARCHITECTURE/transit-section-program-2026-05-13.md`.
+
 ---
 
 ## § 5 Total override count + Phase 4b gate clause check

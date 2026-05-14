@@ -1,6 +1,6 @@
 # TASK: phase-8a-8c-audit-and-boundary-test-contract
 
-- Status: open
+- Status: in-progress
 - Ready: yes
 - Date: 2026-05-14
 - Project: astro
