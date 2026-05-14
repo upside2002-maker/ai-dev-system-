@@ -1,10 +1,10 @@
 # Ведение проекта — sitka-office
 
-- Released: yes
-- Holder: (нет)
-- Started: (нет)
-- Expires: (нет)
-- Scope: (нет)
+- Released: no
+- Holder: upside2002@gmail.com
+- Started: 2026-05-13 20:29:02
+- Expires: бессрочно
+- Scope: инцидент: парсер магазинов возвращает 0 позиций по всем источникам — диагностика
 - Active TASK: (нет)
 
 ## Notes
