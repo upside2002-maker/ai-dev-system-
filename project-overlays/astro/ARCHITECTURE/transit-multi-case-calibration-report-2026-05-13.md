@@ -131,14 +131,37 @@ Calendar window dates engine-derived, clipped at solar-year boundaries per Phase
 
 **Solar return**: 01.07.2025 22:11 (GMT+3), Москва. Marina PDF: `Соляр 2025-2026_4.pdf`.
 
-#### Monthly transit table — **REGRESSION FOUND**
+#### Monthly transit table — Stage A baseline + post-TASK-7a state
 
-Marina labels rows `01.MM.YYYY` (day-of-month = 01, day-of-solar-return). Our PDF
-labels rows by Russian-month string. Marina has 13 rows: Jul 2025 through Jul 2026
-consecutive. Our PDF has 13 rows but **labels duplicate Aug 2025 / Oct 2025 and skip
-Sep 2025 / Feb 2026**:
+> **Snapshot history:** Stage A baseline (commit `a1891cc`, 2026-05-13) — TYPE-B regression found (6/13 cells, 2 dup labels, 2 missed months). **TASK 7a** (`8a4865e`, 2026-05-13) replaced the label arithmetic with integer calendar-month advance; **TASK 7b Stage A.2** Worker run 2026-05-13 verified post-fix state. Below: post-TASK-7a snapshot.
+
+##### Post-TASK-7a state (2026-05-13, Stage A.2 Worker verification)
+
+13 unique consecutive labels, 11/13 cell rows match Marina exactly. 2 residual mismatches at rows 12-13 (TYPE-A anchor-day boundary divergences — see § 4 items 4-5).
 
 | Marina | Marina cells (M/S/J/V) | Our label | Our cells (M/S/J/V) | Match |
+|---|---|---|---|---|
+| 01.07.2025 | 12 / 7 / 10 / 9 | Июль 2025 | 12 / 7 / 10 / 9 | YES |
+| 01.08.2025 | 1 / 7 / 10 / 10 | Август 2025 | 1 / 7 / 10 / 10 | YES |
+| 01.09.2025 | 2 / 7 / 10 / 11 | Сентябрь 2025 | 2 / 7 / 10 / 11 | YES |
+| 01.10.2025 | 3 / 7 / 10 / 1 | Октябрь 2025 | 3 / 7 / 10 / 1 | YES |
+| 01.11.2025 | 3 / 7 / 10 / 2 | Ноябрь 2025 | 3 / 7 / 10 / 2 | YES |
+| 01.12.2025 | 4 / 7 / 10 / 3 | Декабрь 2025 | 4 / 7 / 10 / 3 | YES |
+| 01.01.2026 | 4 / 7 / 10 / 4 | Январь 2026 | 4 / 7 / 10 / 4 | YES |
+| 01.02.2026 | 5 / 7 / 10 / 6 | Февраль 2026 | 5 / 7 / 10 / 6 | YES |
+| 01.03.2026 | 6 / 7 / 10 / 7 | Март 2026 | 6 / 7 / 10 / 7 | YES |
+| 01.04.2026 | 7 / 7 / 10 / 9 | Апрель 2026 | 7 / 7 / 10 / 9 | YES |
+| 01.05.2026 | 8 / 7 / 10 / 10 | Май 2026 | 8 / 7 / 10 / 10 | YES |
+| 01.06.2026 | 8 / 7 / 10 / 10 | Июнь 2026 | **9** / 7 / 10 / **11** | NO (TYPE-A: Mars 8→9 on 2026-06-05; Venus 10→11 on 2026-06-11; see § 4 item 4) |
+| 01.07.2026 | 9 / 7 / 11 / 11 | Июль 2026 | 9 / **8** / 11 / **12** | NO (TYPE-A: Saturn 7→8 on 2026-07-08; Venus 11→12 on 2026-07-08; see § 4 item 5) |
+
+**Result: labels 13/13 PASS, cells 11/13 PASS, 2 TYPE-A boundary mismatches.** Per amended gate (TASK 7c): all four conditions (a)-(d) hold; Stage B authorized.
+
+##### Stage A baseline (pre-TASK-7a) — historical reference
+
+Marina labels rows `01.MM.YYYY` (day-of-month = 01, day-of-solar-return). Stage A baseline (`a1891cc`) had 13 rows but **labels duplicated Aug 2025 / Oct 2025 and skipped Sep 2025 / Feb 2026**:
+
+| Marina | Marina cells (M/S/J/V) | Our label (Stage A) | Our cells (M/S/J/V) | Match |
 |---|---|---|---|---|
 | 01.07.2025 | 12 / 7 / 10 / 9 | Июль 2025 | 12 / 7 / 10 / 9 | YES |
 | 01.08.2025 | 1 / 7 / 10 / 10 | Август 2025 | 1 / 7 / 10 / 10 | YES |
@@ -151,8 +174,8 @@ Sep 2025 / Feb 2026**:
 | 01.03.2026 | 6 / 7 / 10 / 7 | Март 2026 | 6 / 7 / 10 / 7 | YES |
 | 01.04.2026 | 7 / 7 / 10 / 9 | Апрель 2026 | 7 / 7 / 10 / 9 | YES |
 | 01.05.2026 | 8 / 7 / 10 / 10 | Май 2026 | 8 / 7 / 10 / 10 | YES |
-| 01.06.2026 | 8 / 7 / 10 / 10 | Июнь 2026 | 9 / 7 / 10 / 11 | NO (Mars diff) |
-| 01.07.2026 | 9 / 7 / 11 / 11 | Июль 2026 | 9 / 8 / 11 / 12 | NO (Sat/Ven diff) |
+| 01.06.2026 | 8 / 7 / 10 / 10 | Июнь 2026 | 9 / 7 / 10 / 11 | NO (Mars diff — TYPE-A boundary, persists post-fix) |
+| 01.07.2026 | 9 / 7 / 11 / 11 | Июль 2026 | 9 / 8 / 11 / 12 | NO (Sat/Ven diff — TYPE-A boundary, persists post-fix) |
 
 **Root cause** (verified by reading `services/api-python/app/pdf/transit_themes.py`
 function `transit_matrix_by_month`, lines 553-568): the iteration uses
@@ -184,8 +207,12 @@ calendar months because sr-day-of-month is early. Case 10 (Данила) sr = 05
 (19:11 UT), so `sr + 30.4375` and `sr + 60.875` land on month-boundaries (end-of-Jul/
 end-of-Aug) which then `_jd_to_year_month` rounds to the calendar-previous month.
 
-**Classification: TYPE-B (generic logic bug, `transit_themes.py:transit_matrix_by_month`
+**Stage A baseline classification: TYPE-B (generic logic bug, `transit_themes.py:transit_matrix_by_month`
 label arithmetic).** Not fixable through closed-config additions.
+
+**Resolution (TASK 7a, commit `8a4865e`, 2026-05-13):** label arithmetic replaced with integer calendar-month advance (`(start_year, start_month + i)` modulo 12 with year-wrap, `mid_dt = datetime(y, m, 15, UTC)` anchored at fixed mid-month). Regression test `services/api-python/tests/test_mariya_transit_matrix.py` pins full equality of label sequence. Post-fix Stage A.2 Worker verification 2026-05-13 confirmed 13/13 unique consecutive labels.
+
+**Residual 2 TYPE-A boundary mismatches (rows 12-13, post-TASK-7a):** caused by anchor convention difference (Marina 01st soliar-month vs our mid-15). See § 4 TYPE-A items 4-5 for full row/planet/transition detail. **Same family as case 05 Venus Jul 2025 (§ 4 item 3).** Per TASK 7c amended gate (a)-(d), this is acceptable; Stage B authorized.
 
 #### Per-house interpretations
 
@@ -296,31 +323,67 @@ Aggregating across all three cases:
 3. **Case 05 Venus Jul 2025 cell** — Marina shows Venus h3, our PDF shows h4 (Δ=1
    house). Fast-mover boundary: Marina anchors monthly snapshot at 11.07.2025 (day-of-sr);
    we anchor at mid-15. Venus moves ~1 sign/day, so the 4-day gap straddles the h3/h4
-   cusp. Stage B fix would be a per-case `tolerance_overrides` entry on a monthly-cell
-   assertion (Phase 4b structured exception pattern).
+   cusp. Per TASK 7b § B.5 (refinement 2026-05-13): **documented note only**, NOT a
+   structured override; not a new override mechanism (monthly cells are out of Phase 4b
+   structured exception scope). Production code/fixtures/tests unchanged.
+
+4. **Case 07 row 12 «Июнь 2026» monthly cell boundary** — Marina shows Mars h8, Venus
+   h10; our PDF shows Mars h9, Venus h11 (Δ=1 house each). Fast/medium movers crossing
+   cusps in the 1st-to-15th gap:
+   - **Mars house 8→9 on 2026-06-05.** Marina samples 01.06 (Mars still h8); our mid-15
+     sample (Mars h9).
+   - **Venus house 10→11 on 2026-06-11.** Marina samples 01.06 (Venus still h10); our
+     mid-15 sample (Venus h11).
+   Anchor convention: Marina = 1-е соляр-месяца (day-of-solar-return); ours = mid-15
+   (`datetime(y, m, 15, UTC)` per `transit_matrix_by_month`). **Same family as item 3
+   (case 05 Venus Jul 2025).** Per TASK 7c § Fixations 4: documented note only, no
+   structured override, no new override mechanism. **Not a TASK 7a regression** —
+   identical cell values pre/post TASK 7a fix.
+
+5. **Case 07 row 13 «Июль 2026» monthly cell boundary** — Marina shows Saturn h7, Venus
+   h11; our PDF shows Saturn h8, Venus h12 (Δ=1 house each). Cusp crossings in the
+   1st-to-15th gap:
+   - **Saturn house 7→8 on 2026-07-08.** Marina samples 01.07 (Saturn still h7); our
+     mid-15 sample (Saturn h8).
+   - **Venus house 11→12 on 2026-07-08.** Marina samples 01.07 (Venus still h11); our
+     mid-15 sample (Venus h12).
+   **Same family as items 3, 4** (anchor convention difference). Per TASK 7c § Fixations
+   4: documented note only, no structured override.
+
+> **TYPE-A cross-reference:** Items 3, 4, 5 share root cause — Marina anchors monthly
+> snapshot at 1-е соляр-месяца, our `transit_matrix_by_month` anchors at mid-15. When
+> fast/medium movers cross house cusps in the 1st-to-15th gap, the two anchors yield
+> different house assignments. Closed-config does not fix this (would require a generic
+> anchor-day policy change — see Path B in TASK 7b STOP HANDOFF, deferred to future
+> programme). Items remain TYPE-A under amended TASK 7c gate; Stage B authorized.
 
 ### TYPE-B (generic logic regression; STOP, escalate)
 
-1. **Monthly transit table label arithmetic bug — manifests on case 07**. Function
-   `services/api-python/app/pdf/transit_themes.py:transit_matrix_by_month` (lines 546-578)
-   uses `m_start = sr + i * 30.4375` for both label derivation AND for the basis of
-   `mid_dt = datetime(y, m, 15)`. When sr-day-of-month is 01 with late-UT time (case 07
-   sr = 01.07.2025 19:11 UT), the arithmetic drift makes `i=2` land on 31.08.2025 still
-   in August calendar-wise; consequence: label duplicates AND the September mid-15
-   snapshot never gets computed (similarly for Oct/Nov/Dec/Jan and Feb 2026). Result:
-   case 07 monthly table has 2 duplicate-month rows and 2 skipped-month rows; 6 of 13
-   cell rows have wrong values vs Marina.
+> **Stage A baseline TYPE-B item 1 RESOLVED 2026-05-13** by TASK 7a (commit `8a4865e`)
+> and verified by TASK 7b Stage A.2 Worker run. Original entry retained below as
+> historical record; resolution noted inline.
 
-   **Why not closed-config**: the fix requires replacing the iteration with calendar-
-   arithmetic month advance (e.g. `(start_year, start_month + i)` modulo 12 with
-   year-wrap), which is a change to **generic Phase 5 logic**. Per TASK § «Запрещены
-   modifications в Stage B»: `transit_themes.py` Phase 5/6 logic must remain generic
-   and unmodified during multi-case calibration. Any change here is a TYPE-B regression
-   even if the diff is small.
+1. **[RESOLVED] Monthly transit table label arithmetic bug — manifests on case 07**. Function
+   `services/api-python/app/pdf/transit_themes.py:transit_matrix_by_month` (Stage A
+   baseline lines 546-578) used `m_start = sr + i * 30.4375` for both label derivation
+   AND for the basis of `mid_dt = datetime(y, m, 15)`. When sr-day-of-month is 01 with
+   late-UT time (case 07 sr = 01.07.2025 19:11 UT), the arithmetic drift made `i=2` land
+   on 31.08.2025 still in August calendar-wise; consequence: label duplicates AND the
+   September mid-15 snapshot never gets computed (similarly for Oct/Nov/Dec/Jan and Feb
+   2026). Stage A result: case 07 monthly table had 2 duplicate-month rows and 2
+   skipped-month rows; 6 of 13 cell rows had wrong values vs Marina.
 
-   Recommendation: open a separate Tier-C TASK `transit-monthly-table-label-arithmetic`
-   with isolated scope (~10 lines of label derivation, with a regression test for case
-   07 specifically) before reopening Stage B of Phase 7.
+   **Fix landed 2026-05-13:** TASK 7a (commit `8a4865e`) replaced iteration with integer
+   calendar-month advance using `datetime(start_year, start_month + i, 15, UTC)` modulo
+   12 with year-wrap; window window `[1st, next-1st)` for cell sampling. Regression test
+   `services/api-python/tests/test_mariya_transit_matrix.py` pins full equality of label
+   sequence. Post-fix Stage A.2 Worker verification 2026-05-13: **13/13 unique
+   consecutive labels** for case 07; cases 05/10 baselines preserved (51/52 and 52/52
+   monthly cells respectively).
+
+   **Residual post-fix divergence on case 07 (2 boundary rows 12-13)** is NOT TYPE-B —
+   it is anchor-day convention divergence (TYPE-A items 4-5 above), present pre-fix as
+   well. See TASK 7c amendment for gate language allowing TYPE-A boundary rows.
 
 ### TYPE-C (Marina-specific editorial; document only)
 
@@ -363,7 +426,7 @@ total to 3 if Stage B applied it. Still well within both thresholds.
 
 ## § 6 Production-readiness verdict
 
-### Verdict: **Blockers identified — program NOT production-ready**
+### Verdict (Stage A baseline 2026-05-13): **Blockers identified — program NOT production-ready**
 
 **Rationale**: One TYPE-B regression identified (case 07 monthly transit table label
 arithmetic, see § 4 TYPE-B item 1). Per Phase 7 Stage A → Stage B gate (TASK § Two-stage
@@ -372,31 +435,57 @@ execution discipline):
 > «Stage B авторизован только если Stage A diff показывает: нет TYPE-B regressions
 > (если есть TYPE-B → STOP, escalate; Phase 7 closes как "Blockers identified")».
 
-Stage B is **NOT authorized**. Phase 7 closes with this verdict. PDFs for cases 05/07/10
-are diagnostic artifacts only — **not for client (Marina) showing**.
+Stage B was **NOT authorized at Stage A baseline**. PDFs for cases 05/07/10 are
+diagnostic artifacts only — **not for client (Marina) showing**.
 
-### Required follow-up before reopening Phase 7
+### Verdict update (post-TASK-7a + TASK-7c, 2026-05-13)
 
-1. **Open Tier-C TASK `transit-monthly-table-label-arithmetic`** to fix the label-
-   arithmetic bug in `transit_themes.py:transit_matrix_by_month`. Scope: replace
-   `_jd_to_year_month(sr + i*30.4375)` with calendar-month-advance arithmetic.
-   Acceptance: case 07 monthly table renders 13 distinct consecutive labels Jul 2025
-   through Jul 2026; cell values match Marina's table per row.
+**Stage B authorized per TASK 7c amended gate (a)-(d).**
 
-2. After TASK above lands and Натальи acceptance (149 baseline) remains green:
-   **reopen Phase 7 Stage A re-validation** on case 07 with the fix. If clean, proceed
-   to Stage B per original task plan.
+- TASK 7a (commit `8a4865e`) resolved TYPE-B item 1 (label arithmetic). Case 07 now
+  emits 13/13 unique consecutive labels.
+- TASK 7b Stage A.2 Worker verification 2026-05-13: 11/13 cell rows match Marina; 2
+  residual mismatches at rows 12-13 reclassified TYPE-A (see § 4 items 4-5) — same
+  family as case 05 Venus Jul 2025 (item 3).
+- TASK 7c (overlay, 2026-05-13) amends Stage A.2 gate: literal «13/13» replaced with
+  (a)-(d) conditions allowing documented TYPE-A boundary rows. All four conditions
+  PASS at TASK 7c closure.
+- Cases 05/10 baselines preserved (51/52 и 52/52 monthly cells respectively).
 
-3. Stage B closed-config work to do (TYPE-A items from § 4):
+**Stage B remains TO DO** before final production-readiness; PDFs cases 05/07/10
+remain diagnostic-only until Stage B closes with «Ready for Marina show — pending user
+ack» verdict + explicit user ack on this report's final post-Stage-B state.
+
+### Required follow-up before final closure of Phase 7
+
+1. **[DONE 2026-05-13]** Tier-C TASK 7a `transit-monthly-table-label-arithmetic`
+   resolved label-arithmetic bug. Commit `8a4865e`. Regression test pinned.
+
+2. **[DONE 2026-05-13]** TASK 7c overlay-only gate amendment authorized Stage B
+   continuation under conditions (a)-(d). Overlay commit landed.
+
+3. **[NEXT]** Resume TASK 7b Worker on Stage B closed-config work (TYPE-A items 1-2
+   from § 4):
    - Extend `app/pdf/outer_cards.py:OUTER_CARD_ALLOWLIST` with case-05 and case-10
      entries (3 cards each) and populate `_OUTER_CARD_FACTS` from Marina pp. 34-37
      (case 05) and pp. 16-19 (case 10).
-   - Note case-10 card 3 has 4 display windows; Phase 4 helper `_assert_three_phase_intervals`
-     needs parametrised window count or a per-case variant.
-   - Add per-case acceptance test file(s).
-   - Create `services/api-python/scripts/render_case.py` to formalise per-case canonical
-     render (replacing the Stage A throwaway `/tmp/stage_a_render_case.py`).
-   - Optionally apply structured tolerance override for case 05 Venus Jul 2025 cell.
+   - Case-10 card 3 has 4 display windows (TYPE-C item 1); Phase 4 helper
+     `_assert_three_phase_intervals` to be generalized with `expected_window_count`
+     parameter (default 3). Engine output is source of truth — accept
+     `aggregate_display_windows` result as-is.
+   - Doc/comment generalization in `outer_cards.py` and `solar.html.j2` («3 intervals
+     / три касания» → «3+ / per Marina card») — no semantic code change.
+   - Create per-case parameterised test file `tests/test_multi_case_calibration.py`.
+   - `services/api-python/scripts/render_case.py` already created by Stage A.2 Worker
+     run 2026-05-13 (currently untracked); commits with Stage B Worker resume.
+   - Items 3, 4, 5 in TYPE-A (Venus Jul 2025 case 05; Jun/Jul 2026 case 07 boundary
+     rows) remain documented-note-only per TASK 7c — no structured override, no new
+     override mechanism.
+
+4. After Stage B closes with «Ready for Marina show — pending user ack» verdict +
+   explicit user ack on this updated report: recovery program closes; PDF Натальи (case
+   08) production-ready; PDFs case 05/10 ready for Marina if she requests the
+   multi-case sweep.
 
 ### Production-readiness semantics
 

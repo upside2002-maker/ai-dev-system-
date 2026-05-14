@@ -25,18 +25,35 @@ Phase 7 follow-up после TASK 7a (label-arithmetic fix landed commit `8a4865
 
 ### Stage A.2 — Re-validation (case 07 fix verification)
 
+> **Gate amended 2026-05-13 by TASK 7c** (`2026-05-13-phase-7c-gate-amendment-typea-monthly-boundary.md`). Original literal «13/13 cells match» replaced with amended (a)-(d) gate below. Background: Worker run 2026-05-13 produced 13/13 labels + 11/13 cells; 2 residual mismatches (case 07 rows 12-13) classified TYPE-A anchor-day boundary divergences (same family as case 05 Venus Jul 2025), not regression.
+
 Worker запускает Stage A diff заново на case 07 после TASK 7a fix:
-- Render case 07 PDF через canonical render (TASK 7b creates `render_case.py` first, OR throwaway script если render_case.py creation deferred).
-- Monthly table: expect **13/13 cells match Marina** (vs 6/13 pre-fix).
-- 13 month labels: `[Июль 2025, Август 2025, ..., Июль 2026]` (per TASK 7a regression test).
+- Render case 07 PDF через canonical render (TASK 7b creates `render_case.py` first, OR throwaway script если render_case.py creation deferred). **NOTE:** `services/api-python/scripts/render_case.py` уже создан в Worker session 2026-05-13 (untracked); resume Worker re-validates на нём.
+- Monthly table label sequence: **13/13 unique consecutive labels** `[Июль 2025, Август 2025, ..., Июль 2026]` (per TASK 7a regression test pinned in `test_mariya_transit_matrix.py`).
+- Monthly table cell values: **≥11/13 exact**, с cell mismatches только в TYPE-A boundary rows (case 07 rows 12-13 documented в calibration report § 4 items 4-5).
 
-Cases 05 и 10 re-validated quickly (no expected regression — фикс не должен влиять на их monthly tables; они работали 51/52 и 13/13 соответственно).
+Cases 05 и 10 re-validated quickly (no expected regression — фикс не должен влиять на их monthly tables; они работали 51/52 и 13/13 соответственно). **Re-validation Worker run 2026-05-13 confirmed:** case 05 = 51/52 sustained, case 10 = 52/52 sustained.
 
-Update calibration report § 3.07 с post-fix results.
+Update calibration report § 3.2 (case 07) с post-fix results — 13/13 labels, 11/13 cells, 2 TYPE-A boundary rows referenced.
+
+#### Amended Stage A.2 → Stage B gate (per TASK 7c)
+
+Stage B is authorized **iff** all four conditions hold:
+
+- **(a) No duplicate or missing month labels.** Each row label unique and consecutive per `[sr-month, sr-month + 1, ..., sr-month + 12]`. Verified by `test_mariya_transit_matrix.py` equality assertion.
+- **(b) No TYPE-B regressions in monthly tables.** Cell values for non-boundary rows match Marina exactly. Cell-value mismatches outside documented TYPE-A boundary rows trigger STOP.
+- **(c) Any monthly cell mismatch must be classifiable as TYPE-A boundary divergence** (cusp crossing within the 1st-to-15th gap of a calendar month), explicitly listed in calibration report § 4 with row label + planet + house transition + transition date.
+- **(d) Calibration report verdict keeps the program state honest** — TYPE-A items enumerated, no rug-sweep, no implicit re-classification. Boundary rows remain visible to readers of the report.
+
+If any of (a)-(d) fails → STOP, escalate, do not proceed to Stage B.
+
+**Current state at TASK 7c closure (2026-05-13):** (a) PASS — 13/13 labels post-TASK 7a; (b) PASS — only TYPE-A boundary rows mismatch (verified by transit_matrix_by_month independent reproduction); (c) PASS — items 4-5 added to calibration report § 4 with full row/planet/transition data; (d) PASS — verdict updated honestly.
+
+**Stage B authorized.** Worker resume on B.1 → B.2 → B.4 → doc/comment generalization → test helper generalization → B.5 → B.6.
 
 ### Stage B — Closed-config calibration
 
-**Stage B authorized только после Stage A.2 confirms case 07 = 13/13.** Если case 07 < 13/13 после fix → STOP, escalation memo, отдельный TASK.
+**Stage B authorized по amended gate (a)-(d) выше.** Original literal «13/13» gate replaced by TASK 7c; see preceding section for current condition statuses.
 
 #### B.1 — Allowlist extension для case 05 Екатерина
 
@@ -124,11 +141,13 @@ Update `transit-multi-case-calibration-report-2026-05-13.md`:
 
 ## Acceptance
 
-### Stage A.2 — Re-validation
+### Stage A.2 — Re-validation (amended gate per TASK 7c)
 
-- [ ] Case 07 Мария monthly table: **13/13 cells match Marina** (vs 6/13 pre-fix).
-- [ ] Case 05, 10 monthly tables: no regression (51/52 и 13/13 sustained respectively).
-- [ ] Calibration report § 3 updated с post-fix results.
+- [ ] Case 07 Мария monthly table label sequence: **13/13 unique consecutive labels** (`[Июль 2025, ..., Июль 2026]`).
+- [ ] Case 07 monthly cells: **≥11/13 exact**, mismatches only in TYPE-A boundary rows (rows 12-13 per calibration report § 4 items 4-5).
+- [ ] Amended gate (a)-(d) all PASS (see Stages > Stage A.2 section).
+- [ ] Case 05, 10 monthly tables: no regression (51/52 и 52/52 sustained respectively, verified Worker run 2026-05-13).
+- [ ] Calibration report § 3.2 updated с post-fix results.
 
 ### Stage B.1 — Case 05 allowlist + card-facts
 

@@ -115,13 +115,16 @@ Worker validated TL pre-mapped Marina inventory (3/3 cases confirmed, return_jd 
 
 **HANDOFF Worker→TL:** `project-overlays/astro/HANDOFFS/archive/2026-05-13-worker-to-tl-phase-7-stage-b-closed-config-calibration.md`. Override count unchanged: 2 (Натальи Phase 4b) — within threshold. Pytest baseline preserved 150/0/0.
 
-**Решение TL (предложение):**
-- **Path A — reclassify rows 12-13 case 07 как TYPE-A in-memo;** softening TASK 7b gate (≥11/13 + 2 documented TYPE-A vs literal 13/13); Worker resumes Stage B. Pragmatic, fast.
-- **Path B — open separate Tier-C TASK на anchor convention convergence** (mid-15 → 01). Invasive: трогает Phase 7 generic logic, нужна full re-validation Натальи (150 baseline) + cases 05/10. Cleaner final result, but +1-2 day calendar.
-- **Path C — STOP transit recovery program at "Blockers identified" globally.** Деферрит outer cards 05/10 в будущую программу; PDF Натальи production-ready (Phase 1-6+4b+7a), PDFs 05/07/10 — не показывать.
-- **Path D — open TASK 7c с amended gate language** (allow TYPE-A в case 07 rows 12-13). Procedurally cleanest version of Path A; функционально эквивалентно.
+**Решение пользователя 2026-05-13: Path D.** Открыт **TASK 7c** (`2026-05-13-phase-7c-gate-amendment-typea-monthly-boundary.md`, Tier C overlay-only, no Worker, TL inline). 5 fixations по user direction:
+1. Case 07 labels — PASS (13/13 unique consecutive Июль 2025 → Июль 2026, TASK 7a сработал).
+2. Case 07 monthly cells — 11/13 exact, 2 TYPE-A divergences (rows 12-13 Mars/Venus и Saturn/Venus).
+3. Cause — deterministic anchor convention difference (Marina 01st vs наш mid-15), не Phase 7a regression, не label arithmetic bug.
+4. Stage B gate amendment — 4 conditions (a)-(d): no dup/missing labels, no TYPE-B regressions, mismatches только в documented TYPE-A boundary rows, report verdict honest.
+5. No product-code change в 7c — только TASK 7b spec + calibration report + STATUS_RU.
 
-**TL рекомендация:** Path A или D — оба матчат прецедент case 05 Venus Jul 2025. Path D предпочтительнее процедурно (отдельный TASK с явным ack-trail).
+Path B (anchor convention convergence) deferred — strategically возможен, но scope wide (full Phase 1-7 re-validation Натальи + 05/07/10). Path C (STOP program) отклонён — теряем multi-case sense. Path D предпочтительнее Path A процедурно (отдельный TASK = явный ack-trail).
+
+**TASK 7c work applied inline (TL, overlay-only):** TASK 7b Stage A.2 gate amended; calibration report § 3.2 (post-TASK-7a snapshot), § 4 (TYPE-A items 4-5 для case 07 rows 12-13 с cross-ref на item 3), § 6 (verdict update + follow-up reorg); STATUS_RU narrative обновлён. Ждёт user explicit ack на TASK 7c closure → unblocks TASK 7b Worker resume.
 
 **Production-readiness gate:** PDF Марине **не показывается до**: (1) TASK 7b closes с verdict «Ready for Marina show — pending user ack»; (2) **явный отдельный user ack** на updated calibration report.
 
@@ -156,11 +159,7 @@ Worker validated TL pre-mapped Marina inventory (3/3 cases confirmed, return_jd 
 
 ## Ждёт твоего решения
 
-- **Path A/B/C/D на TASK 7b STOP gate (case 07 = 11/13 monthly cells, не 13/13).** См. блок выше. TL рекомендация — Path A или D (оба reclassify rows 12-13 как TYPE-A boundary diffs, авторизуют Stage B). После твоего выбора:
-  - Path A → in-memo amendment TASK 7b spec, Worker resume.
-  - Path D → новая TASK 7c (gate-language amendment), Worker resume.
-  - Path B → новая Tier-C TASK на anchor convention (+1-2 дня).
-  - Path C → закрытие программы с blocker; outer cards 05/10 deferred.
+- **Закрытие TASK 7c (overlay gate amendment).** TASK 7b Stage A.2 gate amended (literal «13/13» → conditions (a)-(d)); calibration report § 3.2 / § 4 / § 6 updated; STATUS_RU updated. Все inline-правки в одном overlay commit. **Acceptance**: продукт-код 0 lines changed; pytest 150/0/0 preserved; backup parity ✓. После ack → resume TASK 7b Worker на Stage B (B.1, B.2, B.4, B.5, B.6) per amended gate.
 - **Когда показывать Марине** — после закрытия всей программы (Phase 0-7) и финального ack пользователя. До этого PDF — внутренний debug/QA артефакт. Известный editorial разрыв на 2 Neptune boundaries (N-J W3 +17d, N-N W1 +178d) **будет видно Марине при показе**; это accepted divergence, но Marina об этом не знает заранее — TL подготовит ей framing в момент показа.
 
 Локальная ветка `claude/dreamy-moore-46f5eb` остаётся (deferred cleanup) — не блокер.
