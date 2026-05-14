@@ -1,7 +1,7 @@
 # Sitka Office — Current State
 
-Дата: 2026-05-13
-Snapshot commit: `42be920` (`fix(deploy): wget в Dockerfile core + точечные deploy-команды в DEPLOY.md`). Perimeter fix задеплоен 2026-05-11. После него в master: PR #82 (portable `~/Projects/...` пути в `.claude/`), PR #83 (рабочий калькулятор парсера, master `936ccdb`), PR #84 (буфер курса в калькуляторе парсера, master `f048c9b`), PR #85 (расширение CODEOWNERS до 2-tier protection model, master `19ddeef`), PR #86 (wget в Dockerfile core + точечные deploy-команды в DEPLOY.md, master `42be920`; долгосрочный фикс инцидента 2026-05-13).
+Дата: 2026-05-14
+Snapshot commit: `7b069a7` (`ci(deploy): автоматический деплой через GitHub Actions + scope detection + auto-rollback (#87)`). Perimeter fix задеплоен 2026-05-11. После него в master: PR #82 (portable `~/Projects/...` пути в `.claude/`), PR #83 (рабочий калькулятор парсера, master `936ccdb`), PR #84 (буфер курса в калькуляторе парсера, master `f048c9b`), PR #85 (расширение CODEOWNERS до 2-tier protection model, master `19ddeef`), PR #86 (wget в Dockerfile core + точечные deploy-команды в DEPLOY.md, master `42be920`; долгосрочный фикс инцидента 2026-05-13), PR #87 (automated deploy через GitHub Actions с scope detection + auto-rollback, master `7b069a7`; включён, протестирован на пустом diff 2026-05-14 01:26Z).
 Repo: `~/Projects/sitka-office`
 
 ## Phase status
@@ -57,10 +57,10 @@ incoming signal
 
 ## Git snapshot
 
-- HEAD: `42be920` (`fix(deploy): wget в Dockerfile core + точечные deploy-команды в DEPLOY.md`).
+- HEAD: `7b069a7` (`ci(deploy): автоматический деплой через GitHub Actions + scope detection + auto-rollback (#87)`).
 - Untracked в проде repo: `.claude/worktrees/` (gitignored),
   `sitka-services/.cache/` (локальный кеш).
-- Интервал `39873d2..42be920` = **16 commits** (PR #71-#86; per-PR detail — `OPERATING/journal/2026-04.md` + `2026-05.md`).
+- Интервал `39873d2..7b069a7` = **17 commits** (PR #71-#87; per-PR detail — `OPERATING/journal/2026-04.md` + `2026-05.md`).
 - Snapshot drift: overlay допускает natural lag за активным проектом
   до следующего refresh.
 
