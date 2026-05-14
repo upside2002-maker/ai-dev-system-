@@ -1,6 +1,6 @@
 # TASK: phase-8b-lexical-horizon-fix-unmark-xfail
 
-- Status: open
+- Status: review
 - Ready: yes
 - Date: 2026-05-14
 - Project: astro
