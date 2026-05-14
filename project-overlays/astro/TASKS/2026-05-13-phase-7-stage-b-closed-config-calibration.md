@@ -1,7 +1,7 @@
 # TASK: phase-7-stage-b-closed-config-calibration
 
 - Status: open
-- Ready: no
+- Ready: yes
 - Date: 2026-05-13
 - Project: astro
 - Layer: services
@@ -56,11 +56,11 @@ Per Marina pp. 16-19 (`Соляр 2025-2026 для Данилы.pdf`), case 10 o
 
 Extend `OUTER_CARD_ALLOWLIST["10-danila-2025-2026"]` с 3 triples. Populate `_OUTER_CARD_FACTS` per card.
 
-**Note: case-10 card 3 has 4 windows, not 3** (Marina editorial; Worker confirms reading pp. 18-19). Phase 4b helper `_assert_three_phase_intervals` нужен generalized для parametrized window count. Worker may either:
-- (a) Update helper в `test_natalya_transits_acceptance.py` для optional `expected_window_count` parameter (default 3), либо
-- (b) Create separate helper `_assert_n_phase_intervals` для cases с не-3 windows.
+**Case-10 card 3 = 4 windows (Marina editorial):** Production logic уже iterates `card.intervals` и ordinals покрывают 1..5 — generic rendering уже поддерживает N windows. **Worker НЕ меняет semantic logic.** Только:
 
-Worker выбирает minimum-disruption option, document в HANDOFF.
+- **Test side:** generalize `_assert_three_phase_intervals` helper для optional `expected_window_count` parameter (default 3); case 10 card 3 uses 4. Test-helper-only change, не production code.
+- **Engine output discipline:** если `aggregate_display_windows` уже возвращает **4 windows** для `Нептун кв Юпитеру` Данилы — Stage B принимает как есть, тест assertion `len(windows) == 4`. Если engine возвращает другое число (например 3 или 5) — **STOP, escalation memo, не хардкодить window в production facts**. Engine source of truth — если расходится с Marina, это TYPE-B или TYPE-C, не «накладной патч».
+- **Doc/comment side:** comments/docstrings в `outer_cards.py` и `solar.html.j2` всё ещё могут говорить «3 intervals / три касания» — Worker может заменить на «3+ / per Marina card» (без semantic code change). Это explicitly authorized в Files section.
 
 #### B.3 — Canonical render script
 
@@ -76,9 +76,11 @@ Per case assertions:
 - Calendar rows match Marina rows (количество и dates ±tolerance).
 - Дома цели through `rulership_houses.target_house_set`.
 
-#### B.5 — Optional case 05 Venus tolerance override
+#### B.5 — Case 05 Venus monthly boundary — documented note only
 
-Calibration report § 4 TYPE-A item 3: case 05 Venus Jul 2025 cell boundary diff ±1 house. Worker decides: либо documented как known case-specific divergence (no override), либо structured override через Phase 4b pattern (если cell-level override mechanism exists для monthly table — отдельный концерн от outer-card interval overrides).
+Calibration report § 4 TYPE-A item 3: case 05 Venus Jul 2025 cell boundary diff ±1 house. **НЕ структурный override** — это не outer-card interval (Phase 4b structured override mechanism применим только к outer card intervals, не к monthly table cells). Также не new override mechanism — Stage B closed-config scope не расширяется до cell-level overrides для monthly table.
+
+**Решение:** документировать как **TYPE-A note** в calibration report § 4 («case 05 Venus Jul 2025 cell boundary differs from Marina by ±1 house — known case-specific divergence; not regression»). Production code, fixtures, tests не меняются для этого item.
 
 ### Stage B.6 — Update calibration report
 
@@ -98,7 +100,9 @@ Update `transit-multi-case-calibration-report-2026-05-13.md`:
   - **`services/api-python/app/pdf/outer_cards.py`**:
     - Extend `OUTER_CARD_ALLOWLIST` с entries для `05-ekaterina-2025-2026` и `10-danila-2025-2026` (3 triples each).
     - Extend `_OUTER_CARD_FACTS` с closed card-facts per card (читать с Marina pp. 34-37 для case 05, pp. 16-19 для case 10).
+    - **Doc/comment generalization authorized:** заменить comments/docstrings про «3 intervals / три касания» на «3+ intervals / per Marina card» где они привязаны к hardcoded 3. **НИКАКОГО semantic code change** — production уже iterates `card.intervals` + ordinals 1..5 уже cover up to 5 windows. Only docs/comments.
     - **`aggregate_display_windows` / `build_outer_card` core logic НЕ меняется.**
+  - **`services/api-python/app/pdf/templates/solar.html.j2`** — **doc/comment generalization** (если есть Jinja comments или wording про «три касания» hardcoded для 3-only). Template уже iterates `card.intervals` generically — no semantic change.
   - **`services/api-python/tests/test_natalya_transits_acceptance.py`** — generalize `_assert_three_phase_intervals` helper для parametrized window count (case 10 card 3 = 4 windows). Add optional parameter `expected_window_count: int = 3`. **НЕ менять Phase 4b structured overrides на Натальи.**
   - **`services/api-python/scripts/render_natalya.py`** — может стать тонкой wrapper над `render_case.py` (optional refactor; Worker decides).
   - **`project-overlays/astro/ARCHITECTURE/transit-multi-case-calibration-report-2026-05-13.md`** — update sections per Stage B.6 above.
@@ -216,4 +220,4 @@ Update `transit-multi-case-calibration-report-2026-05-13.md`:
 
 **Phase 4b gate clause check** (per architecture document § 7 запрет 7): Total tolerance overrides applied across all calibration cases (Натальи Phase 4b = 2 + any new B.5) ≤ 10 total и ≤ 5 per case. Worker reports M в HANDOFF; если exceeded → STOP, escalation.
 
-**Ready: no** — TL flip'ает в `yes` после ack пользователя на TASK 7b spec.
+**Ready: yes** — flipped после ack пользователя на TASK 7b spec (3 refinements applied: doc/comment generalization, case 10 4-window engine discipline, B.5 documented-note-only).
