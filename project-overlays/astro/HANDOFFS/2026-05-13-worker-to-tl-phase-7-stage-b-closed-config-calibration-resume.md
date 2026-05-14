@@ -10,6 +10,7 @@
 - Role mode: Worker (Tier C, resume session)
 - TASK: project-overlays/astro/TASKS/2026-05-13-phase-7-stage-b-closed-config-calibration.md
 - Predecessor handoff: project-overlays/astro/HANDOFFS/archive/2026-05-13-worker-to-tl-phase-7-stage-b-closed-config-calibration.md (Stage A.2 STOP escalation, archived after TASK 7c overlay-only gate amendment)
+- Product repo status: committed (backup push parity verified: backup/main = c936dd1)
 
 ## TL;DR
 

@@ -1,6 +1,6 @@
 # TASK: phase-7-stage-b-closed-config-calibration
 
-- Status: in-progress
+- Status: review
 - Ready: yes
 - Date: 2026-05-13
 - Project: astro
