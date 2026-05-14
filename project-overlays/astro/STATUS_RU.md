@@ -4,7 +4,19 @@
 
 ## Сейчас
 
-Внутренний инструмент Марины для подготовки соляр-консультаций. **Программа Transit Section Recovery в работе. Phase 0/1/2 закрыты. Phase 3 spec готов (ack pending). Worktree merged в main.**
+Внутренний инструмент Марины для подготовки соляр-консультаций. **Программа Transit Section Recovery — CLOSED 2026-05-13.** Все 7 фаз реализованы и приняты: Phase 0/1/2/3/4/4a/4b/5/6/7. Финальный verdict калибровочного отчёта `«Ready for Marina show»`. PDF можно показывать Марине (cases 05/07/08/10).
+
+**Recovery program closure summary (2026-05-13):**
+- Production HEAD: `c936dd1` (astro main = backup/main).
+- Overlay HEAD: `d34eeba` (ai-dev-system master = backup/master) — post-closure overlay commit follows.
+- Pytest: **183 passed, 0 xfailed, 0 failed** (150 baseline + 33 multi-case).
+- Cabal build: clean.
+- Override count: **2 / 10** (Phase 4b Натальи Neptune; threshold preserved).
+- Phase 4b structured editorial exceptions на Натальи (2 Neptune boundaries) — accepted divergence; будет видно Марине при показе, framing подготовит TL.
+- 5 TYPE-A items в § 4 калибровочного отчёта: items 1, 2 [RESOLVED via Stage B] (case 05/10 outer cards); items 3, 4, 5 — anchor-day boundary divergence (Marina 01st vs наш mid-15), documented note-only; Path B convergence deferred to future programme.
+- 7 TASK'ов закрыто в Phase 7: TASK 7 (Stage A baseline, Blockers verdict) + TASK 7a (label-arithmetic fix `8a4865e`) + TASK 7c (gate amendment overlay-only) + TASK 7b (Stage B closed-config `c936dd1`).
+- Канонический render path: `services/api-python/scripts/render_case.py --case-id <case-id> --output <path>` с provenance sidecar (13 keys + case_label extra).
+- Полная история программы: `project-overlays/astro/ARCHITECTURE/transit-section-program-2026-05-13.md` + `transit-multi-case-calibration-report-2026-05-13.md` + 4 archived TASKs в `project-overlays/astro/TASKS/archive/`.
 
 **Phase 1 (Single source of truth + render provenance) — ACCEPTED.** TASK 1 закрыт коммитом `9793d5d`, теперь на `main` (после fast-forward merge `claude/dreamy-moore-46f5eb` → `main`):
 - Canonical render entry point: `services/api-python/scripts/render_natalya.py` с CLI флагами (`--mode {fixture-render,recompute}`, `--output`, `--debug`, `--facts`, `--input`).
@@ -135,7 +147,7 @@ Path B (anchor convention convergence) deferred — strategically возможе
 - Tests: **183 passed + 0 xfailed + 0 failed** (150 baseline + 33 new). cabal build up-to-date. backup parity ✓.
 - **Production-readiness verdict (calibration report § 6): «Ready for Marina show — pending user ack».**
 
-**Production-readiness gate:** PDF Марине **не показывается до**: (1) TASK 7b closes с verdict «Ready for Marina show — pending user ack» — **достигнуто 2026-05-13**; (2) **явный отдельный user ack** на updated calibration report — **NEXT**.
+**Production-readiness gate — PASSED 2026-05-13.** (1) TASK 7b closed с verdict «Ready for Marina show — pending user ack» ✓; (2) **explicit user ack на updated calibration report received 2026-05-13** ✓. Программа Transit Section Recovery **CLOSED**. PDFs cases 05/07/08/10 — production-ready (показывать Марине разрешено).
 
 **Известный editorial разрыв (документировать честно):** Path 4 закрывает **тестовую дисциплину**, не превращает 2 даты в «совпавшие». PDF продолжает рендерить engine-derived dates; Marina при показе видит engine boundaries для 2 Neptune windows, не свои эталонные. Это **known editorial divergence, accepted TL/user 2026-05-13**, не regression и не engine bug.
 
@@ -168,21 +180,26 @@ Path B (anchor convention convergence) deferred — strategically возможе
 
 ## Ждёт твоего решения
 
-- **TASK 7b Stage B closure + final calibration report verdict.** После Worker resume → Stage B applied (allowlist extensions 05/10 + multi-case tests + render_case.py committed + doc/comment generalization + report § 6 final verdict). Финальный operator-отчёт + production-readiness verdict («Ready for Marina show — pending user ack» / «Partial pass» / «Blockers identified») потребует твоего явного ack. После того ack → recovery program closes; PDF Натальи + 05/10 ready for Marina (если она запросит multi-case).
-- **Когда показывать Марине** — после закрытия всей программы (Phase 0-7) и финального ack пользователя. До этого PDF — внутренний debug/QA артефакт. Известный editorial разрыв на 2 Neptune boundaries (N-J W3 +17d, N-N W1 +178d) **будет видно Марине при показе**; это accepted divergence, но Marina об этом не знает заранее — TL подготовит ей framing в момент показа.
+- **Показ Марине** — программа CLOSED; PDF cases 05/07/08/10 — production-ready. Перед показом TL подготовит framing для Марины про known editorial divergence на 2 Neptune boundaries Натальи (N-J W3 +17d, N-N W1 +178d) — engine boundaries, не Marina'ины эталонные; accepted divergence per Path 4 TASK 4b. Marina об этом заранее не знает.
+- **Финальные client-ready PDFs:** свежий render на `c936dd1` через `services/api-python/scripts/render_case.py --case-id <case-id>` — provenance sidecar должен показывать `git_sha = c936dd15169ca5cc4a9425617f2d01c0677e6cfe`. QA-артефакты в `/tmp/*stage-b.pdf` рендерились до Stage B commit (`git_sha = 8a4865e`) — для финальной отправки **не использовать**.
 
 Локальная ветка `claude/dreamy-moore-46f5eb` остаётся (deferred cleanup) — не блокер.
 
 ## Срочные риски
 
-**Программа Transit Section Recovery открыта.** Все работы по транзитному presentation проходят через `ARCHITECTURE/transit-section-program-2026-05-13.md`. До закрытия программы:
+**Программа Transit Section Recovery — CLOSED 2026-05-13.** Активных блокеров нет. Историческая дисциплина (на время программы) — задокументирована в `ARCHITECTURE/transit-section-program-2026-05-13.md`; во время программы запрещалось:
+- перезаписывать `expected.json` golden fixtures результатом текущего engine без diff review;
+- считать зелёные snapshot tests доказательством близости к Марине;
+- использовать full-loop horizon для текстов про текущий соляр;
+- держать main и worktree как равноправные источники PDF;
+- Worker subagents на Phase 3-7 пока Phase 1 + Phase 2 не закрыты;
+- показ PDF Марине до закрытия программы.
 
-- запрещено перезаписывать `expected.json` golden fixtures результатом текущего engine без diff review и hard acceptance tests;
-- запрещено считать зелёные snapshot tests доказательством близости к Марине;
-- запрещено использовать full-loop horizon для текстов про текущий соляр;
-- запрещено держать main и worktree как равноправные источники PDF;
-- запрещены Worker subagents на Phase 3-7 пока Phase 1 + Phase 2 не закрыты;
-- запрещён показ PDF Марине до закрытия программы.
+**Post-closure operational discipline:**
+- Финальные client PDFs рендерить только через `services/api-python/scripts/render_case.py --case-id <case-id>` на HEAD `c936dd1` или новее.
+- Provenance sidecar `<output>.pdf.provenance.json` должен показывать актуальный `git_sha`. QA-PDFs из `/tmp/*stage-b.pdf` (rendered на `8a4865e` до Stage B commit) — для отправки Марине **не использовать**.
+- Phase 4b 2 Neptune editorial divergences (N-J W3 end +17d, N-N W1 start +178d) на Натальи — accepted; TL framing для Марины перед показом обязателен.
+- Anchor convention (mid-15 vs Marina 01st) — 5 TYPE-A boundary rows документированы в калибровочном отчёте § 4. Path B convergence — отдельная будущая программа если потребуется.
 
 Дрейф между prescribed architecture (phases 0.1/0.2) и фактическим кодом (0.5+) — без изменений с 2026-05-06. Не пожар.
 

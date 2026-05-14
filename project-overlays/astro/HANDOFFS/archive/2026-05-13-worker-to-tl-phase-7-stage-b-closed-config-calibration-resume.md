@@ -1,6 +1,6 @@
 # HANDOFF: worker → tl — phase-7-stage-b-closed-config-calibration (Stage B resume)
 
-- Status: review
+- Status: closed
 - Date: 2026-05-13
 - Project: astro
 - From: worker

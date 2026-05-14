@@ -1,6 +1,6 @@
 # TASK: phase-7-stage-b-closed-config-calibration
 
-- Status: review
+- Status: done
 - Ready: yes
 - Date: 2026-05-13
 - Project: astro
@@ -240,3 +240,52 @@ Update `transit-multi-case-calibration-report-2026-05-13.md`:
 **Phase 4b gate clause check** (per architecture document § 7 запрет 7): Total tolerance overrides applied across all calibration cases (Натальи Phase 4b = 2 + any new B.5) ≤ 10 total и ≤ 5 per case. Worker reports M в HANDOFF; если exceeded → STOP, escalation.
 
 **Ready: yes** — flipped после ack пользователя на TASK 7b spec (3 refinements applied: doc/comment generalization, case 10 4-window engine discipline, B.5 documented-note-only).
+
+## Closure (2026-05-13)
+
+**Worker delivered Stage B; user explicit ack received 2026-05-13.**
+
+- **Product commit:** `c936dd1` (`feat(pdf): multi-case outer cards + acceptance tests (Phase 7 / TASK 7b Stage B)`).
+- **Files touched (5, all in spec § Files allow-list):**
+  - `services/api-python/app/pdf/outer_cards.py` — data extends + doc/comment generalization (NO def/class changes).
+  - `services/api-python/app/pdf/templates/solar.html.j2` — doc/comment generalization.
+  - `services/api-python/scripts/render_case.py` — finalized (created Stage A.2, committed Stage B).
+  - `services/api-python/tests/test_multi_case_calibration.py` — 33 new parameterized tests.
+  - `services/api-python/tests/test_natalya_transits_acceptance.py` — helper generalized with `expected_window_count: int = 3` parameter.
+- **Stage B per-section:** B.1 DONE (case 05, 3 cards Marina pp. 34-37); B.2 DONE (case 10, 3 cards Marina pp. 16-19, card 3 = 4 windows engine-native); B.3 DONE (`render_case.py` committed); B.4 DONE (33 multi-case tests); B.5 DONE (case 05 Venus Jul 2025 TYPE-A note-only); B.6 DONE (calibration report § 3/4/5/6 final).
+- **Doc/comment generalization:** done.
+- **Test helper generalization:** done.
+- **Amended gate (a)-(d):** verified PASS by Worker on Stage A.2 entry.
+
+### Acceptance summary (all checked)
+
+- Case 07 monthly labels 13/13 unique consecutive (TASK 7a).
+- Case 07 monthly cells 11/13 + 2 TYPE-A boundary (rows 12-13 per § 4 items 4-5).
+- Cases 05, 10 monthly tables sustained (51/52 и 52/52).
+- Amended gate (a)-(d) all PASS.
+- Case 05 + 10 allowlist + card-facts populated.
+- `_assert_three_phase_intervals(..., expected_window_count: int = 3)` generalized.
+- `render_case.py` parameterized + provenance sidecar `case_label` correct.
+- `test_multi_case_calibration.py` 33 tests covering cases 05/07/10.
+- Calibration report § 6 final verdict «Ready for Marina show — pending user ack».
+- **Override count: 2 (Phase 4b Натальи only); 0 new overrides in Stage B; within threshold.**
+- `cabal build`: Up to date.
+- `pytest`: **183 passed, 0 xfailed, 0 failed.**
+- Product `git status --short`: clean (only `.claude/scheduled_tasks.lock` pre-existing untracked).
+- One commit (`c936dd1`).
+- Backup parity: astro main = backup/main = `c936dd1` ✓; overlay master = backup/master = `d34eeba` ✓.
+- HANDOFF: archived (worker → tl, resume session).
+
+### User explicit ack — received 2026-05-13
+
+User confirmed both:
+1. TASK 7b closure (scope, code, tests, override count).
+2. Final calibration report verdict «Ready for Marina show — pending user ack» — promoted to **Ready for Marina show**.
+
+### Post-closure operational note
+
+User flagged: `/tmp/*stage-b.pdf` artefacts have `git_sha = 8a4865e` (rendered before Stage B commit). These are QA artefacts, not final client artefacts. TL re-renders 4 cases (05, 07, 08, 10) on `c936dd1` post-closure and verifies sidecar `git_sha = c936dd15169ca5cc4a9425617f2d01c0677e6cfe`. Provenance contract fully satisfied only after fresh render.
+
+**Status: done.** Archive to `project-overlays/astro/TASKS/archive/`.
+
+**Recovery program: CLOSED.**
