@@ -1,7 +1,7 @@
 # TASK: phase-8b-lexical-horizon-fix-unmark-xfail
 
 - Status: open
-- Ready: no
+- Ready: yes
 - Date: 2026-05-14
 - Project: astro
 - Layer: services + core (Haskell engine + Python presentation + tests)
@@ -44,12 +44,22 @@ Worker locates current sample-window horizon parameter в Haskell `Domain.Transi
 - Where horizon enters the calculation (function signature, module constant, CLI flag default).
 - Whether horizon affects only outer-planet hits, or all `annual_transit_table` entries.
 
-#### B2.2 — Determine target horizon
+#### B2.2 — Determine target horizon (systemic, not Данила-specific)
 
-Worker computes minimum new horizon needed:
-- Cover Данила Marina W3 end (`07.03.2028`) + W4 end (`18.03.2028`) + reasonable margin.
-- Cover any analogous case in `/Users/ilya/Downloads/Gmail (3)/` (Phase 8A § A.2.1 candidates).
-- Default margin: 60 days past last expected Marina boundary. Worker can propose different margin with reasoning.
+Worker MUST first locate the **current horizon formula** in the engine code (per B2.1) — likely a constant like `outer_card_lookahead_days` or `sample_window_post_solar_return_days`, or a hardcoded numeric. Report explicitly.
+
+Target: introduce or extend a **named systemic parameter**, NOT pin a number tuned to Данила:
+
+- **Recommended rule:** `horizon_end = solar_return + outer_card_lookahead_days` (named constant, no magic number).
+- **Default proposal:** `outer_card_lookahead_days = 365.25 * 3` (3 solar years, ~1095.75 days). Rationale:
+  - Covers slow Neptune/Pluto loops with multiple Direct/Retrograde passes.
+  - Future-proofs against analogous regressions on cases not yet calibrated (Phase 8A § A.2.1 found Данила; nothing prevents another future case hitting same horizon limit).
+  - Marina's typical outer-card windows fit within 3 years post-SR per Phase 8A observations.
+- **Bloat impact analysis BEFORE committing default** — Worker runs B2.5.b presentation-calendar bloat check against the proposed `outer_card_lookahead_days` value FIRST.
+- If `365.25 * 3` overshoots the threshold for any case → Worker proposes alternative (e.g. `365.25 * 2.5` или `365.25 * 2`) with row-count reasoning в HANDOFF.
+- This is a **systemic policy for future slow loops**, not a Данила-specific tuning fence.
+
+**Anti-pattern (STOP trigger):** if Worker is tempted to set `outer_card_lookahead_days = max(Marina W3 end Данила, Marina W4 end Данила) + 60d` — that's tuning to Данила, not systemic. STOP, reread B2.2.
 
 #### B2.3 — Schema-cascade detection
 
@@ -71,10 +81,12 @@ Worker MUST verify all the following pass post-fix:
 - These are Marina-editorial divergences — extending horizon must NOT shift our values toward Marina's (that would change Marina-editorial gap into engine fix).
 - Verified by: rerun audit § A.2.1 boundary extraction; check 08 N-J W3 end and 08 N-N W1 start dates unchanged.
 
-**b. Calendar size does NOT bloat:**
-- `annual_transit_table` row count для Натальи / 05 / 07 / 10 / 08 post-fix ≤ 1.5× pre-fix count.
-- Worker reports actual ratios в HANDOFF.
-- If ratio > 1.5× for any case → STOP, escalation memo, possibly tighter margin in B2.2.
+**b. Presentation calendar does NOT bloat (post-clipping count, not raw):**
+- Threshold applies to **rendered PDF calendar rows** — i.e. `transit_aspects_by_month` output AFTER Phase 6 two-window-pair clipping (visible to Marina).
+- Raw `annual_transit_table` row count в expected.json **may grow** — that's the point of horizon extension. Not a violation per se (but see fixture-regen safeguard below).
+- Presentation calendar post-clipping row count для каждого case (Натальи / 05 / 07 / 08 / 10) ≤ 1.5× pre-fix.
+- Worker reports actual ratios в HANDOFF table — **both raw (for context) and presentation-clipped (for threshold check)**.
+- If presentation ratio > 1.5× for any case → STOP, escalation memo, tighter `outer_card_lookahead_days` proposal in B2.2.
 
 **c. All non-Данила outer card boundaries preserved:**
 - Rerun audit § A.2.1 extraction; verify all 56 boundary entries except 2 Данила targets retain the same Δ start / Δ end values.
@@ -180,8 +192,26 @@ If Worker has time/scope, may propose this as optional add-on в HANDOFF for use
 ### Tier B discipline
 
 - [ ] If schema cascade triggers → STOP, escalation, **Tier A separate TASK**.
-- [ ] If fixture regen needed → atomic commit (Bright Line #8): regen + Haskell roundtrip test + Python contract test + TS types if any.
-- [ ] Reviewer subagent **recommended** per Tier B (Haskell engine touch). TL inline-verify minimum.
+- [ ] If fixture regen needed → atomic commit (Bright Line #8): regen + Haskell roundtrip test + Python contract test + TS types if any. **See § Fixture regen safeguard below — per-case justification table в HANDOFF обязательна.**
+- [ ] **Reviewer subagent REQUIRED for Stage B2** (Haskell engine touch). Reviewer reviews horizon parameter change + regression guard evidence + fixture diff before Worker commits. TL inline-verify on top of Reviewer's report.
+
+### Fixture regen safeguard (CRITICAL — no silent regen)
+
+If `cabal build` post-horizon-change produces different `annual_transit_table` content в golden fixtures (`packages/test-fixtures/golden-cases/*.expected.json`):
+
+- [ ] Worker **does NOT silently overwrite** all expected.json files. Each per-case regen requires explicit justification.
+- [ ] HANDOFF includes a **per-case justification table**, one row per affected case:
+
+  | case | raw row count before | raw row count after | Δ rows | why changed | downstream assertion proving intended |
+  |------|----------------------|---------------------|--------|-------------|----------------------------------------|
+
+  - "why changed" — must reference the horizon extension (e.g. «horizon extended from N to M days → 7 new outer-planet hits in extended window»). Anything beyond «horizon extended» = semantic shift → STOP.
+  - "downstream assertion" — concrete test name or audit-report-section that verifies the change is intended (e.g. `test_multi_case_calibration.py :: test_outer_card_window_boundary :: 10-danila Neptune Square Venus W3 end`).
+
+- [ ] Worker walks through table line-by-line in HANDOFF prose; не «таблица без комментария».
+- [ ] If any "why changed" cannot be tied to horizon extension → STOP, escalation memo (means semantic shift beyond horizon scope).
+- [ ] Reviewer subagent independently verifies justification table before Worker commits.
+- [ ] Atomic commit per Bright Line #8: Haskell engine + (schema cascade if triggered, else not) + fixtures regen + Haskell roundtrip test + Python contract test + TS types if any — **all in one product commit**, with per-case justification table in commit message.
 
 ### Scope discipline
 
@@ -191,7 +221,7 @@ If Worker has time/scope, may propose this as optional add-on в HANDOFF for use
 
 ## Context
 
-**Mode normal + Tier B** (Haskell engine touch + Python presentation + tests). Reviewer subagent recommended. Worker mode: normal.
+**Mode normal + Tier B** (Haskell engine touch + Python presentation + tests). **Reviewer subagent REQUIRED for Stage B2 Haskell change.** Worker mode: normal.
 
 **Baseline:**
 - Product main @ `9740075` (TASK 8A+8C accepted).
@@ -223,4 +253,12 @@ If Worker has time/scope, may propose this as optional add-on в HANDOFF for use
 
 **Parallel artifact track — Наталя:** unaffected by 8B (Phase 4b Натальи overrides preserved per regression guard B2.5.a). Marina show готовность не меняется.
 
-**Ready: no** — TL flips after user ack on TASK 8B spec + any refinements.
+**Ready: yes** — flipped 2026-05-14 после user ack + 4 refinements applied:
+
+1. **Horizon margin (B2.2):** не tuning под Данилу. Worker first traces current horizon formula, then introduces systemic named parameter `outer_card_lookahead_days` (default proposal `365.25 * 3` = 3 solar years). Bloat impact analysis BEFORE committing default. Anti-pattern STOP trigger: «pin to Marina Данила boundaries +60d» = scope-tuning, not systemic.
+
+2. **Calendar bloat (B2.5.b):** threshold ≤ 1.5× considers **presentation calendar rows after Phase 6 clipping**, NOT raw `annual_transit_table` count. Raw expected may grow (that's the point). Worker reports both ratios в HANDOFF — raw for context, presentation for threshold check.
+
+3. **Reviewer required (Tier B discipline):** Reviewer subagent **REQUIRED for Stage B2** (Haskell engine touch). Reviews horizon parameter change + regression guard evidence + fixture diff before Worker commits.
+
+4. **Fixture regen safeguard:** explicit § «Fixture regen safeguard» added — no silent regen. HANDOFF must contain per-case justification table (raw row count before/after + Δ + why + downstream assertion). Worker walks through prose. Reviewer verifies independently. Atomic commit per Bright Line #8.
