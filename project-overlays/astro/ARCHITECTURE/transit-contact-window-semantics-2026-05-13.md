@@ -755,3 +755,49 @@ cd services/api-python && .venv/bin/pytest --tb=no -q
 ```
 
 Analysis-only TASK; baseline unchanged.
+
+---
+
+## Erratum (2026-05-14, Phase 8B Path 1)
+
+> **Status: ERRATUM** — appended after Phase 8B Worker B2.1 trace 2026-05-14 produced empirical evidence that one of two original Phase 4b «Marina-editorial» boundaries was **misclassified**. Original memo body above is **NOT rewritten** (historical record per audit-trail discipline); this erratum subsection documents the corrective reclassification.
+
+### Finding
+
+Phase 8B Worker B2.1 (TASK `2026-05-14-phase-8b-lexical-horizon-fix-unmark-xfail`) traced the engine sample-window horizon parameter to `services/api-python/app/ephemeris/bridge.py:205`:
+
+```python
+_TRANSIT_SAMPLE_BUFFER_DAYS_AFTER = 540
+```
+
+Sample window for outer-planet hit aggregation: `[SR - 540d, SR + 366d + 540d]` = horizon end at `SR + 906d`.
+
+Натальи SR = `2025-08-07 02:13 UTC` → horizon end = `2028-01-30 02:13 UTC`. This matches our **pre-fix N-J W3 end value** (`2028-01-30`) **exactly** (within 1 minute). Engine `orb_exit_jd` = `2461800.5928` = `SR + 906d`.
+
+### Reclassification
+
+Phase 4a hypothesis testing (§ 4 of original memo) on 3 examples (N-J W1, N-J W3, N-N W1) concluded H1/H2/H3 fit max 2 of 3 examples; only H4 (editorial) was consistent. The killer evidence cited was «N-J W3 and N-N W1 morphologically identical (D+R, similar timing offsets), but Marina draws one as 160-day full window, other as 15-day tail».
+
+**Correct reading per Phase 8B trace:**
+
+- **N-J W3 end (-17d Δ Marina) — TRUNCATION ARTIFACT, not editorial.** Engine `orb_exit_jd` lands exactly on `SR + 906d` (horizon boundary). Marina's `16.02.2028` is at `SR + 923d`, beyond original 540d AFTER buffer. Phase 8B horizon extension (AFTER buffer `540 → 730`, total horizon `SR + 1096d`) converges engine output to within ±2d of Marina (Worker empirical preview: `16.02.2028 10:24 UTC` vs Marina `09:00 UTC`, Δ ≈ 1.4 hours).
+- **N-N W1 start (-178d Δ Marina) — TRUE EDITORIAL.** Our start at `02.04.2024` = `SR - 491d`, well within 540d BEFORE buffer (not on boundary). Engine genuinely sees orb threshold crossed at this date; Marina's `27.09.2024` is a tighter editorial visualization choice. Phase 4b ±200d structured override stays.
+
+### What this changes
+
+- **N-J W3 +20d structured override in `test_natalya_transits_acceptance.py` — REMOVED** as part of TASK 8B Stage B3.2 (per amendment 2026-05-14 Path 1).
+- **N-N W1 +200d structured override — STAYS** unchanged.
+- **Phase 4b structured-exception pattern itself stays valid** for true editorial divergences; only the specific N-J W3 entry was misapplied.
+- **Phase 4a memo § 6 recommendation (Path 4 chosen)** — the conclusion about Marina editorial discretion holds for at least N-N W1 and similar future cases; Path 4 pattern remains valid programme mechanism. The Phase 4a hypothesis testing simply had one mis-classified observation.
+
+### Why misclassified at original analysis
+
+Phase 4a memo did NOT trace the engine sample-window parameter. The analyst assumed engine output was orb-threshold-bounded for all windows. Without tracing the horizon constant, the engine's identical pre-fix N-J W3 end / Данила-style truncation pattern looked indistinguishable from editorial choice.
+
+**Lesson:** future analyses of «Marina-editorial» boundaries should verify that engine output is NOT pegged to a sample-window boundary before concluding editorial. Phase 8C boundary test contract + Phase 8B horizon trace are now the discipline that catches this.
+
+### Cross-references
+
+- TASK 8B amendment: `project-overlays/astro/TASKS/2026-05-14-phase-8b-lexical-horizon-fix-unmark-xfail.md` § B.2.5.a + § B3.2.
+- Phase 8 audit report § A.2.1 SoT boundary table: `project-overlays/astro/ARCHITECTURE/phase-8-audit-report-2026-05-14.md`.
+- Calibration report § 4 TYPE reclassification (post-Phase-8B update).

@@ -75,11 +75,13 @@ Worker makes the minimal Haskell change to extend sample window. NO other engine
 
 Worker MUST verify all the following pass post-fix:
 
-**a. Phase 4b Натальи accepted-divergence values stay accepted:**
-- 08 N-J W3 end Δ stays -17d (Marina `16.02.2028` vs ours `30.01.2028`) — Phase 4b structured override of ±20d.
-- 08 N-N W1 start Δ stays -178d (Marina `27.09.2024` vs ours `02.04.2024`) — Phase 4b structured override of ±200d.
-- These are Marina-editorial divergences — extending horizon must NOT shift our values toward Marina's (that would change Marina-editorial gap into engine fix).
-- Verified by: rerun audit § A.2.1 boundary extraction; check 08 N-J W3 end and 08 N-N W1 start dates unchanged.
+**a. Phase 4b Натальи — partial reclassification (AMENDMENT 2026-05-14 Path 1):**
+
+> **Amendment context:** Worker B2.1 trace 2026-05-14 empirically proved that 08 N-J W3 end ≠ Marina-editorial divergence — it was **finite-horizon truncation** (engine `orb_exit_jd = 2461800.5928 = SR + 906d = sample window cutoff`, identical artifact to Данила). Phase 4a memo misclassified this window. 08 N-N W1 start IS still editorial (our `02.04.2024` is at SR-491d, **within** 540d BEFORE-buffer, not at boundary). User/TL ack on reclassification 2026-05-14.
+
+- **08 N-J W3 end** (Marina `16.02.2028`): post-fix engine expected to converge to Marina within **±2 days** (worker empirical preview: `16.02.2028 10:24 UTC` matches Marina `16.02.2028 12:00 MSK = 09:00 UTC` within 1.4 hours).
+- **08 N-N W1 start** (Marina `27.09.2024` vs ours `02.04.2024`): Δ **stays -178d** (true Marina-editorial; not truncation; ours -491 is within 540d BEFORE-buffer, not on horizon boundary). Phase 4b ±200d structured override **STAYS**.
+- Verified by: rerun audit § A.2.1 boundary extraction.
 
 **b. Presentation calendar does NOT bloat (post-clipping count, not raw):**
 - Threshold applies to **rendered PDF calendar rows** — i.e. `transit_aspects_by_month` output AFTER Phase 6 two-window-pair clipping (visible to Marina).
@@ -88,9 +90,12 @@ Worker MUST verify all the following pass post-fix:
 - Worker reports actual ratios в HANDOFF table — **both raw (for context) and presentation-clipped (for threshold check)**.
 - If presentation ratio > 1.5× for any case → STOP, escalation memo, tighter `outer_card_lookahead_days` proposal in B2.2.
 
-**c. All non-Данила outer card boundaries preserved:**
-- Rerun audit § A.2.1 extraction; verify all 56 boundary entries except 2 Данила targets retain the same Δ start / Δ end values.
-- 4 OUT-of-tolerance entries pre-fix: 2 Phase 4b (08 N-J W3 end, 08 N-N W1 start) stay; 2 Данила (10 N-V W3 end, 10 N-J W4 end) move toward OK.
+**c. Non-Данила boundaries preserved, with ONE explicit reclassification (AMENDMENT 2026-05-14 Path 1):**
+- Rerun audit § A.2.1 extraction; verify Δ values unchanged for ALL entries EXCEPT:
+  - **2 Данила targets** (10 N-V W3 end, 10 N-J W4 end) — must converge to within ±2d.
+  - **08 N-J W3 end (Натальи)** — must improve to within ±2d (reclassified as horizon truncation per amendment; Phase 4a memo gets erratum subsection separately).
+- All other **53 entries**: Δ unchanged.
+- 08 N-N W1 start Δ = -178d **stays** (truly editorial; not on horizon boundary).
 
 **d. Monthly transit tables preserved:**
 - Cases 05 (51/52 + 1 TYPE-A Venus Jul 2025 boundary) — preserved.
@@ -101,23 +106,36 @@ Worker MUST verify all the following pass post-fix:
 - `(219 baseline) - 2 unmarked + 2 newly-passing` = 219 still passes; 0 xfailed; 0 failed.
 - Or expressed differently: 219 collected, 219 passed, 0 xfailed, 0 failed.
 
-### Stage B3 — Unmark Данила xfail (Tier C test housekeeping)
+### Stage B3 — Unmark Данила xfail + remove N-J W3 override (Tier C, amended scope)
 
 After Stage B2 lands and Stage B2.5 regression guards pass:
 
-`services/api-python/tests/test_multi_case_calibration.py` — remove `@pytest.mark.xfail(strict=True, reason="Phase 8B — Данила finite scan horizon ...")` from:
-- `10-danila-2025-2026 :: Neptune Square Venus :: W3 :: end`
-- `10-danila-2025-2026 :: Neptune Square Jupiter :: W4 :: end`
+**B3.1 — Unmark Данила xfail in `test_multi_case_calibration.py`:**
 
-Remove associated `_PHASE_8B_DANILA_XFAIL_BOUNDARIES` data structure (or similar — Worker checks what's there).
+Remove `@pytest.mark.xfail(strict=True, reason="Phase 8B — Данила finite scan horizon ...")` from:
+- `10-danila-2025-2026 :: Neptune Square Venus :: W3 :: end`.
+- `10-danila-2025-2026 :: Neptune Square Jupiter :: W4 :: end`.
 
-After unmark, pytest must report:
-- `(219 passed + 2 xfailed)` → `(221 passed + 0 xfailed)` (if 2 xfailed counted in collection: tally adjusts by formula).
-- Or: `219 passed, 0 xfailed, 0 failed` if Worker'оvская numerology preserved (depends on collection style).
+Remove associated `_PHASE_8B_DANILA_XFAIL_BOUNDARIES` data structure.
+
+**B3.2 — Remove N-J W3 end ±20d override in `test_natalya_transits_acceptance.py` (AMENDMENT 2026-05-14 Path 1):**
+
+Per amendment: Phase 4b N-J W3 end was misclassified; horizon extension makes engine output match Marina within ±2 days. Override `tolerance_overrides[3]["end"]` (or analogous) for Neptune-Jupiter Square must be **removed**.
+- Find current override structure (likely in test method or shared fixture for Neptune-Jupiter Square assertions).
+- Remove the W3 end ±20d tolerance entry.
+- N-N W1 start ±200d override **STAYS** (untouched — true editorial).
+- Any other Phase 4b structured overrides — **DO NOT TOUCH**.
+
+After both unmarks, pytest must report:
+- `xpass(strict=True)` does NOT fire on Данила tests (because Worker explicitly removed xfail markers).
+- `xpass(strict=True)` does NOT fire on N-J W3 (because Worker explicitly removed override).
+- N-N W1 start ±200d override fires as before (still required).
+- Final: `221 passed + 0 xfailed + 0 failed` (or equivalent — depends on collection style).
 
 **STOP triggers:**
 - If Данила boundary tests still fail post-unmark → horizon extension didn't reach Marina dates → revert + escalation (need wider margin or Path B fallback).
-- If `xpass(strict=True)` fires automatically → expected; Worker must explicitly unmark.
+- If 08 N-J W3 end still fails post-override-removal → horizon extension undershot for Натальи — investigate; may need wider `outer_card_lookahead_days`.
+- If 08 N-N W1 start fails (unexpected) → BEFORE buffer also extended somehow (shouldn't be per spec) — STOP, revert any unintended BEFORE buffer change.
 
 ### Stage B4 — Optional Path B defensive fence (deferred)
 
@@ -145,7 +163,10 @@ If Worker has time/scope, may propose this as optional add-on в HANDOFF for use
 ## Do not touch
 
 - Schema `packages/contracts/*.schema.json` — UNLESS horizon extension forces it. If schema cascade triggers → STOP, escalation memo, separate Tier A TASK.
-- Phase 4b Натальи structured overrides в `test_natalya_transits_acceptance.py` — DO NOT change tolerance_overrides values for N-J W3 (±20d end) or N-N W1 (±200d start). These are Marina-editorial divergences and must stay.
+- Phase 4b Натальи `test_natalya_transits_acceptance.py` (AMENDMENT 2026-05-14 Path 1):
+  - **N-J W3 end ±20d override:** **MUST BE REMOVED** in Stage B3.2 — reclassified as horizon truncation; horizon extension makes engine output converge to Marina within ±2d.
+  - **N-N W1 start ±200d override:** **STAYS UNCHANGED** — true Marina-editorial divergence (our start at SR-491d is within 540d BEFORE buffer, not on boundary).
+  - **All other Phase 4b structured overrides:** DO NOT TOUCH.
 - Cases 07 Мария TYPE-A boundary rows (Jun/Jul 2026) — anchor-day convention, separate concern.
 - Cases 05 Venus Jul 2025 TYPE-A monthly cell — separate concern.
 - TASK 7b / 7c / 8.0 / 8A+8C archived files — historical records.
@@ -160,24 +181,28 @@ If Worker has time/scope, may propose this as optional add-on в HANDOFF for use
 - [ ] No other case titles affected.
 - [ ] No other lexical regression.
 
-### Stage B2 — Horizon fix
+### Stage B2 — Horizon fix (amended)
 
-- [ ] Stage B2.1: current horizon traced + reported в HANDOFF (value, location, scope).
-- [ ] Stage B2.2: target horizon + margin reasoning reported.
+- [ ] Stage B2.1: current horizon traced + reported в HANDOFF (value, **language [Python or Haskell]**, location, scope). **Note: TASK initially assumed Haskell; Worker B2.1 trace 2026-05-14 found parameter in Python `bridge.py` — that's correct; spec amendment confirms.**
+- [ ] Stage B2.2: target horizon = `outer_card_lookahead_days` named parameter; default proposal `365.25 * 3 ≈ 1096` days; bloat impact analysis BEFORE commit; reasoning in HANDOFF.
 - [ ] Stage B2.3: schema-cascade check — confirmed «no cascade» OR STOP+escalation.
-- [ ] Stage B2.4: horizon extension applied — minimal Haskell change.
-- [ ] Stage B2.5 regression guards (ALL must pass):
-  - [ ] (a) Phase 4b Натальи N-J W3 end Δ stays -17d; N-N W1 start Δ stays -178d.
-  - [ ] (b) Calendar `annual_transit_table` row count ratio post/pre ≤ 1.5× для каждого case (Натальи / 05 / 07 / 08 / 10).
-  - [ ] (c) All 54 non-Данила boundary entries в § A.2.1 retain pre-fix Δ values (2 Phase 4b accepted divergences stay accepted).
-  - [ ] (d) Monthly tables 05 / 07 / 08 / 10 unchanged.
-  - [ ] (e) Pytest `219 passed + 2 xfailed + 0 failed` baseline preserved pre-unmark.
+- [ ] Stage B2.4: horizon extension applied — minimal change (Python `_TRANSIT_SAMPLE_BUFFER_DAYS_AFTER` adjustment OR named-parameter introduction per B2.2). BEFORE buffer **NOT changed** (only AFTER).
+- [ ] Stage B2.5 regression guards (ALL must pass; AMENDMENT 2026-05-14 Path 1):
+  - [ ] (a) **08 N-J W3 end converges to within ±2d of Marina `16.02.2028`** (reclassified as horizon truncation per amendment).
+  - [ ] (a) **08 N-N W1 start Δ stays -178d** (true editorial; not on horizon boundary; BEFORE buffer not extended).
+  - [ ] (b) Presentation calendar (post-clipping) row count ratio post/pre ≤ 1.5× для каждого case. Report both raw + presentation ratios.
+  - [ ] (c) All 53 OTHER non-Данила boundary entries retain pre-fix Δ values (08 N-J W3 end is the only intended reclassification).
+  - [ ] (d) Monthly tables 05 / 07 / 08 / 10 unchanged. **STOP if any change** (per user direction 2026-05-14).
+  - [ ] (e) Pytest `219 passed + 2 xfailed + 0 failed` baseline preserved pre-unmark (Натальи N-J W3 ±20d override still active при этой проверке — он removed только в Stage B3.2).
 
-### Stage B3 — Unmark Данила xfail
+### Stage B3 — Unmark + remove override (amended)
 
-- [ ] 2 `@pytest.mark.xfail(strict=True, ...)` markers removed for Данила W3 end (Венере) + W4 end (Юпитеру).
-- [ ] `_PHASE_8B_DANILA_XFAIL_BOUNDARIES` (or analogous structure) removed.
-- [ ] Pytest post-unmark: `221 passed + 0 xfailed + 0 failed` (или эквивалент per Worker collection).
+- [ ] **B3.1:** 2 `@pytest.mark.xfail(strict=True, ...)` markers removed for Данила W3 end (Венере) + W4 end (Юпитеру).
+- [ ] **B3.1:** `_PHASE_8B_DANILA_XFAIL_BOUNDARIES` (or analogous structure) removed.
+- [ ] **B3.2:** Phase 4b N-J W3 end ±20d override removed from `test_natalya_transits_acceptance.py` (per amendment 2026-05-14 Path 1).
+- [ ] **B3.2:** N-N W1 start ±200d override **untouched**.
+- [ ] **B3.2:** All other Phase 4b structured overrides untouched.
+- [ ] Pytest post-unmark: `221 passed + 0 xfailed + 0 failed` (or equivalent — depends on collection style).
 - [ ] CI green.
 
 ### Common
@@ -234,14 +259,20 @@ If `cabal build` post-horizon-change produces different `annual_transit_table` c
 - `project-overlays/astro/ARCHITECTURE/transit-multi-case-calibration-report-2026-05-13.md` (§ 6 has Phase 8 verdict).
 - `project-overlays/astro/ARCHITECTURE/phase-8-audit-report-2026-05-14.md` (audit + Phase 8B proposals; § A.2.1 SoT).
 
-**STOP triggers (do not commit + escalate):**
+**STOP triggers (do not commit + escalate; AMENDED 2026-05-14 Path 1):**
 - Schema cascade triggered by horizon extension (Tier A territory).
-- Phase 4b Натальи N-J W3 end or N-N W1 start Δ values **shift** post-fix (means horizon is over-correcting Marina-editorial gap).
-- Calendar row count bloats > 1.5× for any case.
-- Non-Данила boundaries change Δ values (regression).
-- Данила tests still fail after unmark (horizon insufficient → wider margin or Path B fallback).
-- Worker tempted to fix anything beyond scope (allowlist, TYPE-D).
+- **08 N-N W1 start Δ shifts from -178d** post-fix (means BEFORE buffer was unintentionally extended; only AFTER should change).
+- **08 N-J W3 end Δ does NOT converge to ±2d** of Marina (means horizon margin too tight; need larger `outer_card_lookahead_days`).
+- Presentation calendar row count bloats > 1.5× for any case.
+- Any non-Данила, non-N-J-W3-end boundary Δ values change (regression — only 1 reclassification authorized).
+- **Monthly tables for 05 / 07 / 08 / 10 change** (per user direction 2026-05-14).
+- Calendar clipping output for 05 / 07 / 08 / 10 changes (other than the planned outer-card-window expansions).
+- Данила tests still fail after Stage B3 unmark (horizon insufficient → wider margin or Path B fallback; don't re-add xfail).
+- 08 N-J W3 end test fails after Stage B3.2 override removal (override removal premature).
+- Worker tempted to fix anything beyond scope (allowlist 01-09, TYPE-D, other Phase 4b overrides).
 - Lexical fix breaks other case titles.
+- Fixture regen justification cannot tie all changes to horizon extension scope.
+- Reviewer subagent escalates.
 
 **Phase 8B sequence:**
 - Stage B1 (lexical) first — quick warmup, low risk.
@@ -253,7 +284,21 @@ If `cabal build` post-horizon-change produces different `annual_transit_table` c
 
 **Parallel artifact track — Наталя:** unaffected by 8B (Phase 4b Натальи overrides preserved per regression guard B2.5.a). Marina show готовность не меняется.
 
-**Ready: yes** — flipped 2026-05-14 после user ack + 4 refinements applied:
+**Ready: yes** — flipped 2026-05-14 после user ack + 4 refinements applied + AMENDMENT 2026-05-14 Path 1.
+
+### Amendment 2026-05-14 Path 1 (post-Worker-B2.1-escalation)
+
+Worker B2.1 trace empirically showed: Phase 4b N-J W3 end -17d = horizon truncation, not editorial. User ack 2026-05-14:
+1. Systemic horizon: `outer_card_lookahead_days = 365.25 * 3 ≈ 1096` days (AFTER buffer only; BEFORE buffer untouched).
+2. Phase 4a memo erratum subsection added (not memo rewrite).
+3. N-J W3 ±20d override REMOVED in Stage B3.2 (engine post-fix matches Marina ±2d).
+4. N-N W1 ±200d override STAYS (true editorial: ours at SR-491d, within 540d BEFORE buffer).
+5. Fixture regen with per-case justification table (refinement 4 still applies).
+6. B2.5.a expectations changed: «N-J W3 to ±2d (improve); N-N W1 stays -178d».
+7. Only ONE reclassification authorized — all other Δ values stay.
+8. Monthly tables + presentation calendar clipping for 05/07/08/10 must stay unchanged.
+
+Spec amendments above sections § Stage B2.5.a, § Stage B3.1+B3.2, § Do not touch, § Acceptance Stage B2+B3, § STOP triggers — all updated 2026-05-14.
 
 1. **Horizon margin (B2.2):** не tuning под Данилу. Worker first traces current horizon formula, then introduces systemic named parameter `outer_card_lookahead_days` (default proposal `365.25 * 3` = 3 solar years). Bloat impact analysis BEFORE committing default. Anti-pattern STOP trigger: «pin to Marina Данила boundaries +60d» = scope-tuning, not systemic.
 
