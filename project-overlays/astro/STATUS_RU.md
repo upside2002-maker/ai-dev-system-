@@ -124,7 +124,12 @@ Worker validated TL pre-mapped Marina inventory (3/3 cases confirmed, return_jd 
 
 Path B (anchor convention convergence) deferred — strategically возможен, но scope wide (full Phase 1-7 re-validation Натальи + 05/07/10). Path C (STOP program) отклонён — теряем multi-case sense. Path D предпочтительнее Path A процедурно (отдельный TASK = явный ack-trail).
 
-**TASK 7c work applied inline (TL, overlay-only):** TASK 7b Stage A.2 gate amended; calibration report § 3.2 (post-TASK-7a snapshot), § 4 (TYPE-A items 4-5 для case 07 rows 12-13 с cross-ref на item 3), § 6 (verdict update + follow-up reorg); STATUS_RU narrative обновлён. Ждёт user explicit ack на TASK 7c closure → unblocks TASK 7b Worker resume.
+**TASK 7c — ACCEPTED + archived 2026-05-13.** Overlay commit `6b768ae`. Inline-применение: TASK 7b Stage A.2 gate amended (literal `13/13` → conditions (a)-(d)); calibration report § 3.2 (post-TASK-7a snapshot), § 4 (TYPE-A items 4-5 для case 07 rows 12-13 с cross-ref на item 3), § 6 (verdict update + follow-up reorg); STATUS_RU narrative обновлён. User ack на closure received → TASK 7b Worker resumes на Stage B per amended gate.
+
+**TASK 7b — Worker resume на Stage B.** Lifecycle: TASK 7b остаётся `Status: in-progress` (set предыдущим Worker через accept-task; не reset). Новая Worker session continues тот же TASK 7b ownership:
+- `services/api-python/scripts/render_case.py` (untracked, создан предыдущим Worker как § B.3 deliverable) — **resume Worker accepts как свой existing TASK 7b artifact**; commit в Stage B commit как § B.3.
+- Stage B work: B.1 (case 05 allowlist 3 triples) + B.2 (case 10 allowlist 3 triples + 4-window engine discipline) + B.4 (`test_multi_case_calibration.py`) + B.5 (case 05 Venus Jul 2025 note-only) + B.6 (calibration report final update + production-readiness verdict) + doc/comment generalization + test helper generalization.
+- Gate per TASK 7c (a)-(d) — Worker validates self-check before Stage B commit.
 
 **Production-readiness gate:** PDF Марине **не показывается до**: (1) TASK 7b closes с verdict «Ready for Marina show — pending user ack»; (2) **явный отдельный user ack** на updated calibration report.
 
@@ -159,7 +164,7 @@ Path B (anchor convention convergence) deferred — strategically возможе
 
 ## Ждёт твоего решения
 
-- **Закрытие TASK 7c (overlay gate amendment).** TASK 7b Stage A.2 gate amended (literal «13/13» → conditions (a)-(d)); calibration report § 3.2 / § 4 / § 6 updated; STATUS_RU updated. Все inline-правки в одном overlay commit. **Acceptance**: продукт-код 0 lines changed; pytest 150/0/0 preserved; backup parity ✓. После ack → resume TASK 7b Worker на Stage B (B.1, B.2, B.4, B.5, B.6) per amended gate.
+- **TASK 7b Stage B closure + final calibration report verdict.** После Worker resume → Stage B applied (allowlist extensions 05/10 + multi-case tests + render_case.py committed + doc/comment generalization + report § 6 final verdict). Финальный operator-отчёт + production-readiness verdict («Ready for Marina show — pending user ack» / «Partial pass» / «Blockers identified») потребует твоего явного ack. После того ack → recovery program closes; PDF Натальи + 05/10 ready for Marina (если она запросит multi-case).
 - **Когда показывать Марине** — после закрытия всей программы (Phase 0-7) и финального ack пользователя. До этого PDF — внутренний debug/QA артефакт. Известный editorial разрыв на 2 Neptune boundaries (N-J W3 +17d, N-N W1 +178d) **будет видно Марине при показе**; это accepted divergence, но Marina об этом не знает заранее — TL подготовит ей framing в момент показа.
 
 Локальная ветка `claude/dreamy-moore-46f5eb` остаётся (deferred cleanup) — не блокер.

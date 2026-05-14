@@ -1,6 +1,6 @@
 # TASK: phase-7c-gate-amendment-typea-monthly-boundary
 
-- Status: open
+- Status: done
 - Ready: yes
 - Date: 2026-05-13
 - Project: astro
@@ -126,3 +126,20 @@ TASK 7c modifies overlay documentation only:
 **Why Path A (in-memo amendment) was not chosen:** procedurally less clean than Path D (separate TASK file with explicit ack trail). Path D preserves audit visibility — a year from now it is clear that the gate softening was a deliberate, ack'd decision with documented rationale.
 
 **Ready: yes** — user provided full spec content (5 fixations) inline; TL captures verbatim in this TASK file.
+
+## Closure (2026-05-13)
+
+- **Inline application landed:** overlay commit `6b768ae` (one commit, 4 files: TASK 7c new + TASK 7b spec + calibration report + STATUS_RU).
+- **All Acceptance items checked:**
+  - TASK 7b spec Stage A.2 acceptance section updated to amended gate (a)-(d). ✓
+  - Calibration report § 3.2 case 07 monthly table snapshot reflects post-TASK-7a state. ✓
+  - Calibration report § 4 TYPE-A items 4-5 added with row + planet + transition + date; cross-ref to item 3 explicit. ✓
+  - Calibration report § 6 follow-up updated (TASK 7a [DONE], TASK 7c [DONE], TASK 7b Stage B [NEXT]). ✓
+  - STATUS_RU narrative updated. ✓
+  - One overlay commit; push backup; parity ✓.
+  - Pytest baseline preserved (150/0/0).
+  - Product `git status --short` unchanged (only `.claude/scheduled_tasks.lock` + Worker'овский `services/api-python/scripts/render_case.py` untracked).
+- **User ack on closure: received 2026-05-13.**
+- **Status: done.** Archive to `project-overlays/astro/TASKS/archive/`.
+
+After closure → resume TASK 7b Worker on Stage B (B.1, B.2, B.4, B.5, B.6 + doc/comment generalization + test helper generalization) per amended gate (a)-(d).
