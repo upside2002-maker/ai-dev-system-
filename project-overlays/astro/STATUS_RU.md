@@ -126,12 +126,16 @@ Path B (anchor convention convergence) deferred — strategically возможе
 
 **TASK 7c — ACCEPTED + archived 2026-05-13.** Overlay commit `6b768ae`. Inline-применение: TASK 7b Stage A.2 gate amended (literal `13/13` → conditions (a)-(d)); calibration report § 3.2 (post-TASK-7a snapshot), § 4 (TYPE-A items 4-5 для case 07 rows 12-13 с cross-ref на item 3), § 6 (verdict update + follow-up reorg); STATUS_RU narrative обновлён. User ack на closure received → TASK 7b Worker resumes на Stage B per amended gate.
 
-**TASK 7b — Worker resume на Stage B.** Lifecycle: TASK 7b остаётся `Status: in-progress` (set предыдущим Worker через accept-task; не reset). Новая Worker session continues тот же TASK 7b ownership:
-- `services/api-python/scripts/render_case.py` (untracked, создан предыдущим Worker как § B.3 deliverable) — **resume Worker accepts как свой existing TASK 7b artifact**; commit в Stage B commit как § B.3.
-- Stage B work: B.1 (case 05 allowlist 3 triples) + B.2 (case 10 allowlist 3 triples + 4-window engine discipline) + B.4 (`test_multi_case_calibration.py`) + B.5 (case 05 Venus Jul 2025 note-only) + B.6 (calibration report final update + production-readiness verdict) + doc/comment generalization + test helper generalization.
-- Gate per TASK 7c (a)-(d) — Worker validates self-check before Stage B commit.
+**TASK 7b — Stage B Worker resume — ACCEPTED.** Commit `c936dd1` на main:
+- Stage B closed-config calibration landed: B.1 (case 05 outer cards 3 triples + facts из Marina pp. 34-37), B.2 (case 10 outer cards 3 triples + facts из pp. 16-19; case 10 card 3 = 4 windows engine output natively), B.3 (`render_case.py` committed), B.4 (`test_multi_case_calibration.py` — 33 parameterized tests), B.5 (case 05 Venus Jul 2025 = TYPE-A note only), B.6 (calibration report final update).
+- Test helper `_assert_three_phase_intervals` generalized: optional `expected_window_count: int = 3`. Phase 4b Натальи структурные overrides — без изменений.
+- Doc/comment generalization («3 intervals / три касания» → «3+ per Marina card») в `outer_cards.py` + `solar.html.j2`. **0 semantic code change** вне ALLOWLIST + FACTS extends.
+- 0 новых tolerance overrides; всего 2 (Phase 4b Натальи). Threshold preserved (≤ 10 total; ≤ 5 per case).
+- Engine / Haskell core / schema / fixtures / `transit_themes.py` / Phase 4b structured overrides — **0 lines changed**.
+- Tests: **183 passed + 0 xfailed + 0 failed** (150 baseline + 33 new). cabal build up-to-date. backup parity ✓.
+- **Production-readiness verdict (calibration report § 6): «Ready for Marina show — pending user ack».**
 
-**Production-readiness gate:** PDF Марине **не показывается до**: (1) TASK 7b closes с verdict «Ready for Marina show — pending user ack»; (2) **явный отдельный user ack** на updated calibration report.
+**Production-readiness gate:** PDF Марине **не показывается до**: (1) TASK 7b closes с verdict «Ready for Marina show — pending user ack» — **достигнуто 2026-05-13**; (2) **явный отдельный user ack** на updated calibration report — **NEXT**.
 
 **Известный editorial разрыв (документировать честно):** Path 4 закрывает **тестовую дисциплину**, не превращает 2 даты в «совпавшие». PDF продолжает рендерить engine-derived dates; Marina при показе видит engine boundaries для 2 Neptune windows, не свои эталонные. Это **known editorial divergence, accepted TL/user 2026-05-13**, не regression и не engine bug.
 
@@ -197,7 +201,8 @@ Path B (anchor convention convergence) deferred — strategically возможе
 - **Phase 6** (per-context cutoff policy) — **CLOSED** 2026-05-13 (TASK 6 accepted, commit `a1891cc`, 4 Phase 6 xfail flips, two-window-pair architecture).
 - **Phase 7 Stage A** (multi-case calibration validation) — **CLOSED** 2026-05-13 с verdict «Blockers identified» (TYPE-B regression в case 07 monthly table; calibration report committed). Stage B deferred.
 - **TASK 7a** (transit monthly table label-arithmetic fix) — **CLOSED** 2026-05-13 (commit `8a4865e`, 149/0/0 → 150/0/0, Natalya baseline preserved, case 07 13 labels validated).
-- **TASK 7b** (Phase 7 Stage A re-validation + Stage B closed-config calibration) — **готов, ждёт ack пользователя.** Финальная implementation TASK программы. После closing + user ack → recovery program closes; PDF можно показывать Марине.
+- **TASK 7b** (Phase 7 Stage A re-validation + Stage B closed-config calibration) — **CLOSED** 2026-05-13 (commit `c936dd1`, 150 → 183 passed, calibration report verdict «Ready for Marina show — pending user ack»). Финальная implementation TASK программы. **NEXT — user explicit ack** на updated calibration report → recovery program closes; PDF можно показывать Марине.
+- **TASK 7c** (overlay-only gate amendment, TYPE-A monthly boundary) — **CLOSED** 2026-05-13 (overlay commit `6b768ae`, amended gate (a)-(d) для Stage A.2 → Stage B continuation).
 - **Phase 4** (outer-planet cards generator) — только для тех outer-aspects, что представлены в эталоне как карточки.
 - **Phase 5** (rulership-expanded target houses) — Tier C с эскалацией до Tier A при shared core helper.
 - **Phase 6** (per-context cutoff policy) — explicit clipping rules.

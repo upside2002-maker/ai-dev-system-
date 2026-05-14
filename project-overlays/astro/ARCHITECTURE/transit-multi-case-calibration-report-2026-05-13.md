@@ -1,16 +1,28 @@
-# Transit Section Multi-Case Calibration Report — Phase 7 (Stage A)
+# Transit Section Multi-Case Calibration Report — Phase 7 (Stage A + Stage B)
 
-Дата: 2026-05-13
-Author: Worker subagent (Phase 7, TASK `2026-05-13-multi-case-calibration`)
+Дата: 2026-05-13 (Stage A original) + 2026-05-13 (Stage B closed-config calibration)
+Author: Worker subagent (Phase 7, TASK `2026-05-13-multi-case-calibration` →
+TASK 7b Stage A.2/B `2026-05-13-phase-7-stage-b-closed-config-calibration`)
 Owner: Project Tech Lead
 
-Repo state: `main @ a1891cc` (Phase 6 closed). Tests baseline `149 passed / 0 xfailed / 0 failed`.
+Repo state at Stage B close: `main @ 8a4865e` (TASK 7a label-arithmetic fix landed) +
+Stage B closed-config changes (one Worker commit after Stage B closure).
+Tests at Stage B close: **183 passed / 0 xfailed / 0 failed** (150 baseline post-TASK-7a + 33 new
+multi-case acceptance tests in `tests/test_multi_case_calibration.py`).
 
 Architecture SoT: `project-overlays/astro/ARCHITECTURE/transit-section-program-2026-05-13.md`.
 
 Stage A scope (read-only validation): inventory mapping confirm, render per case via
 canonical-equivalent path, per-section diff against Marina, divergence classification,
 override count + Phase 4b gate check, production-readiness verdict. **No product changes.**
+
+Stage B scope (closed-config calibration, authorized by TASK 7c amended gate (a)-(d)):
+extend `OUTER_CARD_ALLOWLIST` + `_OUTER_CARD_FACTS` for cases 05 / 10 from Marina
+reference; create canonical `render_case.py`; create parameterized
+`test_multi_case_calibration.py`; doc/comment generalization («3 intervals / три касания»
+→ «3+ per Marina card»); test helper generalization
+(`_assert_three_phase_intervals(expected_window_count: int = 3)`). **No engine /
+schema / fixture / generic-logic changes.**
 
 ---
 
@@ -113,9 +125,14 @@ Our PDF: matches Marina's set exactly. No out-of-year stale dates observed.
    12.02.2025-08.04.2025 / 10.10.2025-07.02.2026. Golden-rule: transit_h=10, target_h=6,
    transit_ruled=[1,10,11], target_ruled=[10,1,11], walks empty.
 
-**Our PDF**: outer-cards block is empty (no «тр X в Y с нат Z» headings). `OUTER_CARD_ALLOWLIST`
-has no entry for `05-ekaterina-2025-2026`. This is a **TYPE-A closed-config gap** —
-Stage B authorized to extend allowlist + add card-facts.
+**Stage A baseline (pre-Stage-B)**: outer-cards block empty for case 05 — `OUTER_CARD_ALLOWLIST`
+lacked entry for `05-ekaterina-2025-2026`. **TYPE-A closed-config gap.**
+
+**Post-Stage-B (2026-05-13)**: `OUTER_CARD_ALLOWLIST["05-ekaterina-2025-2026"]` extended
+with 3 triples per Marina pp. 34-37; `_OUTER_CARD_FACTS` populated for each card.
+Rendered PDF `/tmp/05-ekaterina-stage-b.pdf` contains all 3 outer cards with Marina-style
+titles, intervals (3 windows each per engine output), Golden-rule tables, psychology +
+event level texts. **TYPE-A item 1 [RESOLVED via Stage B].**
 
 #### Calendar (КАЛЕНДАРЬ транзитных аспектов)
 
@@ -287,13 +304,16 @@ also includes Марс across 1-12 (10 houses), Венера across 1-12, Ура
    30.08.2027-20.11.2027 / 09.01.2028-18.03.2028. Golden-rule: transit_h=2, target_h=7,
    transit_ruled=[1,3], target_ruled=[1,3], walks=h4.
 
-Our PDF: outer-cards block empty. **TYPE-A closed-config gap** — Stage B authorized to
-extend `OUTER_CARD_ALLOWLIST` with these 3 case-10 entries + their card-facts.
+**Stage A baseline (pre-Stage-B)**: outer-cards block empty for case 10 — allowlist
+empty. **TYPE-A closed-config gap.**
 
-Note: card 3 has 4 windows (Marina convention says «4 касание» plural; the Phase 4
-acceptance helper `_assert_three_phase_intervals` is fixed at 3-windows — Stage B card
-3 tests would either parametrise window count or use a per-case variant. This is a
-Stage B implementation detail, not Stage A blocker.)
+**Post-Stage-B (2026-05-13)**: `OUTER_CARD_ALLOWLIST["10-danila-2025-2026"]` extended
+with 3 triples per Marina pp. 16-19; `_OUTER_CARD_FACTS` populated. Card 3 (Нептун кв
+Юпитер) verified: engine `aggregate_display_windows` emits **4 display windows**
+natively, matching Marina «четвертое касание». `_assert_three_phase_intervals` helper
+generalized with `expected_window_count: int = 3` parameter (default 3; case 10 card 3
+passes 4). Rendered PDF `/tmp/10-danila-stage-b.pdf` contains all 3 cards.
+**TYPE-A item 2 [RESOLVED via Stage B].**
 
 #### Calendar
 
@@ -310,15 +330,20 @@ Aggregating across all three cases:
 
 ### TYPE-A (acceptable / closed-config gap; Stage B can fix)
 
-1. **Case 05 outer cards** — Marina shows 3 deep-dive cards (Уран кв Луне, Уран секст
-   Юпитеру, Нептун триг Юпитеру), `OUTER_CARD_ALLOWLIST` empty for `05-ekaterina-2025-2026`.
-   Stage B fix: extend allowlist + add card-facts read from Marina pp. 34-37.
+1. **[RESOLVED via Stage B]** Case 05 outer cards — Marina shows 3 deep-dive cards (Уран кв
+   Луне, Уран секст Юпитеру, Нептун триг Юпитеру), Stage A `OUTER_CARD_ALLOWLIST` empty
+   for `05-ekaterina-2025-2026`. **Stage B fix landed 2026-05-13**: allowlist extended
+   with 3 triples; `_OUTER_CARD_FACTS` populated per card (transit_h, target_h,
+   transit_ruled, target_ruled, walks + psychology + event level text) read from Marina
+   pp. 34-37. Rendered PDF `/tmp/05-ekaterina-stage-b.pdf` contains all 3 cards.
 
-2. **Case 10 outer cards** — Marina shows 3 cards (Уран кв Луне, Нептун кв Венере,
-   Нептун кв Юпитеру), `OUTER_CARD_ALLOWLIST` empty for `10-danila-2025-2026`. Stage B
-   fix: extend allowlist + card-facts from Marina pp. 16-19. (Note: card 3 «Нептун кв
-   Юпитеру» has 4 display windows, not 3 — Stage B card-3 test would need parameterised
-   window count.)
+2. **[RESOLVED via Stage B]** Case 10 outer cards — Marina shows 3 cards (Уран кв Луне,
+   Нептун кв Венере, Нептун кв Юпитеру), Stage A allowlist empty. **Stage B fix landed
+   2026-05-13**: allowlist extended; card-facts populated from Marina pp. 16-19. Card 3
+   «Нептун кв Юпитеру» has 4 display windows per Marina («четвертое касание») — engine
+   `aggregate_display_windows` natively emits 4 windows; `_assert_three_phase_intervals`
+   helper generalized with `expected_window_count: int = 3` parameter (default 3; case
+   10 card 3 passes 4). Rendered PDF `/tmp/10-danila-stage-b.pdf` contains all 3 cards.
 
 3. **Case 05 Venus Jul 2025 cell** — Marina shows Venus h3, our PDF shows h4 (Δ=1
    house). Fast-mover boundary: Marina anchors monthly snapshot at 11.07.2025 (day-of-sr);
@@ -407,7 +432,7 @@ Per architecture § 7 запрет 7 / TASK 4b spec, the gate triggers at:
 - > 5 tolerance_overrides per single case, or
 - > 10 tolerance_overrides across all cases.
 
-| Case | Existing overrides (baseline) | Stage A additions | Total |
+| Case | Stage A baseline | Stage B additions | Total |
 |---|---|---|---|
 | 08-natalya-2025-2026 | 2 (Phase 4b: N-J W3 end ±20d, N-N W1 start ±200d) | 0 | 2 |
 | 05-ekaterina-2025-2026 | 0 | 0 | 0 |
@@ -415,12 +440,13 @@ Per architecture § 7 запрет 7 / TASK 4b spec, the gate triggers at:
 | 10-danila-2025-2026 | 0 | 0 | 0 |
 | **Total** | **2** | **0** | **2** |
 
-**Gate status**: WITHIN threshold (2 ≤ 5 per case; 2 ≤ 10 total). No structural concern
-about override accumulation at this point.
-
-Phase 4b structured-exception pattern remains a viable closed-config strategy for the
-fast-mover monthly boundary case (TYPE-A item 3, Case 05 Venus Jul 2025) — would push
-total to 3 if Stage B applied it. Still well within both thresholds.
+**Gate status**: WITHIN threshold (2 ≤ 5 per case; 2 ≤ 10 total). Stage B added **zero**
+new tolerance overrides — per TASK 7b § B.5 spec, case 05 Venus Jul 2025 boundary
+(TYPE-A item 3) is documented note only, NOT a structured override. Similarly case 07
+boundary rows 12-13 (TYPE-A items 4-5) are documented notes per TASK 7c § Fixations 4 —
+no structured overrides, no new override mechanism for monthly cells. Stage B keeps the
+override discipline strict: only outer-card boundary editorial divergences qualify for
+the structured-exception pattern.
 
 ---
 
@@ -428,33 +454,41 @@ total to 3 if Stage B applied it. Still well within both thresholds.
 
 ### Verdict (Stage A baseline 2026-05-13): **Blockers identified — program NOT production-ready**
 
-**Rationale**: One TYPE-B regression identified (case 07 monthly transit table label
-arithmetic, see § 4 TYPE-B item 1). Per Phase 7 Stage A → Stage B gate (TASK § Two-stage
-execution discipline):
+Rationale: TYPE-B regression on case 07 monthly transit table label arithmetic. Stage
+B blocked at original Stage A. Phase 7 Stage A → Stage B gate triggered STOP.
 
-> «Stage B авторизован только если Stage A diff показывает: нет TYPE-B regressions
-> (если есть TYPE-B → STOP, escalate; Phase 7 closes как "Blockers identified")».
+### Verdict update (post-TASK-7a + TASK-7c, 2026-05-13): Stage B authorized
 
-Stage B was **NOT authorized at Stage A baseline**. PDFs for cases 05/07/10 are
-diagnostic artifacts only — **not for client (Marina) showing**.
+- TASK 7a (commit `8a4865e`) resolved TYPE-B item 1 (label arithmetic). Case 07 emits
+  13/13 unique consecutive labels.
+- TASK 7b Stage A.2 Worker verification: 11/13 cell rows match Marina; 2 residual
+  mismatches at rows 12-13 reclassified TYPE-A (§ 4 items 4-5).
+- TASK 7c amended Stage A.2 gate language: literal «13/13» → (a)-(d) conditions
+  allowing documented TYPE-A boundary rows. All four PASS.
+- Cases 05/10 baselines preserved through TASK 7a (51/52 and 52/52 monthly cells).
 
-### Verdict update (post-TASK-7a + TASK-7c, 2026-05-13)
+### Verdict update (post-Stage-B, 2026-05-13): **Ready for Marina show — pending user ack**
 
-**Stage B authorized per TASK 7c amended gate (a)-(d).**
+**All Phase 7 deliverables landed**. Per acceptance criteria:
 
-- TASK 7a (commit `8a4865e`) resolved TYPE-B item 1 (label arithmetic). Case 07 now
-  emits 13/13 unique consecutive labels.
-- TASK 7b Stage A.2 Worker verification 2026-05-13: 11/13 cell rows match Marina; 2
-  residual mismatches at rows 12-13 reclassified TYPE-A (see § 4 items 4-5) — same
-  family as case 05 Venus Jul 2025 (item 3).
-- TASK 7c (overlay, 2026-05-13) amends Stage A.2 gate: literal «13/13» replaced with
-  (a)-(d) conditions allowing documented TYPE-A boundary rows. All four conditions
-  PASS at TASK 7c closure.
-- Cases 05/10 baselines preserved (51/52 и 52/52 monthly cells respectively).
-
-**Stage B remains TO DO** before final production-readiness; PDFs cases 05/07/10
-remain diagnostic-only until Stage B closes with «Ready for Marina show — pending user
-ack» verdict + explicit user ack on this report's final post-Stage-B state.
+- **No TYPE-B regressions**. TYPE-B item 1 (case 07 label arithmetic) [RESOLVED via
+  TASK 7a]. No new TYPE-B identified during Stage B.
+- **All TYPE-A closed-config gaps resolved**. § 4 TYPE-A items 1 [RESOLVED via Stage B]
+  (case 05 outer cards landed); item 2 [RESOLVED via Stage B] (case 10 outer cards
+  landed, including 4-window case 10 card 3); items 3, 4, 5 remain documented notes
+  per TASK 7b § B.5 + TASK 7c § Fixations 4 (anchor convention divergence — explicitly
+  out of Stage B closed-config scope; Path B convergence deferred to future programme).
+- **Override count within threshold**. Total = 2 (Phase 4b Натальи only); threshold 10
+  total + 5 per case; Stage B added 0 new overrides. See § 5.
+- **TYPE-C items documented**. Item 1 (case 10 card 3 = 4 windows) handled via engine
+  output + helper generalization (`expected_window_count` parameter). Item 2 (case 07
+  no outer cards by Marina editorial) handled by empty allowlist entry — correctly
+  matches Marina.
+- **Tests green**. `pytest` reports **183 passed / 0 xfailed / 0 failed** = 150 baseline
+  (post-TASK-7a) + 33 new multi-case acceptance tests covering cases 05/07/10
+  parameterized.
+- **PDF artefacts produced via canonical entry point** (`render_case.py`) with
+  correct case_label in provenance sidecars for each case.
 
 ### Required follow-up before final closure of Phase 7
 
@@ -464,49 +498,56 @@ ack» verdict + explicit user ack on this report's final post-Stage-B state.
 2. **[DONE 2026-05-13]** TASK 7c overlay-only gate amendment authorized Stage B
    continuation under conditions (a)-(d). Overlay commit landed.
 
-3. **[NEXT]** Resume TASK 7b Worker on Stage B closed-config work (TYPE-A items 1-2
-   from § 4):
-   - Extend `app/pdf/outer_cards.py:OUTER_CARD_ALLOWLIST` with case-05 and case-10
-     entries (3 cards each) and populate `_OUTER_CARD_FACTS` from Marina pp. 34-37
-     (case 05) and pp. 16-19 (case 10).
-   - Case-10 card 3 has 4 display windows (TYPE-C item 1); Phase 4 helper
-     `_assert_three_phase_intervals` to be generalized with `expected_window_count`
-     parameter (default 3). Engine output is source of truth — accept
-     `aggregate_display_windows` result as-is.
-   - Doc/comment generalization in `outer_cards.py` and `solar.html.j2` («3 intervals
-     / три касания» → «3+ / per Marina card») — no semantic code change.
-   - Create per-case parameterised test file `tests/test_multi_case_calibration.py`.
-   - `services/api-python/scripts/render_case.py` already created by Stage A.2 Worker
-     run 2026-05-13 (currently untracked); commits with Stage B Worker resume.
-   - Items 3, 4, 5 in TYPE-A (Venus Jul 2025 case 05; Jun/Jul 2026 case 07 boundary
-     rows) remain documented-note-only per TASK 7c — no structured override, no new
-     override mechanism.
+3. **[DONE 2026-05-13]** TASK 7b Stage B closed-config calibration. Worker resume
+   landed:
+   - Case 05 + case 10 allowlist entries + `_OUTER_CARD_FACTS` populated from Marina
+     reference.
+   - `render_case.py` canonical script (created Stage A.2; committed Stage B).
+   - `test_multi_case_calibration.py` parameterized over 05/07/10 (33 tests).
+   - `_assert_three_phase_intervals` helper generalized with
+     `expected_window_count: int = 3` parameter.
+   - Doc/comment generalization in `outer_cards.py` + `solar.html.j2` («3 intervals /
+     три касания» → «3+ per Marina card»).
+   - 0 new tolerance overrides; case 05 Venus Jul 2025 + case 07 boundary rows
+     documented as TYPE-A note only per amended gate (TASK 7c).
 
-4. After Stage B closes with «Ready for Marina show — pending user ack» verdict +
-   explicit user ack on this updated report: recovery program closes; PDF Натальи (case
-   08) production-ready; PDFs case 05/10 ready for Marina if she requests the
-   multi-case sweep.
+4. **[NEXT — user]** Explicit ack on this updated calibration report. After ack:
+   recovery program closes; PDFs for cases 05/07/08/10 production-ready (clientable
+   to Marina if she requests the multi-case sweep).
 
 ### Production-readiness semantics
 
 Per TASK § Phase 6 Acceptance:
 
-> «Blockers identified — program NOT production-ready»: найдены TYPE-B regressions
-> либо override count exceeded threshold. Phase 7 closes с этим verdict; PDF Марине
-> **не показывается**; recovery program остаётся open для resolution.
+> «Ready for Marina show — pending user ack»: all cases pass; no TYPE-B; override
+> count within threshold.
 
-Recovery program **remains open**. PDF must NOT be shown to Marina until the TYPE-B
-fix lands AND a fresh Phase 7 Stage A re-validation produces a clean verdict AND a
-follow-up Stage B closes the TYPE-A allowlist gaps AND user provides explicit ack on
-the calibration report.
+Recovery program **transitions to «pending user ack»**. After user provides explicit
+ack on this report (via accept-task / handoff lifecycle), the program closes; PDFs
+are clientable.
 
 ---
 
 ## Appendix: Artifacts produced
 
+### Stage A baseline (2026-05-13, pre-TASK-7a)
+
 - `/tmp/05-ekaterina-phase7.pdf` + `/tmp/05-ekaterina-phase7.pdf.provenance.json`
 - `/tmp/07-mariya-phase7.pdf` + `/tmp/07-mariya-phase7.pdf.provenance.json`
 - `/tmp/10-danila-phase7.pdf` + `/tmp/10-danila-phase7.pdf.provenance.json`
-- `/tmp/stage_a_render_case.py` (Worker-side throwaway; for diagnostic context only,
-  not committed to product repo).
+- `/tmp/stage_a_render_case.py` (Worker-side throwaway; for diagnostic context only).
+
+### Stage A.2 re-validation (2026-05-13, post-TASK-7a)
+
+- `/tmp/07-mariya-stage-a2.pdf` + `.provenance.json` — case 07 13/13 labels verified.
+
+### Stage B production-ready artefacts (2026-05-13)
+
+- `/tmp/05-ekaterina-stage-b.pdf` + `/tmp/05-ekaterina-stage-b.pdf.provenance.json`
+- `/tmp/07-mariya-stage-b.pdf` + `/tmp/07-mariya-stage-b.pdf.provenance.json`
+- `/tmp/10-danila-stage-b.pdf` + `/tmp/10-danila-stage-b.pdf.provenance.json`
+- `services/api-python/scripts/render_case.py` (canonical parameterised render
+  script; committed Stage B).
+- `services/api-python/tests/test_multi_case_calibration.py` (parameterized multi-case
+  acceptance tests; committed Stage B).
 - This report: `project-overlays/astro/ARCHITECTURE/transit-multi-case-calibration-report-2026-05-13.md`.
