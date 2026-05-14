@@ -467,7 +467,50 @@ B blocked at original Stage A. Phase 7 Stage A → Stage B gate triggered STOP.
   allowing documented TYPE-A boundary rows. All four PASS.
 - Cases 05/10 baselines preserved through TASK 7a (51/52 and 52/52 monthly cells).
 
-### Verdict update (post-Stage-B, 2026-05-13): **Ready for Marina show — pending user ack**
+### Verdict update (post-Phase-8-audit, 2026-05-14): **Partial pass — only 08 Natalya production-ready**
+
+> **⚠ This verdict supersedes the post-Stage-B verdict below.** Manual audit (Codex + TL 2026-05-14) on a clean checkout — performed after TASK 7b closure — revealed that the Stage B test contract was **incomplete**. Specifically `services/api-python/tests/test_multi_case_calibration.py` asserted outer-card window count + types + ordinals but did **NOT** assert interval boundary dates (start/end strings) vs Marina etalon. Pytest 183/0/0 was honest but the contract had a hole.
+>
+> **Discipline ownership:** TASK 7b § B.4 spec gap is mine as PTL («outer cards present per allowlist» — count only; «calendar rows match Marina ±tolerance» applied to calendar, not to outer-card intervals). Worker delivered exactly what spec required.
+>
+> **Recovery program REOPENED 2026-05-14 as Phase 8** (programme-corrective, not retrospective rewrite). TASK 7b stays in `archive/` as historical record; its closure stays. Phase 8 is the corrective programme on top.
+
+#### Verdict (2026-05-14): «Partial pass — only 08 Natalya production-ready»
+
+**Per Phase 8.0 audit findings:**
+
+1. **Test contract gap.** `test_multi_case_calibration.py` lacks outer-card interval boundary assertions; spec gap in TASK 7b § B.4. **Phase 8C scope** to close.
+2. **Case 10 Данила Neptune boundary regression** — **not accepted divergence**:
+   - Нептун кв Венере W3 end = `28.01.2028 10:44` vs Marina `07.03.2028` (+38d).
+   - Нептун кв Юпитеру W4 end = `28.01.2028 10:44` vs Marina `18.03.2028` (+49d).
+   - Both terminate at identical `orb_exit_jd = 2461798.822368622` — finite-horizon engine sample window truncation. Distinct from Phase 4b Натальи accepted divergences (which are editorial). **Phase 8B scope** — either extend loop horizon or explicitly mark truncated windows. User direction: not to classify as accepted divergence.
+3. **Allowlist gap — cases 01/02/03/04/09.** Our PDF emits 0 outer cards; Marina shows 2-9 cards per case. TYPE-A closed-config gap (analog of TASK 7b § B.1+B.2). **Phase 8B scope** as separate sub-task after Phase 8A inventory.
+4. **Lexical divergence — case 05.** Card title «тр Нептун в **трине** с нат Юпитером»; Marina «тр Нептун в **тригоне**». **Phase 8B scope** — one-word fix in aspect-locative dict in `outer_cards.py`.
+5. **Data-quality blockers (TYPE-D, separate from code regressions):**
+   - `Соляр 2025-2026_3.pdf` — fixture missing natal metadata; cannot reproduce.
+   - Анастасия — fixture-vs-reference SR-time/timezone mismatch suspected.
+   - Held as separate **data revision sub-tasks** in Phase 8A audit; not mixed with code regression class.
+
+**Cross-reference:** TASK 8.0 (`archive/2026-05-14-phase-8-0-reopen-audit-trail.md`); TASK Phase 8A+8C (audit + boundary test contract) — drafted next.
+
+#### What's still production-ready
+
+- **08-natalya-2025-2026** — production-ready. Phase 1-7 (including 4b structured Neptune divergences) clean. Fresh PDF rendered post-closure on `c936dd1` at `/tmp/08-natalya-2025-2026-c936dd1.pdf` with provenance sidecar.
+- TL framing memo for Marina (re 2 Phase 4b Neptune divergences) — available on request; independent of Phase 8 progress.
+
+#### What's NOT production-ready (until Phase 8 closes)
+
+- All «package» PDFs (05/07/08/10) — cannot ship as bundle.
+- Case 10 Данила individually — boundary regression unresolved.
+- Cases 05 (lexical) — minor but unresolved.
+- Cases 01/02/03/04/09 — allowlist gap.
+- `_3.pdf` / Анастасия — data-quality blockers.
+
+---
+
+### Verdict update (post-Stage-B, 2026-05-13, SUPERSEDED 2026-05-14): **Ready for Marina show — pending user ack**
+
+> **Status: SUPERSEDED** by the «Partial pass» verdict above. Kept as historical record per Phase 8.0 audit trail discipline. Reason for supersession: post-closure manual audit found test contract gap + Данила boundary regression + allowlist gap on additional cases + lexical case 05 + 2 TYPE-D data-quality blockers.
 
 **All Phase 7 deliverables landed**. Per acceptance criteria:
 
