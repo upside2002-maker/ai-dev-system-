@@ -98,15 +98,30 @@ Worker validated TL pre-mapped Marina inventory (3/3 cases confirmed, return_jd 
 - Natalya baseline preserved 1:1 (mid-15 UTC anchor identical pre/post fix для Натальи early-UT solar return).
 - Tests: **149/0/0 → 150/0/0** (regression test добавлен).
 
-**TASK 7b (Phase 7 Stage A re-validation + Stage B closed-config calibration) — spec готов, Ready: no, ждёт ack пользователя.** TASK `2026-05-13-phase-7-stage-b-closed-config-calibration.md`. Финальная implementation TASK программы. Tier C / Mode normal / Layer services.
+**TASK 7b (Phase 7 Stage A re-validation + Stage B closed-config calibration) — Worker hit STOP gate, ждёт TL/user decision.** TASK `2026-05-13-phase-7-stage-b-closed-config-calibration.md`, overlay commit `b8188e1` (Ready: yes). Worker subagent отработал Stage A.2 + создал `render_case.py` (Stage B.3, untracked) и STOP'нул на gate `case 07 < 13/13`.
 
-Stage A.2 re-validation: case 07 monthly table expected 13/13 cells post-fix; case 05/10 без regression. Stage B closed-config:
-- Extend `outer_cards.py:OUTER_CARD_ALLOWLIST` для 05-ekaterina (3 triples per Marina pp. 34-37) и 10-danila (3 triples per Marina pp. 16-19). Closed card-facts populated.
-- Case 10 card 3 = 4 windows (не 3) — generalize `_assert_three_phase_intervals` helper для parametrized window count.
-- Create `services/api-python/scripts/render_case.py` (parametrized canonical render).
-- Single parameterised test файл `test_multi_case_calibration.py`.
-- Update calibration report § 3/4/5/6 с post-Stage-B results.
-- Final production-readiness verdict.
+**Stage A.2 outcome:**
+- **Case 07 Мария monthly table = 11/13 rows match Marina** (не 13/13). 13 labels post-TASK 7a fix correct. 2 residual mismatches:
+  - Июнь 2026: ours M=9/S=7/J=10/V=11 vs Marina 8/7/10/10 (Mars и Venus boundary).
+  - Июль 2026: ours M=9/S=8/J=11/V=12 vs Marina 9/7/11/11 (Saturn и Venus boundary).
+- **Cases 05, 10 — no regression.** Case 05 = 51/52, case 10 = 52/52 (sustained).
+- **Stage B (B.1, B.2, B.4, B.5, B.6) — НЕ начат.** Только B.3 `render_case.py` создан (Stage A.2 prerequisite, authorized в spec).
+
+**Diagnosis (Worker analysis, TL-verified):** 2 mismatched rows = **TYPE-A boundary anchor diffs**, не TYPE-B regression. Marina anchors monthly cells at **01 числа** (day-of-solar-return = 1st of solar month); наша конвенция = **mid-15** (`datetime(y, m, 15, UTC)`). Cusp transitions в 15-day gap:
+- Mars 2026-06-05 (h=8→9), Venus 2026-06-11 (h=10→11) — Marina samples 01.06 (still h=8/10), ours samples 15.06 (already h=9/11).
+- Saturn 2026-07-08 (h=7→8), Venus 2026-07-08 (h=11→12) — same family.
+
+Это **same family как case 05 Venus Jul 2025 boundary** (calibration report § 4 item 3 TYPE-A note). TASK 7a fix targeted label arithmetic (`sr + i*30.4375` → integer calendar advance); cell values rows 12/13 идентичны pre/post TASK 7a — это не regression от 7a, это pre-existing convention gap.
+
+**HANDOFF Worker→TL:** `project-overlays/astro/HANDOFFS/archive/2026-05-13-worker-to-tl-phase-7-stage-b-closed-config-calibration.md`. Override count unchanged: 2 (Натальи Phase 4b) — within threshold. Pytest baseline preserved 150/0/0.
+
+**Решение TL (предложение):**
+- **Path A — reclassify rows 12-13 case 07 как TYPE-A in-memo;** softening TASK 7b gate (≥11/13 + 2 documented TYPE-A vs literal 13/13); Worker resumes Stage B. Pragmatic, fast.
+- **Path B — open separate Tier-C TASK на anchor convention convergence** (mid-15 → 01). Invasive: трогает Phase 7 generic logic, нужна full re-validation Натальи (150 baseline) + cases 05/10. Cleaner final result, but +1-2 day calendar.
+- **Path C — STOP transit recovery program at "Blockers identified" globally.** Деферрит outer cards 05/10 в будущую программу; PDF Натальи production-ready (Phase 1-6+4b+7a), PDFs 05/07/10 — не показывать.
+- **Path D — open TASK 7c с amended gate language** (allow TYPE-A в case 07 rows 12-13). Procedurally cleanest version of Path A; функционально эквивалентно.
+
+**TL рекомендация:** Path A или D — оба матчат прецедент case 05 Venus Jul 2025. Path D предпочтительнее процедурно (отдельный TASK с явным ack-trail).
 
 **Production-readiness gate:** PDF Марине **не показывается до**: (1) TASK 7b closes с verdict «Ready for Marina show — pending user ack»; (2) **явный отдельный user ack** на updated calibration report.
 
@@ -141,7 +156,11 @@ Stage A.2 re-validation: case 07 monthly table expected 13/13 cells post-fix; ca
 
 ## Ждёт твоего решения
 
-- **Ack на TASK 7b spec.** Прочитать `project-overlays/astro/TASKS/2026-05-13-phase-7-stage-b-closed-config-calibration.md`. Stage A.2 re-validation + Stage B closed-config calibration (allowlist extensions для 05/10 + render_case.py + multi-case tests + calibration report update + final production-readiness verdict). После closing + явного user ack → recovery program closes; PDF Марине можно показывать.
+- **Path A/B/C/D на TASK 7b STOP gate (case 07 = 11/13 monthly cells, не 13/13).** См. блок выше. TL рекомендация — Path A или D (оба reclassify rows 12-13 как TYPE-A boundary diffs, авторизуют Stage B). После твоего выбора:
+  - Path A → in-memo amendment TASK 7b spec, Worker resume.
+  - Path D → новая TASK 7c (gate-language amendment), Worker resume.
+  - Path B → новая Tier-C TASK на anchor convention (+1-2 дня).
+  - Path C → закрытие программы с blocker; outer cards 05/10 deferred.
 - **Когда показывать Марине** — после закрытия всей программы (Phase 0-7) и финального ack пользователя. До этого PDF — внутренний debug/QA артефакт. Известный editorial разрыв на 2 Neptune boundaries (N-J W3 +17d, N-N W1 +178d) **будет видно Марине при показе**; это accepted divergence, но Marina об этом не знает заранее — TL подготовит ей framing в момент показа.
 
 Локальная ветка `claude/dreamy-moore-46f5eb` остаётся (deferred cleanup) — не блокер.
