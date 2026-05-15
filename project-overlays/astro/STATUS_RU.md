@@ -4,7 +4,50 @@
 
 ## Сейчас
 
-Внутренний инструмент Марины для подготовки соляр-консультаций. **Программа Transit Section Recovery — Phase 8 финальная implementation работа завершена 2026-05-15 (TASK 8E), awaiting user ack.**
+Внутренний инструмент Марины для подготовки соляр-консультаций. **Программа Transit Section Recovery — CLOSED 2026-05-15.**
+
+**Final verdict (per user explicit ack 2026-05-15):**
+> «**Recovery program CLOSED — Natalya/05/07/10 production-ready; full-folder supply requires Marina framing and excludes TYPE-D/Pluto-rule future work.**»
+
+**Phase 8 closure cascade landed 2026-05-15:** TASK 8D + TASK 8E + Phase 8 program closed одним overlay commit. Reviewer subagent APPROVE on TASK 8E (8 points, narrow-scope) + user explicit ack received. Marina framing memo готовится отдельным lightweight post-closure artifact (per discipline «не смешивать framing memo с closure commit»).
+
+**Recovery program timeline:**
+- 2026-05-11/12: Tier A engine cascade (per-loop-pass orb-window scanner; per-planet orb calibration; cross-year sample window). Pytest 85/85.
+- 2026-05-12: Tier C presentation rebuild (premature accept).
+- 2026-05-13: Программа Recovery открыта; Phase 0-7 + 7a + 7b + 7c. Pytest 85 → 183.
+- 2026-05-13: TASK 7b закрыт «Ready for Marina show» (преждевременно — boundary contract gap).
+- 2026-05-14: Phase 8 REOPENED. Phase 8.0 + 8A + 8C + 8B (Path 1 retract N-J W3) + 8D. Pytest 183 → 286.
+- 2026-05-15: TASK 8E (Path 1' BEFORE buffer) + cascade closure. Pytest 286 → 298. Phase 8 + Recovery program CLOSED.
+
+**Production state at closure:**
+- astro main = backup/main = `59ec177` ✓
+- ai-dev-system overlay master = backup/master ✓ (cascade closure commit landed)
+- Pytest: **298 passed + 0 xfailed + 0 failed** (vs 85 при старте).
+- Cabal build: clean.
+- Override count: **1** (08 Phase 4b N-N W1 start ±200d — sole survivor, true Marina-editorial confirmed by TASK 8E Path 1' Scenario 1).
+- Canonical render: `services/api-python/scripts/render_case.py --case-id <case-id> --output <path>`.
+
+**Boundary state:**
+- 104 enrolled boundaries в `MARINA_OUTER_CARD_BOUNDARIES`; 0 OOT.
+- 1 structured override (N-N W1 start ±200d, true editorial).
+- 12 documented future-work items в audit § A.2.1.D — vacuum-out of Phase 8 implementation scope: Pluto display rule (3 cards), single-window alignment (6 cards), case 03 P-Mars Marina typo (1 card), case 09 Анастасия TYPE-D (2 cards).
+
+**Production-ready cases для прямого показа Марине (по verdict):**
+- 08 Натальи — Phase 1-7 + Phase 8B Path 1 (N-J W3 fixed). 1 editorial divergence remaining (N-N W1 start +178d) — TL framing memo обязателен.
+- 05 Екатерина — Phase 7b Stage B (3 outer cards). Lexical «трине → тригоне» fixed (Phase 8B). 51/52 monthly cells + 1 TYPE-A Venus Jul 2025 (anchor convention).
+- 07 Мария — Phase 7a label-arithmetic fix; 11/13 cells + 2 TYPE-A boundary rows (anchor convention). No outer cards by Marina editorial.
+- 10 Данила — Phase 7b Stage B (3 outer cards, Нептун кв Юпитеру 4 windows); Phase 8B Path 1 horizon fix (W3 Венере + W4 Юпитеру converged).
+
+**NOT в production supply без framing:**
+- 01 Ксения, 02 Максим, 03 Артём, 04 Валерия — рендерятся, но 12 future-work items в audit § A.2.1.D (Pluto / single-window / case 03 P-Mars typo) затрагивают эти cases. Required per-case framing.
+- 09 Анастасия — TYPE-D fixture/reference SR-time mismatch (~60min); data revision sub-task **вне Phase 8 implementation programme**.
+
+**Полная история программы:**
+- `project-overlays/astro/ARCHITECTURE/transit-section-program-2026-05-13.md` — 8 sections recovery SoT.
+- `project-overlays/astro/ARCHITECTURE/transit-multi-case-calibration-report-2026-05-13.md` — § 1-6 verdict chain.
+- `project-overlays/astro/ARCHITECTURE/phase-8-audit-report-2026-05-14.md` — Phase 8 audit + § A.2.1.D 14-card analysis.
+- `project-overlays/astro/ARCHITECTURE/transit-contact-window-semantics-2026-05-13.md` — Phase 4a memo + Phase 8B Path 1 erratum.
+- 8 archived TASK files + 5 archived HANDOFFs in `archive/`.
 
 **TASK 8E delivered 2026-05-15 (Worker subagent, Tier B).** BEFORE buffer extension `_TRANSIT_SAMPLE_BUFFER_DAYS_BEFORE = 540 → 730` в `services/api-python/app/ephemeris/bridge.py` (rationale per user direction: «730 = minimum systemic extension covering confirmed Marina pre-SR windows with >150d margin» — 01 N-Sun W1 SR-582d fits с ~148d margin; 01 N-Mars W1 SR-557d fits с ~173d margin). AFTER buffer untouched (stays 730d from TASK 8B). Stage E.5.a 08 N-N W1 start empirical recheck → **Scenario 1** (Δ stays -178d, TL prediction correct; true editorial, NOT horizon truncation; ±200d structured override stays). Stage E.6.1: 12 new boundary points enrolled (01 N-Sun + N-Mars × 3 windows × 2 sides) — все within ±2d default tolerance.
 
@@ -220,11 +263,13 @@ Path B (anchor convention convergence) deferred — strategically возможе
 
 ## Ждёт твоего решения
 
-- **Reviewer APPROVE на TASK 8E** (BEFORE buffer extension). Worker delivered 2026-05-15: pytest 298/0/0, фиксы regenerated, Stage E.5.a Scenario 1 confirmed (08 N-N W1 stays -178d editorial). После Reviewer APPROVE → cascade close TASK 8D + 8E + Phase 8 program → user ack → программа closes.
-- **Marina framing memo (post-closure lightweight artifact).** Подготовить отдельно от closure commit (per user direction 2026-05-15): single Neptune editorial divergence (08 N-N W1 start +178d, true editorial — Phase 4b structured override sole survivor). User решает когда/если показать Марине.
-- **Показ Марине — parallel artifact track, доступно сейчас (post-Phase-8E):**
-  - **Можно:** все 9 calibrated cases (01/02/03/04/05/07/08/09/10), при условии user ack на final verdict. PDFs нужно re-render'ить через `services/api-python/scripts/render_case.py --case-id ...` на HEAD post-Phase-8E.
-  - **Нельзя:** показ всей папки PDFs одним пакетом до user ack на post-Phase-8E verdict.
+- **Marina framing memo draft** (lightweight post-closure artifact). Готовится отдельным overlay commit per user discipline («не смешивать framing memo с closure commit»). Содержание: production-ready cases (08/05/07/10) с явным framing на single Neptune editorial divergence (08 N-N W1 start +178d); per-case caveat block для 01/02/03/04 (12 future-work items в audit § A.2.1.D); explicit «NOT в supply» для 09 Анастасия (TYPE-D fixture/reference mismatch). User решает когда/если показать Марине.
+- **Показ Марине — operational discipline post-closure:**
+  - **Production-ready без caveats:** 08 Натальи (с framing memo на 1 editorial divergence).
+  - **Production-ready с per-case framing:** 05 / 07 / 10 (anchor convention TYPE-A items documented в § 4).
+  - **Render через framing:** 01 / 02 / 03 / 04 (future-work items affect Pluto cards, single-window alignment cases, lexical typo case 03 P-Mars).
+  - **NOT в supply:** 09 Анастасия (TYPE-D данные).
+  - PDFs rendered через `services/api-python/scripts/render_case.py --case-id ...` на HEAD `59ec177+` (provenance sidecar carry актуальный git_sha).
 
 Локальная ветка `claude/dreamy-moore-46f5eb` остаётся (deferred cleanup) — не блокер.
 

@@ -1,6 +1,6 @@
 # TASK: phase-8d-allowlist-extension-01-02-03-04-09
 
-- Status: review
+- Status: done
 - Ready: yes
 - Date: 2026-05-14
 - HANDOFF: project-overlays/astro/HANDOFFS/2026-05-14-worker-to-tl-phase-8d-allowlist-extension-01-02-03-04-09.md
@@ -235,3 +235,18 @@ Update `transit-multi-case-calibration-report-2026-05-13.md`:
 3. **PDF artifacts:** `/tmp/` only (not committed); sidecar verification mandatory (`git_sha == HEAD`, `case_label` correct, `debug=false`).
 4. **Calibration report:** full § 3.4-3.8 subsections (NOT compact additive); compact previously hid Phase 8B boundary gap.
 5. **Acceptance:** exact lexical title assertions added (e.g. `"в тригоне с"`, `"в квадрате с"`) — NOT regex/fuzzy; pin lexical post-TASK-8B fix.
+
+## Closure (2026-05-15, cascade with TASK 8E)
+
+**TASK 8D + TASK 8E closed in cascade per user explicit ack 2026-05-15.** TASK 8D was held in `review` status post-Worker delivery while pre-buffer truncation finding (audit § A.2.1.D, confirmed by external Reviewer 2026-05-15) was resolved via TASK 8E. After TASK 8E Reviewer APPROVE → both closed in single overlay commit.
+
+- **Product commit:** `ce35be1` (TASK 8D Stage D.1-D.4 implementation).
+- **Reviewer subagent APPROVE** (2026-05-15, narrow 5-point scope per user direction):
+  - 20/20 cards rendered + golden-rule facts not mis-transferred (Reviewer spot-checked 15/20 Marina pages directly).
+  - 14 excluded cards: all categories empirically reproduced; no missed-assertion bug.
+  - Pre-buffer finding case 01 N-Sun + N-Mars confirmed (SR-540d exactly = engine cutoff; symmetric to TASK 8B Path 1 AFTER-buffer).
+  - Product scope clean (2 files: `outer_cards.py` + `test_multi_case_calibration.py`).
+  - Pytest 286/0/0 independent run.
+- **Pre-buffer finding follow-up:** Resolved via TASK 8E BEFORE buffer extension `540 → 730` (2026-05-15). Case 01 N-Sun W1 16.04.2023 (Δ-1d Marina), N-Mars W1 11.05.2023 (Δ-1d Marina) — both within ±2d.
+- **14 excluded cards documented in audit § A.2.1.D — 2 resolved via 8E (case 01 N-Sun + N-Mars), 12 remain as documented future work items** (Pluto display rule, single-window alignment, case 03 P-Mars typo, Анастасия TYPE-D). NOT touched in Phase 8 implementation per user scope discipline.
+- **Status: done.** Archive to `project-overlays/astro/TASKS/archive/`.

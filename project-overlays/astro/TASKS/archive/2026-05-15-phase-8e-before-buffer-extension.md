@@ -1,6 +1,6 @@
 # TASK: phase-8e-before-buffer-extension
 
-- Status: open
+- Status: done
 - Ready: yes
 - Date: 2026-05-15
 - Project: astro
@@ -322,3 +322,59 @@ Mirror of TASK 8B safeguard:
 3. **Reviewer scope** + item 8: per-case raw row count ratio before/after (early-warning; informational if > 1.20×, escalate if > 1.50×).
 4. **Calendar threshold ≤ 1.5×** preserved (presentation rows, post Phase 6 clipping).
 5. **Closure cascade discipline:** Marina framing memo NOT mixed with closure commit — separate lightweight post-closure artifact, user decides shipping.
+
+## Closure (2026-05-15, cascade with TASK 8D — Phase 8 program CLOSED)
+
+**TASK 8E + TASK 8D closed in cascade per user explicit ack 2026-05-15.** This is the **final implementation TASK of the Transit Section Recovery program**.
+
+- **Product commit:** `59ec177` (Bright Line #8 atomic: bridge.py + test_multi_case_calibration.py + 18 fixture files).
+- **Worker self-review** + **external Reviewer subagent APPROVE** (2026-05-15, narrow 8-point scope):
+
+### Stage results
+
+- **Stage E.1-E.2 trace:** `_TRANSIT_SAMPLE_BUFFER_DAYS_BEFORE = 540` в `bridge.py:204`. Rationale fixed in spec: «`730 = minimum systemic extension covering confirmed Marina pre-SR windows with >150d margin`».
+- **Stage E.3 schema-cascade:** no cascade (runtime parameter, same JSON shape). Tier B sufficient.
+- **Stage E.4 apply:** `540 → 730` one-line minimal change. AFTER buffer untouched (stays 730 from TASK 8B). Both lines now equal 730 (symmetric ±730d around SR).
+- **Stage E.5.a Scenario 1 confirmed (TL prediction correct):** 08 N-N W1 start stays Δ-178d (true Marina-editorial; our orb_enter at SR-491d is inside buffer; not horizon truncation). Phase 4b ±200d structured override STAYS. Phase 4a memo has ONLY 1 erratum (TASK 8B Path 1). **No second retraction needed.**
+- **Stage E.5.b convergence:** 01 N-Sun W1 16.04.2023 (Δ-1d Marina 17.04); 01 N-Mars W1 11.05.2023 (Δ-1d Marina 12.05). Both ±2d.
+- **Stage E.5.c-d preservation:** presentation calendar `cal_h` + monthly cells matrix `mat_h` bit-identical pre/post all 9 cases (Phase 6 clipping isolates client PDF to solar year).
+- **Stage E.5.e non-affected boundaries preserved:** 92 existing entries unchanged.
+- **Stage E.5.f pytest pre-Stage-E.6:** 286/0/0 preserved.
+- **Stage E.6.1:** 12 new boundary points enrolled (01 N-Sun + N-Mars × 3 windows × 2 sides) with SoT cross-ref.
+- **Stage E.6.2:** N/A (Scenario 1 — no override action needed).
+- **Stage E.7:** STATUS_RU + audit § A.2.1.D row updates + calibration § 6 final verdict — all updated.
+
+### Reviewer 8-point APPROVE (2026-05-15)
+
+All 8 items PASS empirical reproduction (case 01 W1 dates re-extracted; case 08 N-N W1 Δ re-verified -178d; cal_h + mat_h bit-identity confirmed on cases 05/08/10; fixture regen justification spot-checked 3 cases — all changes in `[SR-730d, SR-540d)` zone; pytest 298 independent; raw row ratios 1.082×-1.136× reproduced exactly).
+
+### Reviewer informational notes (non-blocking)
+
+1. `analysis` field в fixtures grew (priority_windows, cautions, extended_themes, key_periods entries) — **NOT surface'ит в Marina PDF** (clipped by Phase 3 horizon split в `synthesis_themes.py`). Reviewer verified `themed_synthesis` + `summary_table` bit-identical for spot-checked cases. Optional future work: `synthesis_h` hash в regression guards (no current issue).
+2. 7 removed rows per case at exact SR-540d boundary marker — engine semantics of old buffer-boundary marker replaced by new SR-730d marker (not regression).
+
+### User explicit ack — received 2026-05-15
+
+User confirmed cascade closure with final verdict formulation:
+> «Recovery program CLOSED — Natalya/05/07/10 production-ready; full-folder supply requires Marina framing and excludes TYPE-D/Pluto-rule future work.»
+
+### Tests + build
+
+- pytest: **298 passed + 0 xfailed + 0 failed** (298 = 85 baseline → 298 across Phase 1-8).
+- cabal build: Up to date (no Haskell changes; bridge.py is Python-side parameter).
+- Override count: **1** (08 Phase 4b N-N W1 ±200d, confirmed true Marina-editorial; sole survivor).
+
+### Boundary state final
+
+- 104 enrolled boundaries in `MARINA_OUTER_CARD_BOUNDARIES`; 0 OOT.
+- 1 structured override in `test_natalya_transits_acceptance.py` (N-N W1 ±200d).
+- 12 future-work items documented в audit § A.2.1.D — out of Phase 8 implementation scope.
+
+### Backup parity
+
+- astro main = backup/main = `59ec177` ✓
+- overlay master = backup/master (post-cascade commit) ✓
+
+### Status: done
+
+Archive to `project-overlays/astro/TASKS/archive/`. HANDOFF archive to `project-overlays/astro/HANDOFFS/archive/`. **Phase 8 program CLOSED.** Marina framing memo prepared as separate lightweight post-closure artifact (per user direction).

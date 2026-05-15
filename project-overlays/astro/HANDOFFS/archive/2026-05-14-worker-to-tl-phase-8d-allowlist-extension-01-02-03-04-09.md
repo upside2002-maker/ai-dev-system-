@@ -1,6 +1,6 @@
 ## HANDOFF: worker → tl — phase-8d-allowlist-extension-01-02-03-04-09
 
-- Status: review (ready for TL accept-cascade)
+- Status: closed (TASK 8D accepted 2026-05-15 in cascade with TASK 8E — Reviewer APPROVE + user explicit ack; Phase 8 program CLOSED)
 - Date: 2026-05-14
 - Project: astro
 - From: worker (subagent, fresh)

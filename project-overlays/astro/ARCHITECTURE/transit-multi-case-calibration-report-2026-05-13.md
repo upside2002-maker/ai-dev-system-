@@ -805,14 +805,66 @@ B blocked at original Stage A. Phase 7 Stage A → Stage B gate triggered STOP.
   allowing documented TYPE-A boundary rows. All four PASS.
 - Cases 05/10 baselines preserved through TASK 7a (51/52 and 52/52 monthly cells).
 
-### Verdict update (post-Phase-8E, 2026-05-15): **Ready for Marina show — pending user ack** (final closure verdict)
+### Verdict update (post-cascade-closure, 2026-05-15): **Recovery program CLOSED**
 
-> **Status: ACTIVE.** This verdict supersedes the «post-TASK-8D» verdict below. TASK 8E
-> (Worker subagent, 2026-05-15) extended `_TRANSIT_SAMPLE_BUFFER_DAYS_BEFORE` from 540
-> to 730 days in `services/api-python/app/ephemeris/bridge.py`, resolving the last audit
-> § A.2.1.D future work item (pre-buffer truncation on case 01 Neptune cards). All
-> Phase 8 work (8A audit + 8B AFTER buffer + 8C boundary test contract + 8D allowlist +
-> 8E BEFORE buffer) landed.
+> **Status: FINAL.** Per user explicit ack 2026-05-15: «**Recovery program CLOSED — Natalya/05/07/10 production-ready; full-folder supply requires Marina framing and excludes TYPE-D/Pluto-rule future work.**» Supersedes all prior verdict subsections (post-Phase-8E pending-ack; post-TASK-8D; post-Phase-8-audit; post-Stage-B 2026-05-13). Cascade closure landed one overlay commit 2026-05-15 (TASK 8D + 8E + STATUS_RU + § 6 update + § A.2.1.D row updates + HANDOFF archive). Marina framing memo prepared as separate lightweight post-closure artifact (NOT mixed with closure commit per user discipline).
+
+**Production-ready breakdown:**
+
+- **08 Натальи** — production-ready. Phase 1-7 + Phase 8B Path 1 (N-J W3 horizon retracted; engine matches Marina ±2d). 1 editorial divergence remaining: **08 N-N W1 start +178d Δ Marina (true Marina-editorial, not horizon truncation — confirmed by TASK 8E Path 1' Scenario 1)**. Phase 4b ±200d structured override sole survivor. TL framing memo обязателен.
+- **05 Екатерина** — production-ready с framing. Phase 7b Stage B (3 outer cards) + Phase 8B lexical fix («трине → тригоне»). 51/52 monthly cells + 1 TYPE-A Venus Jul 2025 boundary row (anchor convention, § 4 item 3).
+- **07 Мария** — production-ready с framing. Phase 7a label-arithmetic fix; 11/13 monthly cells + 2 TYPE-A Jun/Jul 2026 boundary rows (anchor convention, § 4 items 4-5). No outer cards by Marina editorial — empty allowlist correct.
+- **10 Данила** — production-ready с framing. Phase 7b Stage B (3 outer cards, Нептун кв Юпитеру 4 windows native engine output) + Phase 8B Path 1 horizon fix (W3 Венере + W4 Юпитеру converged to Marina ±2d).
+
+**NOT в production supply без per-case framing:**
+
+- **01 Ксения** — 5 outer cards. Post-Phase-8E: 01 N-Sun + N-Mars Neptune W1 starts converged to Marina ±2d. Remaining future-work items (§ A.2.1.D): 01 Pluto Trine Jupiter (Pluto display rule — Marina narrows ~100d, engine 261d).
+- **02 Максим** — 2 outer cards. Future-work items: single-Marina-window alignment (Marina W1 = engine W2/W3/W4 by coincidence).
+- **03 Артём** — 9 outer cards. Future-work items: Marina case 03 P-Mars likely editorial typo (identical dates to P-Sun on Marina p.29); single-window alignment for some cards.
+- **04 Валерия** — 2 outer cards. Future-work items: single-Marina-window alignment.
+- **09 Анастасия** — **NOT в supply.** TYPE-D fixture/reference SR-time/timezone mismatch (~60min). Requires data revision sub-task; outside Phase 8 implementation programme.
+
+### Phase 8 documented future-work items (carry-over)
+
+12 items в audit § A.2.1.D Future Work, OUT of Phase 8 implementation scope:
+1. Pluto display rule (3 cards: 01 P-J, 03 P-Sun, 03 P-Mars).
+2. Single-window alignment helper (6 cards: 02 U-P, 02 U-U, 03 N-Mer, 03 N-Mars, 04 U-Sat, 04 U-P).
+3. Case 03 P-Mars Marina typo investigation (data-quality follow-up).
+4. Case 09 Анастасия fixture/reference SR mismatch (TYPE-D data revision).
+
+These are NOT regressions, NOT bugs. They are user-conscious carry-overs requiring distinct programmes (engine work for Pluto rule; presentation helper for alignment; data revision for case 09).
+
+### Pytest evolution (programme summary)
+
+| Phase | Pytest | Override count |
+|---|---|---|
+| Tier A engine cascade (2026-05-11/12) | 85 / 0 / 0 | 0 |
+| Phase 2 hard acceptance assertions | 102 / 21x / 0 | 0 |
+| Phase 4 outer cards (Path 3) | 113 / 10x / 0 | 0 |
+| Phase 4b structured exceptions | 115 / 8x / 0 | 2 (08 N-J W3 + 08 N-N W1) |
+| Phase 5 rulership houses | 145 / 4x / 0 | 2 |
+| Phase 6 calendar clipping | 149 / 0 / 0 | 2 |
+| TASK 7a label arithmetic | 150 / 0 / 0 | 2 |
+| TASK 7b Stage B multi-case | 183 / 0 / 0 | 2 |
+| TASK 8A+8C boundary contract | 219 / 2x / 0 | 2 + 2 xfail-strict (Данила) |
+| TASK 8B Path 1 (N-J W3 retract) | 221 / 0 / 0 | 1 (only N-N W1) |
+| TASK 8D allowlist 01/02/03/04/09 | 286 / 0 / 0 | 1 |
+| TASK 8E Path 1' (BEFORE buffer + case 01 enrollment) | **298 / 0 / 0** | **1** |
+
+### Recovery program CLOSED state
+
+- Production HEAD: `59ec177` (astro main = backup/main).
+- Overlay HEAD: post-cascade closure commit (ai-dev-system master = backup/master).
+- Sole override survivor: **08 N-N W1 start ±200d** (true Marina-editorial; documented per TASK 8E Path 1' Scenario 1 empirical recheck).
+- Boundary contract: 104 enrolled boundaries in `MARINA_OUTER_CARD_BOUNDARIES`, 0 OOT in test suite.
+- 12 documented future-work items in audit § A.2.1.D (carry-over).
+- Canonical render path: `services/api-python/scripts/render_case.py --case-id <case-id>`.
+
+---
+
+### Verdict update (post-Phase-8E pending-ack, 2026-05-15): **Ready for Marina show — pending user ack** (SUPERSEDED by cascade closure verdict above)
+
+> **Status: SUPERSEDED.** Original interim verdict between TASK 8E Worker delivery and user ack on cascade closure. TASK 8E (Worker subagent, 2026-05-15) extended `_TRANSIT_SAMPLE_BUFFER_DAYS_BEFORE` from 540 to 730 days in `services/api-python/app/ephemeris/bridge.py`, resolving the last audit § A.2.1.D future work item (pre-buffer truncation on case 01 Neptune cards). All Phase 8 work (8A audit + 8B AFTER buffer + 8C boundary test contract + 8D allowlist + 8E BEFORE buffer) landed.
 
 **Per TASK 8E + cumulative Phase 8 work:**
 

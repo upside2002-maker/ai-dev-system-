@@ -1,6 +1,6 @@
 ## HANDOFF: worker → tl — phase-8e-before-buffer-extension
 
-- Status: open (Worker submits for review)
+- Status: closed (TASK 8E + 8D cascade accepted 2026-05-15 — Reviewer APPROVE + user explicit ack; Phase 8 program CLOSED)
 - Date: 2026-05-15
 - Project: astro
 - From: worker (subagent)
