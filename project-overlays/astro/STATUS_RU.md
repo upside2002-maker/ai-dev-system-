@@ -4,15 +4,15 @@
 
 ## Сейчас
 
-Внутренний инструмент Марины для подготовки соляр-консультаций. **Программа Transit Section Recovery — Phase 8 финальная implementation работа завершена 2026-05-14 (TASK 8D), awaiting user ack.**
+Внутренний инструмент Марины для подготовки соляр-консультаций. **Программа Transit Section Recovery — Phase 8 финальная implementation работа завершена 2026-05-15 (TASK 8E), awaiting user ack.**
 
-**TASK 8D delivered + external Reviewer APPROVE 2026-05-15.** Status: review (lifecycle close deferred until TASK 8E lands per user direction Option δ). 20 new cards in `OUTER_CARD_ALLOWLIST` + `_OUTER_CARD_FACTS` (5+2+9+2+2 = 20 cards × 5 fact cells = 100 manual transfers, Reviewer spot-checked 15/20 directly от Marina PDFs); 36 new boundary assertions + 29 lexical title assertions (pytest 286/0/0). Override count: 1 (08 Phase 4b N-N W1 ±200d sole survivor).
+**TASK 8E delivered 2026-05-15 (Worker subagent, Tier B).** BEFORE buffer extension `_TRANSIT_SAMPLE_BUFFER_DAYS_BEFORE = 540 → 730` в `services/api-python/app/ephemeris/bridge.py` (rationale per user direction: «730 = minimum systemic extension covering confirmed Marina pre-SR windows with >150d margin» — 01 N-Sun W1 SR-582d fits с ~148d margin; 01 N-Mars W1 SR-557d fits с ~173d margin). AFTER buffer untouched (stays 730d from TASK 8B). Stage E.5.a 08 N-N W1 start empirical recheck → **Scenario 1** (Δ stays -178d, TL prediction correct; true editorial, NOT horizon truncation; ±200d structured override stays). Stage E.6.1: 12 new boundary points enrolled (01 N-Sun + N-Mars × 3 windows × 2 sides) — все within ±2d default tolerance.
 
-**Reviewer empirical finding (TASK 8D § A.2.1.D, confirmed 2026-05-15):** **Pre-buffer truncation finding** для case 01 N-Sun + N-Mars W1 starts. Engine emits W1 = `29.05.2023 06:14 GMT+3` = `_TRANSIT_SAMPLE_BUFFER_DAYS_BEFORE = 540` floor to-the-second exactly; Marina W1 = 17.04.2023 / 12.05.2023 lies in pre-buffer zone. **Симметрично TASK 8B Path 1 AFTER-buffer finding.** 14 of 20 new cards excluded from boundary tests (documented per category в audit § A.2.1.D); pre-buffer category requires TASK 8E to resolve (analogous Path 1' for BEFORE).
+**Pytest 298/0/0** (286 baseline + 12 new boundary points). Override count: 1 (08 Phase 4b N-N W1 ±200d sole survivor). Per-case raw row count ratio 1.08×–1.14× (below 1.20× early-warning informational threshold и 1.50× escalate threshold). Presentation calendar `cal_h` bit-identical pre/post all 9 cases (1.00× ratio); monthly cells matrix `mat_h` bit-identical pre/post all 9 cases. 9 fixture files regenerated (input + expected = 18 files) per Bright Line #8 atomic commit.
 
-**Phase 8E drafted 2026-05-15 (Ready: no).** BEFORE buffer extension: `_TRANSIT_SAMPLE_BUFFER_DAYS_BEFORE = 540 → 730` (default `outer_card_lookbehind_days = 365.25 * 2`, mirror of TASK 8B AFTER). Empirical recheck on 08 N-N W1 start — TL prediction: Δ stays -178d (true editorial, our orb_enter at SR-491d is inside even current buffer); if prediction wrong + converges → Phase 4a memo gets second erratum (analogous Path 1 retraction). Calendar/monthly clipping guards mandatory. Other 12 excluded cards (Pluto display rule / single-window alignment / case 03 P-Mars typo / Анастасия TYPE-D) NOT in 8E scope — future work items.
+**Verdict update (post-Phase-8E, 2026-05-15):** «**Ready for Marina show — pending user ack**» (final closure verdict). Recovery program Phase 8 complete (8.0 + 8A + 8B + 8C + 8D + 8E). После Reviewer APPROVE → cascade close TASK 8D + 8E + Phase 8 program → пользовательский ack → программа closes. Framing memo для Marina готовится отдельным lightweight post-closure artifact, не смешивается с closure commit.
 
-**Verdict update (post-TASK-8D + Reviewer + Phase 8E pending, 2026-05-15):** «**Partial pass — TASK 8D implementation accepted; Phase 8 final verdict deferred до Phase 8E closure**». TASK 8D accepted в cascade with 8E post-Phase-8E closure. PDFs cases 01/02/03/04/09 рендерятся, но 14 cards имеют known boundary issues — НЕ показывать «всю папку» Марине до 8E closure.
+**TASK 8D delivered + external Reviewer APPROVE 2026-05-15 (предшествует 8E в cascade).** 20 new cards in `OUTER_CARD_ALLOWLIST` + `_OUTER_CARD_FACTS` (5+2+9+2+2 = 20 cards × 5 fact cells = 100 manual transfers, Reviewer spot-checked 15/20 directly от Marina PDFs); 36 new boundary assertions + 29 lexical title assertions. **Reviewer empirical finding (TASK 8D § A.2.1.D, confirmed 2026-05-15):** Pre-buffer truncation finding для case 01 N-Sun + N-Mars W1 starts. Engine emits W1 = `29.05.2023 06:14 GMT+3` = `_TRANSIT_SAMPLE_BUFFER_DAYS_BEFORE = 540` floor to-the-second exactly; Marina W1 = 17.04.2023 / 12.05.2023. **Resolved via TASK 8E** (post-fix engine W1 = 16.04.2023 / 11.05.2023, Δ −1d both, within ±2d default tolerance).
 
 **Verdict superseded (post-Phase-8-audit, 2026-05-14):** «Partial pass — только 08 Наталья production-ready». Закрытие TASK 7b 2026-05-13 было **преждевременным** — manual audit (Codex + TL 2026-05-14) на clean checkout обнаружил, что multi-case тесты Stage B проверяли количество outer-card окон, но **не их boundary даты** vs Marina. Worker'овский pytest baseline 183/0/0 правда зелёный, но контрактная дыра в TASK 7b § B.4 пропустила реальные расхождения. **Дисциплинарная ответственность — на PTL за spec, не на Worker'е.**
 
@@ -43,6 +43,7 @@
   2. **Данила horizon fix Path A** — engine sample horizon extension в Haskell (`Domain.TransitCalendar`). **Required regression guards:** (a) Phase 4b Натальи N-J W3 end + N-N W1 start Δ stay accepted-divergence values (do NOT change post-fix); (b) calendar size (`annual_transit_table` row count) does NOT bloat across Натальи / 05 / 07 / 10; (c) all monthly tables + outer card boundaries для не-Данила окон preserved. Path B (presentation truncation marker) — **optional defensive fence**, не первый фикс. Tier B (Haskell engine touch; Tier A escalation if schema cascade triggered).
   3. **После horizon fix** — unmark 2 Данила `xfail(strict=True)` markers в `test_multi_case_calibration.py`; boundary tests должны стать green (Phase 2 xfail-strict discipline: xpass forces unmark в том же TASK).
 - **TASK 8D** (separate Worker TASK после 8B closes): allowlist + facts extension для 01/02/03/04/09 (Stage B-pattern, Tier C closed-config). **Не смешивать с 8B horizon fix.** Order: после Path A landed чтобы новые карты сразу получили correct sample horizon.
+- **TASK 8E** (BEFORE buffer extension, post-8D): `_TRANSIT_SAMPLE_BUFFER_DAYS_BEFORE = 540 → 730` (mirror of TASK 8B AFTER side, but tighter — «730 = minimum systemic extension covering confirmed Marina pre-SR windows with >150d margin» per user direction). Stage E.5.a empirical recheck on 08 N-N W1 start; STOP-gated if converges (TL/user ack required для retraction). Tier B + Reviewer REQUIRED.
 - **TYPE-D** (`_3.pdf`, Анастасия) — отдельный data-revision backlog, **вне Phase 8 implementation programme**.
 
 **Phase 8A+8C ACCEPTED + archived 2026-05-14.** TASK 8A+8C lifecycle закрыт: TASK file + HANDOFF archived; calibration report § 4 расширен; pytest 219/2/0 preserved; CI green.
@@ -219,10 +220,11 @@ Path B (anchor convention convergence) deferred — strategically возможе
 
 ## Ждёт твоего решения
 
-- **Ack на TASK 8E spec** (BEFORE buffer extension, symmetric to TASK 8B Path 1). TL draft'ит spec в `project-overlays/astro/TASKS/2026-05-15-phase-8e-before-buffer-extension.md` (Ready: no). Tier B (engine touch via Python bridge.py); Reviewer REQUIRED. После 8E APPROVE + Reviewer → cascade close TASK 8D + 8E + Phase 8 program final verdict.
-- **Показ Марине — parallel artifact track, доступно сейчас:**
-  - **Можно (post Phase 8B):** Наталю + Данилу + Екатерину (case 05 / 08 / 10). Case 05 lexical fix landed; case 08 N-J W3 end сошлось с Marina; case 10 Данила W3/W4 ends сошлись с Marina. TL подготовит framing memo для Marina про **1** Phase 4b Neptune accepted divergence (N-N W1 start +178d). PDFs нужно re-render'ить через `services/api-python/scripts/render_case.py --case-id ...` после Phase 8B commit landed.
-  - **Нельзя:** Показывать cases 01/02/03/04/09 (allowlist gap, TASK 8D scope); Анастасию (TYPE-D SR mismatch); `_3.pdf` (TYPE-D natal data missing).
+- **Reviewer APPROVE на TASK 8E** (BEFORE buffer extension). Worker delivered 2026-05-15: pytest 298/0/0, фиксы regenerated, Stage E.5.a Scenario 1 confirmed (08 N-N W1 stays -178d editorial). После Reviewer APPROVE → cascade close TASK 8D + 8E + Phase 8 program → user ack → программа closes.
+- **Marina framing memo (post-closure lightweight artifact).** Подготовить отдельно от closure commit (per user direction 2026-05-15): single Neptune editorial divergence (08 N-N W1 start +178d, true editorial — Phase 4b structured override sole survivor). User решает когда/если показать Марине.
+- **Показ Марине — parallel artifact track, доступно сейчас (post-Phase-8E):**
+  - **Можно:** все 9 calibrated cases (01/02/03/04/05/07/08/09/10), при условии user ack на final verdict. PDFs нужно re-render'ить через `services/api-python/scripts/render_case.py --case-id ...` на HEAD post-Phase-8E.
+  - **Нельзя:** показ всей папки PDFs одним пакетом до user ack на post-Phase-8E verdict.
 
 Локальная ветка `claude/dreamy-moore-46f5eb` остаётся (deferred cleanup) — не блокер.
 
@@ -230,11 +232,10 @@ Path B (anchor convention convergence) deferred — strategically возможе
 
 **Программа Transit Section Recovery — REOPENED 2026-05-14, Phase 8 в работе.** TASK 7b closure 2026-05-13 был премат-clos'нут — contract gap в тестах Stage B (boundary assertions missing). **Дисциплинарная ответственность — на PTL** за неполный spec TASK 7b § B.4.
 
-**Текущая Phase 8 discipline (post Phase 8B closure):**
-- **Показывать Марине разрешено Наталю + Данилу + Екатерину** (case 05 / 08 / 10) с Phase 4b framing про 1 Neptune accepted divergence (N-N W1 start +178d, true editorial). НЕ показывать cases 01/02/03/04/09 до TASK 8D landed.
-- Финальные client PDFs рендерить только через `services/api-python/scripts/render_case.py --case-id <case-id>` на HEAD post-Phase-8B или новее. Provenance sidecar должен показывать актуальный `git_sha`.
-- Cases 01/02/03/04/09 — **не показывать** до TASK 8D fix landed (allowlist + facts extension).
-- `_3.pdf` и Анастасия — TYPE-D data quality blockers, держать отдельно от code regressions.
+**Текущая Phase 8 discipline (post Phase 8E closure):**
+- **Все 9 calibrated cases (01/02/03/04/05/07/08/09/10) — production-ready post-Reviewer-APPROVE + user-ack.** Phase 4b framing про 1 Neptune accepted divergence (08 N-N W1 start +178d, true editorial) — sole editorial divergence для Marina framing (Phase 8B Path 1 убрал N-J W3 +20d override как horizon truncation, не editorial; Phase 8E Stage E.5.a Scenario 1 confirmed N-N W1 -178d stays editorial — BEFORE buffer extension не изменила).
+- Финальные client PDFs рендерить только через `services/api-python/scripts/render_case.py --case-id <case-id>` на HEAD post-Phase-8E или новее. Provenance sidecar должен показывать актуальный `git_sha`.
+- `_3.pdf` (case 06) и Анастасия (case 09 TYPE-D SR mismatch ~60 min) — отдельные data quality items в backlog, держать отдельно от code regressions. Анастасия рендерится в общем production-ready наборе (audit § A.3 TYPE-D items), но Marina может заметить расхождение SR-time; user решает показывать или придержать до data revision.
 
 **Historical дисциплина (на время программы 2026-05-11 → 2026-05-13) — задокументирована в `ARCHITECTURE/transit-section-program-2026-05-13.md`; во время программы запрещалось:**
 - перезаписывать `expected.json` golden fixtures результатом текущего engine без diff review;

@@ -210,8 +210,8 @@ and pinned by lexical title assertions, but no boundary assertion):
 
 | Case | Card | Reason (excluded from boundary tests) | Boundary points |
 |---|---|---|---|
-| 01 | Neptune Trine Sun | Marina W1 start (17.04.2023) lies in SR−582d zone; engine `_TRANSIT_SAMPLE_BUFFER_DAYS_BEFORE = 540` truncates W1 to 29.05.2023 (Δ +42d). True pre-buffer horizon limitation analogous to Phase 4b 08 N-N W1 ±200d, but in the «before SR» direction. Documented as future engine work item (NOT in TASK 8D scope). | 6 |
-| 01 | Neptune Square Mars | Same pre-buffer truncation pattern: Marina W1 = 12.05.2023, engine W1 = 29.05.2023 (Δ +17d). | 6 |
+| 01 | Neptune Trine Sun | **[ENROLLED post-Phase-8E, 2026-05-15]** — Marina W1 start (17.04.2023) originally in SR−582d zone; engine `_TRANSIT_SAMPLE_BUFFER_DAYS_BEFORE = 540` truncated W1 to 29.05.2023 (Δ +42d). Phase 8E (TASK 8E) extended BEFORE buffer to 730d; post-fix engine W1 start = 16.04.2023 (Δ −1d, within ±2d). All 6 boundary points enrolled in `MARINA_OUTER_CARD_BOUNDARIES`. | 6 → 0 |
+| 01 | Neptune Square Mars | **[ENROLLED post-Phase-8E, 2026-05-15]** — Same pre-buffer truncation pattern resolved by TASK 8E: Marina W1 = 12.05.2023, engine W1 pre-fix = 29.05.2023 (Δ +17d); engine W1 post-fix = 11.05.2023 (Δ −1d, within ±2d). All 6 boundary points enrolled. | 6 → 0 |
 | 01 | Pluto Trine Jupiter | Marina display rule for Pluto narrows windows (Marina W3 = 12.06.2026–21.09.2026, engine W3 = 20.05.2026–05.02.2027 — engine spans 261 days, Marina spans 101 days). Pluto multi-year loop display rule differs from raw orb-window output. Future engine work item or presentation rule (NOT in TASK 8D scope). | 6 |
 | 02 | Uranus Opposition Pluto | Marina shows SINGLE window (Marina W1 = 01.12.2025–06.04.2026 = engine W3); positional alignment fails (Marina[0] vs engine[0] ≠ same loop touch). Requires per-card `engine_window_index` mapping to align — out of TASK 8D scope. | 2 |
 | 02 | Uranus Trine Uranus | Same single-Marina-window alignment limitation (Marina W1 = engine W3). | 2 |
@@ -245,6 +245,17 @@ and pinned by lexical title assertions, but no boundary assertion):
 | 08 Phase 4b structured override (N-N W1 ±200d) | 1 | 1 (accepted) |
 | **Sole repo-wide OOT** | — | **1** (08 N-N W1 start, true Marina-editorial) |
 
+**Boundary-test scope post-TASK-8E (2026-05-15):**
+
+| Source | Boundary assertions | OOT-of-tolerance |
+|---|---|---|
+| Phase 8C existing (05 + 10 cases) | 56 | 0 |
+| TASK 8D (01 + 03 Uranus/Neptune cards) | 36 | 0 |
+| **TASK 8E (01-kseniya Neptune Trine Sun + Neptune Square Mars)** | **12** | **0** |
+| **Total in `MARINA_OUTER_CARD_BOUNDARIES`** | **104** | **0** |
+| 08 Phase 4b structured override (N-N W1 ±200d) | 1 | 1 (accepted) |
+| **Sole repo-wide OOT** | — | **1** (08 N-N W1 start, true Marina-editorial — verified post-TASK-8E that BEFORE buffer extension does NOT shift this boundary; Scenario 1 per TASK 8E Stage E.5.a) |
+
 Override count post-TASK-8D = 1 (sole survivor: 08 Phase 4b N-N W1 start
 ±200d Marina-editorial structured override in
 `test_natalya_transits_acceptance.py`). Threshold (5 per case / 10 total)
@@ -252,11 +263,15 @@ preserved with wide margin.
 
 **Future work items (out of TASK 8D scope; documented for traceability):**
 
-1. **Engine `_TRANSIT_SAMPLE_BUFFER_DAYS_BEFORE` extension** — would
-   resolve case 01 Neptune Tr Sun / Sq Mars W1 starts (currently
-   truncated by ~17-42d). Would also future-proof any solar year that
-   begins with multi-year outer loops where Marina narrates the «first
-   touch» from the preceding year(s).
+1. **[RESOLVED via TASK 8E, 2026-05-15]** Engine
+   `_TRANSIT_SAMPLE_BUFFER_DAYS_BEFORE` extension — resolved case 01
+   Neptune Tr Sun / Sq Mars W1 starts. Buffer extended `540 → 730` in
+   `services/api-python/app/ephemeris/bridge.py`; engine W1 starts
+   converged to Marina within ±2d (pre-fix Δ +42d/+17d → post-fix Δ
+   −1d/−1d). 12 boundary points enrolled in
+   `MARINA_OUTER_CARD_BOUNDARIES`. Stage E.5.a empirical recheck on 08
+   N-N W1 start confirmed Scenario 1 (stays −178d; true editorial; not
+   horizon truncation; ±200d structured override stays).
 2. **Single-Marina-window alignment mapping** — extend
    `MARINA_OUTER_CARD_BOUNDARIES` shape to support per-card
    `engine_window_index` mapping (e.g. Marina W1 ↔ engine W3 for cases

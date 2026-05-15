@@ -805,12 +805,88 @@ B blocked at original Stage A. Phase 7 Stage A → Stage B gate triggered STOP.
   allowing documented TYPE-A boundary rows. All four PASS.
 - Cases 05/10 baselines preserved through TASK 7a (51/52 and 52/52 monthly cells).
 
-### Verdict update (post-TASK-8D, 2026-05-14): **Ready for Marina show — pending user ack**
+### Verdict update (post-Phase-8E, 2026-05-15): **Ready for Marina show — pending user ack** (final closure verdict)
 
-> **Status: ACTIVE.** This verdict supersedes the «Partial pass» verdict below. TASK 8D
+> **Status: ACTIVE.** This verdict supersedes the «post-TASK-8D» verdict below. TASK 8E
+> (Worker subagent, 2026-05-15) extended `_TRANSIT_SAMPLE_BUFFER_DAYS_BEFORE` from 540
+> to 730 days in `services/api-python/app/ephemeris/bridge.py`, resolving the last audit
+> § A.2.1.D future work item (pre-buffer truncation on case 01 Neptune cards). All
+> Phase 8 work (8A audit + 8B AFTER buffer + 8C boundary test contract + 8D allowlist +
+> 8E BEFORE buffer) landed.
+
+**Per TASK 8E + cumulative Phase 8 work:**
+
+1. **Test contract gap closed.** Phase 8C added outer-card interval boundary assertions
+   (cases 05 + 10, 56 assertions); TASK 8D extended to cases 01 + 03 Uranus/Neptune
+   cards (+36 assertions = 92 boundary assertions post-TASK-8D); **TASK 8E added 12
+   new boundary points for 01-kseniya Neptune Trine Sun + Neptune Square Mars**
+   (3 windows × 2 sides × 2 cards = 12, all within ±2d default tolerance). Total
+   **104 boundary assertions in `MARINA_OUTER_CARD_BOUNDARIES`**, 0 OOT. Phase 4b
+   08-N-N W1 structured override (sole survivor, ±200d) stays — Stage E.5.a Scenario 1
+   confirmed: N-N W1 start remains at SR-491d (true editorial), not shifted by
+   BEFORE buffer extension.
+2. **All TYPE-A closed-config gaps resolved.** § 4 item 6 [RESOLVED via TASK 8D]; §
+   audit A.2.1.D future work item 1 (pre-buffer extension) [RESOLVED via TASK 8E].
+3. **No new TYPE-B.** No generic logic regressions detected during TASK 8E inspection.
+4. **Override count.** Total = 1 (unchanged from TASK 8D: 08 N-N W1 start ±200d).
+   Threshold (5 per case / 10 total) preserved with wide margin. TASK 8E added 0 new
+   tolerance overrides.
+5. **TYPE-C documented.** Marina single-Marina-window cards (02, 04, partial 03) and
+   Marina Pluto display rule narrowing (partial 01, 03) classified as «render correctly
+   but boundary assertions deferred» — audit § A.2.1.D Future Work items 2-3
+   (single-window alignment helper; Pluto display rule) remain as out-of-scope future
+   work.
+6. **TYPE-D outstanding (separate backlog).** Case 09 fixture SR mismatch ~60 min and
+   `Соляр 2025-2026_3.pdf` natal metadata blocker remain in separate data-revision
+   backlog, NOT blocking Marina show.
+
+**Tests green at HEAD (post-TASK-8E):**
+- `pytest`: **298 passed / 0 xfailed / 0 failed** = 286 baseline (post-TASK-8D) + 12
+  new boundary points (01 N-Sun W1/W2/W3 + 01 N-Mars W1/W2/W3, start + end each).
+- `cabal --project-dir core/astrology-hs build`: Up to date (no engine changes;
+  Phase 8E touches only Python `bridge.py` constant + golden fixtures regenerated).
+
+**Per-case raw row count impact (TASK 8E BEFORE buffer extension):**
+
+| case | raw_pre (540 BEFORE) | raw_post (730 BEFORE) | Δ rows | ratio | within 1.20× early-warning? |
+|---|---|---|---|---|---|
+| 01-kseniya | 106 | 120 | +14 | 1.132× | YES |
+| 02-maksim | 114 | 126 | +12 | 1.105× | YES |
+| 03-artem | 110 | 125 | +15 | 1.136× | YES |
+| 04-valeriya | 110 | 119 | +9 | 1.082× | YES |
+| 05-ekaterina | 101 | 111 | +10 | 1.099× | YES |
+| 07-mariya | 106 | 119 | +13 | 1.123× | YES |
+| 08-natalya | 110 | 121 | +11 | 1.100× | YES |
+| 09-anastasiya | 116 | 128 | +12 | 1.103× | YES |
+| 10-danila | 110 | 122 | +12 | 1.109× | YES |
+
+Per-case presentation calendar (post Phase 6 clipping) `cal_h` bit-identical pre/post
+all 9 cases (ratio 1.00×); monthly cells matrix `mat_h` bit-identical pre/post all
+9 cases. BEFORE buffer extension affects only raw `annual_transit_table` payload
+(extra pre-SR entries); Phase 6 clipping `[sr_jd, sr_jd + 365.25]` isolates client-PDF
+calendar rows from sample-window-width changes.
+
+**Production-readiness gate post-TASK-8E — all conditions met:**
+- All Phase 7 + Phase 8 deliverables landed ✓
+- No TYPE-B ✓
+- Override count ≤ threshold (1 vs 10 total) ✓
+- All TYPE-A closed-config gaps resolved ✓
+- All audit § A.2.1.D future work item 1 (pre-buffer extension) [RESOLVED via TASK 8E] ✓
+- TYPE-C documented ✓
+- TYPE-D items in separate backlog (NOT blocking Marina show) ✓
+
+**Required next step: user explicit ack on this updated calibration report.** After
+ack: recovery program closes; PDFs for all 8 Phase-7/8 cases (01 / 02 / 03 / 04 / 05
+/ 07 / 08 / 09 / 10) production-ready and clientable to Marina.
+
+---
+
+### Verdict update (post-TASK-8D, 2026-05-14): SUPERSEDED by post-Phase-8E verdict above
+
+> **Status: SUPERSEDED.** Kept as historical record per audit-trail discipline. TASK 8D
 > (Worker subagent, 2026-05-14) enrolled the 5 remaining cases (01 / 02 / 03 / 04 / 09)
 > in `OUTER_CARD_ALLOWLIST` + `_OUTER_CARD_FACTS` — the last implementation work in the
-> Phase 8 recovery program. All Phase 8B / 8C / 8D deliverables landed.
+> Phase 8 recovery program at that snapshot. All Phase 8B / 8C / 8D deliverables landed.
 
 **Per TASK 8D + cumulative Phase 8 work:**
 
