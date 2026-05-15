@@ -1,11 +1,11 @@
 # TASK: phase-8d-allowlist-extension-01-02-03-04-09
 
 - Status: open
-- Ready: no
+- Ready: yes
 - Date: 2026-05-14
 - Project: astro
 - Layer: services (Python presentation only — closed-config additions)
-- Risk tier: C (allowlist data + facts + tests; analogous to TASK 7b Stage B closed-config calibration pattern)
+- Risk tier: C (allowlist data + facts + tests; analogous to TASK 7b Stage B closed-config calibration pattern) — **Reviewer subagent REQUIRED (narrow-scope), per user direction 2026-05-14: main risk is human error in golden-rule fact transfer across 5 cases × ~20 outer cards × 5 fact cells, not code.**
 - Owner: Project Tech Lead
 - Created by: upside2002@gmail.com
 - Worker model: Claude Code
@@ -24,37 +24,75 @@ Phase 8A audit (audit report § A.3 TYPE-A item 6) confirmed: cases 01/02/03/04/
 
 ## Stages
 
-### Stage D.1 — Per-case allowlist + facts (5 cases)
+### Stage D.1 — Per-case allowlist + facts (5 cases, 20 cards total per audit)
 
-For each of cases 01/02/03/04/09:
-- Extend `OUTER_CARD_ALLOWLIST["<case-id>"]` с N triples (per Marina audit § A.2 inventory).
-- Populate `_OUTER_CARD_FACTS` per card: `transit_natal_house`, `target_natal_house`, `transit_ruled_houses`, `target_ruled_houses`, `transit_walks_house`, `psychology`, `event_level` (Marina-style paraphrase, не verbatim).
-- Marina reference pages — TBD from audit § A.2.1 / § A.4 per-case page numbers. Worker reads etalon PDFs visually + audit table.
+Pre-mapped card counts per case (per user direction 2026-05-14, sourced from Phase 8A audit § A.2 + audit § A.4 item 4):
 
-Worker MUST audit-read each etalon PDF before adding facts. **No silent guessing on house numbers** — Worker reads «Золотое правило транзита» tables from Marina pages directly.
+| Case | Etalon PDF | Expected outer card count |
+|------|------------|---------------------------|
+| 01-kseniya-2024-2025 | `Соляр 2025-2026.pdf` (case 01 variant) | **5** |
+| 02-maksim-2025-2026 | `Соляр 2025-2026 для Максима.pdf` (or analog) | **2** |
+| 03-artem-2025-2026 | `Соляр 2025-2026 для Артёма.pdf` (or analog) | **9** |
+| 04-valeriya-2025-2026 | `Соляр 2025-2026 для Валерии.pdf` (or analog) | **2** |
+| 09-anastasiya-2025-2026 | `Соляр 2025-2026 для Анастасии.pdf` | **2** |
+| **Total** | — | **20 outer cards** |
+
+Worker MUST:
+- Visually verify exact PDF filename per case (audit report § A.1 inventory has match table; consult).
+- Read «Золотое правило транзита» tables from Marina pages directly. **No silent guessing on house numbers.**
+- Cite exact Marina page range per card in code comment (e.g. `# Marina <PDF> pp. X-Y — тр Уран в квадрате с нат Луной`).
+- In HANDOFF, provide an exact **PDF page → card** mapping table:
+
+  | case | card # | Marina PDF | pages | triple (transit, aspect, target) | golden-rule cells (5) verified |
+  |------|--------|------------|-------|----------------------------------|--------------------------------|
+
+For each card:
+- Extend `OUTER_CARD_ALLOWLIST["<case-id>"]` с triple.
+- Populate `_OUTER_CARD_FACTS[(case, transit, aspect, target)]`: `transit_natal_house`, `target_natal_house`, `transit_ruled_houses`, `target_ruled_houses`, `transit_walks_house` (5 cells from Marina table) + `psychology` + `event_level` (Marina-style paraphrase, не verbatim).
+
+**STOP triggers within Stage D.1:**
+- Engine `outer_cards_for_case` returns ≠ expected card count for any case (i.e. fewer triples produce hits than allowlist contains, or unexpected extras) → audit page numbers wrong or fixture mismatch; STOP, escalation.
+- Marina page numbers ambiguous (Worker cannot confidently read house numbers from etalon PDF) → STOP, escalation memo, request user clarification per card.
 
 ### Stage D.2 — Render verification per case
 
 For each of 01/02/03/04/09:
 - Render PDF via `services/api-python/scripts/render_case.py --case-id <case-id> --output /tmp/<case-id>-stage-d.pdf`.
-- Verify provenance sidecar `git_sha` matches HEAD (one of the Stage D commits).
-- Confirm rendered outer cards present per allowlist.
+- PDFs stay в `/tmp/` (debug artifacts; **NOT committed** anywhere persistent).
+- **Provenance sidecar verification (MANDATORY):**
+  - `git_sha == HEAD` (one of the Stage D commits or later; not stale).
+  - `extra.case_label == <case-id>` (correct case wiring).
+  - `debug == false` (no debug footer in client PDFs).
+  - Report verification status per case в HANDOFF.
+- Confirm rendered outer cards present per allowlist (count matches Stage D.1 table).
 - Visual smoke (PyPDF text extract) for card titles + dates within ±2d of Marina audit § A.2.1 entries.
+
+**STOP triggers within Stage D.2:**
+- Sidecar `git_sha` does NOT match HEAD → stale render; re-render after commit.
+- Sidecar `case_label` mismatched → wiring bug; STOP, escalation.
+- `debug == true` in any sidecar → debug leak risk; STOP, fix render mode.
 
 ### Stage D.3 — Test contract extension
 
-Extend `services/api-python/tests/test_multi_case_calibration.py` boundary assertions:
-- Per Phase 8C pattern: add Marina-listed boundary dates per new card per new case to `MARINA_OUTER_CARD_BOUNDARIES` dict (single SoT, with `# SoT: ... § A.2.1` cross-ref).
-- Per-window start_str + end_str assertions (±2 days date-only, per Phase 8C C.1 helper).
-- 0 new `tolerance_overrides`. If any window OUT-of-tolerance — STOP, escalation. Phase 8B horizon extension should make all new cases pass cleanly; if not, that's a finding.
+Extend `services/api-python/tests/test_multi_case_calibration.py`:
+- **D.3.1 — Boundary assertions** (per Phase 8C C.1 helper pattern):
+  - Add Marina-listed boundary dates per new card per new case to `MARINA_OUTER_CARD_BOUNDARIES` dict (single SoT, with `# SoT: ... § A.2.1` cross-ref).
+  - Per-window start_str + end_str assertions (±2 days date-only).
+  - 0 new `tolerance_overrides`. If any window OUT-of-tolerance — STOP, escalation. Phase 8B horizon extension should make all new cases pass cleanly; if not, that's a finding.
+- **D.3.2 — Exact title lexical assertions (per user direction 2026-05-14):**
+  - Per card, assert rendered card title contains **exact lexical form** of aspect locative, NOT regex `трин\w*` или similar fuzzy match.
+  - Specifically: «тригоне» (not «трине»), «секстиле», «квадрате», «соединении», «оппозиции» — exact strings.
+  - Rationale: TASK 8B B1 just fixed lexical «трине → тригоне»; pin via exact-string test so future regressions are caught immediately. Generic regex masks lexical regressions.
+  - Implementation: per case, parametrized test asserting `assert "в тригоне с" in title` (for Trine cards), `assert "в квадрате с" in title` (for Square cards), etc. Use `in` not `re.match`/`re.search` with wildcard.
 
 Tests should run green at HEAD (no new xfail markers).
 
-### Stage D.4 — Calibration report § 4 update
+### Stage D.4 — Calibration report § 4 update (FULL subsections per user direction 2026-05-14)
 
 Update `transit-multi-case-calibration-report-2026-05-13.md`:
 - § 4 TYPE-A item 6 (allowlist gap 01/02/03/04/09) marked `[RESOLVED via TASK 8D]`.
-- New § 3.X subsections per new case if Worker decides (analogous to existing § 3.1, 3.2, 3.3 for 05/07/10) — or single appended § 3.4-3.8 block, Worker chooses minimal-additive approach.
+- **§ 3.4-3.8 full subsections per case** (NOT compact additive). Rationale per user direction: compact wording previously hid the Phase 8B boundary gap (TASK 7b closure was premature in part because compact reporting); for 5 new cases pinning explicit § 3.4 case 01, § 3.5 case 02, § 3.6 case 03, § 3.7 case 04, § 3.8 case 09 with structure analogous to existing § 3.1/3.2/3.3:
+  - Per case: SR + Marina PDF reference; monthly transit table summary (smoke check, не cell-by-cell — those covered by existing tests); per-house interpretation summary; outer-planet cards table (count + titles + boundaries + golden-rule cells); calendar smoke; verdict per case (matches Marina; partial; documented divergences).
 - § 6 verdict update: «Ready for Marina show — pending user ack» (target verdict — все TYPE-A closed-config gaps resolved; TYPE-B no new findings; overrides count unchanged; TYPE-C documented; TYPE-D остаётся data-revision backlog вне Phase 8).
 
 ## Files
@@ -89,26 +127,34 @@ Update `transit-multi-case-calibration-report-2026-05-13.md`:
 
 ### Stage D.1 — Per-case allowlist + facts
 
-- [ ] Cases 01/02/03/04/09 entries in `OUTER_CARD_ALLOWLIST` (N triples each per audit).
+- [ ] Cases 01/02/03/04/09 entries in `OUTER_CARD_ALLOWLIST`: **5 + 2 + 9 + 2 + 2 = 20 triples total** (per audit + user pre-mapping).
 - [ ] `_OUTER_CARD_FACTS` populated per card with 5 cells + psychology + event_level texts.
 - [ ] Marina reference pages cited в code comments (e.g. «pp. X-Y per Соляр 2025-2026_N.pdf»).
+- [ ] HANDOFF includes exact **PDF page → card** mapping table per Stage D.1 spec (case / card # / Marina PDF / pages / triple / golden-rule cells verified).
+- [ ] **No silent guessing on house numbers** — Worker visually audited Marina «Золотое правило транзита» tables per card.
 
 ### Stage D.2 — Render verification
 
-- [ ] Per-case PDFs at `/tmp/<case-id>-stage-d.pdf` exist with correct allowlist outer cards.
-- [ ] Provenance sidecar `git_sha` matches Stage D commit HEAD.
+- [ ] Per-case PDFs at `/tmp/<case-id>-stage-d.pdf` exist with correct allowlist outer cards (count matches Stage D.1 table).
+- [ ] **Provenance sidecar verification per case (MANDATORY):**
+  - `git_sha == HEAD` (one of Stage D commits or later).
+  - `extra.case_label == <case-id>`.
+  - `debug == false`.
+- [ ] Visual smoke (PyPDF text extract) per case: card titles + dates within ±2d of Marina audit § A.2.1.
 
 ### Stage D.3 — Test contract extension
 
-- [ ] `MARINA_OUTER_CARD_BOUNDARIES` extended per new card per new case (with SoT cross-ref).
-- [ ] Boundary assertions added per Phase 8C C.1 helper.
-- [ ] 0 new `tolerance_overrides`; no new xfail markers.
-- [ ] All new boundary tests green (per Phase 8B horizon extension covering all Marina dates).
+- [ ] **D.3.1:** `MARINA_OUTER_CARD_BOUNDARIES` extended per new card per new case (with `# SoT:` cross-ref).
+- [ ] **D.3.1:** Boundary assertions added per Phase 8C C.1 helper.
+- [ ] **D.3.1:** 0 new `tolerance_overrides`; no new xfail markers.
+- [ ] **D.3.1:** All new boundary tests green (per Phase 8B horizon extension covering all Marina dates).
+- [ ] **D.3.2:** Exact lexical title assertions added per card (e.g. `assert "в тригоне с" in title` for Trine cards; `assert "в квадрате с" in title` for Square cards). **NOT regex / fuzzy match.**
+- [ ] **D.3.2:** Tests for all 20 new cards + sanity for 05/08/10 existing cards (re-asserting lexical on existing cards optional but recommended — Worker decides).
 
-### Stage D.4 — Calibration report update
+### Stage D.4 — Calibration report update (full subsections)
 
 - [ ] § 4 TYPE-A item 6 marked `[RESOLVED via TASK 8D]`.
-- [ ] § 3 extended with new cases (or compact additive block).
+- [ ] **§ 3.4-3.8 full subsections per case** (NOT compact additive): one subsection each for case 01, 02, 03, 04, 09 with structure analogous to existing § 3.1/3.2/3.3 (SR + Marina PDF ref + monthly smoke + per-house summary + outer-cards table + calendar smoke + verdict).
 - [ ] § 6 verdict: «Ready for Marina show — pending user ack» (with reasoning: all TYPE-A resolved; no TYPE-B; override count = 1 only N-N W1 stays).
 
 ### Common
@@ -143,7 +189,15 @@ Update `transit-multi-case-calibration-report-2026-05-13.md`:
 
 ## Context
 
-**Mode normal + Tier C** (closed-config calibration; analogous to TASK 7b Stage B). Reviewer subagent optional (Tier C). TL inline-verify acceptable.
+**Mode normal + Tier C** (closed-config calibration; analogous to TASK 7b Stage B). **Reviewer subagent REQUIRED (narrow-scope) per user direction 2026-05-14** — main risk vector is human error in golden-rule fact transfer across 5 cases × 20 cards × 5 fact cells = 100 manual data points. TL inline-verify on top of Reviewer pass.
+
+**Reviewer narrow scope:**
+- Verify each card's 5 golden-rule cells (transit_h, target_h, transit_ruled, target_ruled, walks) match Marina table on cited page (independent visual read).
+- Verify card title lexical exactness (assert «тригоне» not «трине» etc.).
+- Verify allowlist entry count per case matches Stage D.1 table (5+2+9+2+2 = 20).
+- Verify sidecar provenance per case (git_sha + case_label + debug=false).
+- Confirm 0 new tolerance_overrides; 0 new xfail markers.
+- Pytest independent run.
 
 **Baseline:**
 - Product main @ `f667a10` (TASK 8B Path 1 accepted; horizon extended to SR + 1096d).
@@ -172,4 +226,10 @@ Update `transit-multi-case-calibration-report-2026-05-13.md`:
 - TYPE-D остаётся отдельным data-revision backlog (НЕ блокирует Marina show — кейсы `_3.pdf` и Анастасия не в production scope этой программы).
 - User explicit ack required for verdict promotion.
 
-**Ready: no** — TL flips after user ack on TASK 8D spec + any refinements.
+**Ready: yes** — flipped 2026-05-14 после user ack + 5 refinements applied:
+
+1. **Reviewer:** REQUIRED (narrow-scope) per user direction; main risk = human error в golden-rule fact transfer across 5 cases × 20 cards × 5 cells.
+2. **Pages pre-mapped:** card counts per case (01=5, 02=2, 03=9, 04=2, 09=2 = 20 total); Worker fills exact PDF page → card table в HANDOFF.
+3. **PDF artifacts:** `/tmp/` only (not committed); sidecar verification mandatory (`git_sha == HEAD`, `case_label` correct, `debug=false`).
+4. **Calibration report:** full § 3.4-3.8 subsections (NOT compact additive); compact previously hid Phase 8B boundary gap.
+5. **Acceptance:** exact lexical title assertions added (e.g. `"в тригоне с"`, `"в квадрате с"`) — NOT regex/fuzzy; pin lexical post-TASK-8B fix.
