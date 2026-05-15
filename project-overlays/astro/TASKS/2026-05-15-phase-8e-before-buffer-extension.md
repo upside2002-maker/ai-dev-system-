@@ -1,7 +1,7 @@
 # TASK: phase-8e-before-buffer-extension
 
 - Status: open
-- Ready: no
+- Ready: yes
 - Date: 2026-05-15
 - Project: astro
 - Layer: services (Python `bridge.py` BEFORE buffer parameter) + tests
@@ -40,17 +40,22 @@ Reports current value (540), location, scope (outer-planet hits only / all annua
 
 Worker introduces or extends systemic named parameter `outer_card_lookbehind_days` (mirror of TASK 8B `outer_card_lookahead_days`).
 
-**Default proposal:** `outer_card_lookbehind_days = 365.25 * 2` (~730 days, ~2 solar years).
+**Default proposal:** `outer_card_lookbehind_days = 730` days (~2 solar years).
 
-Rationale:
-- Mirrors TASK 8B AFTER buffer (540 → 730 already landed).
-- Solar return charts narrate the year ahead; "before SR" context typically extends only to the previous outer-card touch (rarely > 2 years).
-- TASK 8D Reviewer empirical: Marina 01 N-Sun = SR-582d; N-Mars = SR-557d. Both within proposed 730d buffer with ~150d / 173d margin respectively.
-- Worker bloat impact analysis BEFORE committing default (per Stage E.5.b).
+**Rationale (per user direction 2026-05-15, fixed in spec — do NOT change rationale string):**
 
-**Anti-pattern (STOP trigger):** if Worker tunes `outer_card_lookbehind_days = max(Marina 01 N-Sun W1 start delta, Marina 01 N-Mars W1 start delta) + 60d` — that's case-01 tuning, NOT systemic. STOP, reread E.2.
+> **`730 = minimum systemic extension covering confirmed Marina pre-SR windows with >150d margin`**.
 
-If `365.25 * 2 = 730d` overshoots presentation-calendar bloat threshold for any case → Worker proposes tighter alternative (e.g. `365.25 * 1.5` = 548d — barely above current 540d) with row-count reasoning в HANDOFF.
+Reasoning:
+- NOT symmetry-for-symmetry's sake with TASK 8B AFTER buffer (1096d). The cost-benefit differs: solar return narrative typically looks ahead 3+ years (multi-year outer loops resolve into "third touch this year"), but looks back at most to the «previous touch» of a current loop (rarely > 2 years).
+- TASK 8D Reviewer empirical: Marina 01 N-Sun W1 start = SR-582d; N-Mars W1 start = SR-557d. Both within proposed 730d buffer with ~150d / ~173d margin respectively — meets the «>150d margin» criterion exactly.
+- 730 is the **minimum extension** to cover confirmed Marina cases; tightens raw-row bloat impact compared to 1096d mirror.
+
+Worker MUST run B2.5.b/E.5.c presentation-calendar bloat check + Reviewer raw-row ratio check against `730d` value FIRST (before committing).
+
+**Anti-pattern (STOP trigger):** if Worker tunes `outer_card_lookbehind_days = max(Marina 01 N-Sun W1 start delta, Marina 01 N-Mars W1 start delta) + 60d` — that's case-01 tuning, NOT systemic policy. STOP, reread E.2.
+
+If `730d` overshoots presentation-calendar bloat threshold for any case → Worker proposes tighter alternative (e.g. `600d` covering Marina 01 N-Sun SR-582d with ~18d margin) with row-count reasoning в HANDOFF. **Going wider** (e.g. 1096d for systemic mirror with AFTER) is **explicitly NOT authorized** without user/TL ack — user direction 2026-05-15 rejected symmetry-for-symmetry argument.
 
 ### Stage E.3 — Schema-cascade detection
 
@@ -68,11 +73,23 @@ Change `_TRANSIT_SAMPLE_BUFFER_DAYS_BEFORE = 540 → 730` (or per E.2 reasoning)
 
 All must pass:
 
-**a. Phase 4b 08 N-N W1 start empirical check (KEY DECISION POINT):**
-- Re-extract 08 N-N W1 start via `outer_cards_for_case` post-fix.
-- **If Δ stays at -178d ±2d:** N-N W1 start is true Marina-editorial. Phase 4b ±200d override STAYS. Phase 4a memo erratum stands (only N-J W3 retracted, N-N W1 still editorial per memo).
-- **If Δ converges to within ±2d of Marina:** N-N W1 was ALSO horizon truncation (same family as N-J W3 retracted by TASK 8B Path 1). Phase 4a memo gets **second erratum subsection**: «N-N W1 start was also misclassified as editorial; Phase 8E BEFORE-buffer extension proves it was also horizon truncation». Phase 4b ±200d override gets removed in Stage E.6.2. **This would be the second retraction.**
-- TL prediction (pre-Worker): Δ stays -178d (ours at SR-491d is inside even current 540d buffer; engine's orb_enter doesn't depend on buffer being wider). Worker confirms empirically.
+**a. Phase 4b 08 N-N W1 start empirical check (KEY DECISION POINT; STOP-gated per user direction 2026-05-15):**
+
+Re-extract 08 N-N W1 start via `outer_cards_for_case` post-fix.
+
+**Three scenarios, AMENDED 2026-05-15 (Worker no longer auto-retracts):**
+
+- **Scenario 1 — Δ stays at -178d ±2d** (TL prediction; most likely): N-N W1 start is true Marina-editorial. Phase 4b ±200d override STAYS. Phase 4a memo erratum stands (only N-J W3 retracted, N-N W1 still editorial per existing memo body). Worker proceeds to Stage E.6 normally (override untouched). **No new erratum.**
+
+- **Scenario 2 — Δ converges to within ±2d of Marina:** N-N W1 was ALSO horizon truncation (would be analogous Path 1 retraction для BEFORE side). **Worker MUST STOP and escalate** — do NOT auto-remove override; do NOT auto-write second erratum subsection. Per user direction 2026-05-15: «08 N-N W1 retract только через TL/user ack. Если вдруг converges, Worker должен STOP и эскалировать, как в 8B. Это уже второй retract Phase 4a memo, нельзя автоматом.» Escalation memo includes:
+  - Pre-fix Δ, post-fix Δ, Marina target date, our pre/post engine `orb_enter_jd`.
+  - Analogous discipline pattern referenced (TASK 8B Worker B2.1 escalation 2026-05-14).
+  - Worker recommends path (likely Path 1' = retract + remove override) but does NOT apply.
+  - TL + user ack required before Worker resumes Stage E.6.2 retraction work.
+
+- **Scenario 3 — Δ shifts but neither stays -178d nor converges to ±2d Marina** (e.g. Δ becomes -50d or +50d — wanders into uncharted territory): **STOP, escalation memo.** Unexpected pattern; not horizon truncation by simple reading; possible cusp boundary interaction or other artifact. Do NOT proceed.
+
+TL prediction (pre-Worker): Scenario 1 (Δ stays -178d) — ours at SR-491d is inside even current 540d buffer; engine's orb_enter doesn't depend on buffer being wider. Reviewer 2026-05-14 confirmed this math. Empirical answer expected to match prediction; Scenario 2 would be programmatically significant pivot.
 
 **b. Case 01 boundary convergence:**
 - 01 N-Sun W1 start: must converge to Marina `17.04.2023` within ±2d.
@@ -105,11 +122,20 @@ All must pass:
 - `# SoT: ... § A.2.1.D` cross-ref comment.
 - Update audit § A.2.1.D table row for 01 N-Sun and 01 N-Mars: mark `[ENROLLED post-Phase-8E]`.
 
-**E.6.2 — Phase 4b 08 N-N W1 start override (conditional on E.5.a):**
-- **If 08 N-N W1 start Δ stays -178d (TL prediction):** Override stays. Phase 4a memo unchanged. No test changes for Натальи.
-- **If 08 N-N W1 start Δ converges to Marina:** Override REMOVED from `test_natalya_transits_acceptance.py` (analogous to TASK 8B B3.2). Phase 4a memo gets second erratum subsection.
+**E.6.2 — Phase 4b 08 N-N W1 start override (AMENDED 2026-05-15: STOP-gated, not auto):**
 
-Worker decides based on Stage E.5.a empirical result. Do NOT silently keep override if values converged; do NOT silently remove if values stay divergent.
+Per amendment 2026-05-15: Worker does NOT auto-decide. Conditional on Stage E.5.a scenario:
+
+- **Scenario 1 (stays -178d, TL prediction):** Override stays. Phase 4a memo unchanged. No test changes for Натальи. Worker proceeds with normal Stage E.6 completion.
+
+- **Scenario 2 (converges to Marina):** Worker STOPped at Stage E.5.a per amendment; Stage E.6.2 is NOT executed by Worker. TL + user ack required (mirror of TASK 8B Path 1 ack process). After user ack on second Phase 4a retraction:
+  - Override REMOVED from `test_natalya_transits_acceptance.py`.
+  - Phase 4a memo gets second erratum subsection.
+  - TASK 8E spec amendment landed (TL inline) before Worker resumes.
+
+- **Scenario 3 (Δ wanders):** Worker STOPped at Stage E.5.a; TL/user determine root cause + path forward.
+
+DO NOT silently keep override if values converged; DO NOT silently remove if values stay divergent. **DO NOT take retraction action without TL/user ack.**
 
 ### Stage E.7 — Calibration report + audit updates
 
@@ -120,15 +146,16 @@ Worker decides based on Stage E.5.a empirical result. Do NOT silently keep overr
 
 ## Reviewer subagent (REQUIRED, narrow-scope per Tier B)
 
-After Stage E.4-E.7 complete, spawn Reviewer subagent (`general-purpose`). Reviewer scope:
+After Stage E.4-E.7 complete (or after Stage E.5.a STOP+escalation if Scenario 2/3), spawn Reviewer subagent (`general-purpose`). Reviewer scope (8 points; AMENDED 2026-05-15 +item 8):
 
-1. Verify `_TRANSIT_SAMPLE_BUFFER_DAYS_BEFORE 540 → 730` is the only product code change in `bridge.py` (one-line minimal).
+1. Verify `_TRANSIT_SAMPLE_BUFFER_DAYS_BEFORE 540 → 730` is the only product code change in `bridge.py` (one-line minimal). Rationale string `730 = minimum systemic extension covering confirmed Marina pre-SR windows with >150d margin` present in HANDOFF.
 2. Verify AFTER buffer untouched (stays 730 from TASK 8B).
 3. Verify 01 N-Sun + N-Mars W1 starts converge to Marina ±2d.
-4. Verify 08 N-N W1 start empirical result + appropriate override action (stays / removed per Stage E.6.2).
+4. Verify 08 N-N W1 start empirical scenario classification (1 / 2 / 3) + appropriate action (override stays / Worker STOPped per amendment).
 5. Verify per-case presentation calendar ≤ 1.5×; monthly tables bit-identical.
 6. Verify fixture regen justification table per case (per Bright Line #8 + TASK 8B precedent).
 7. Independent pytest run.
+8. **Verify per-case raw row count ratio before/after** (early-warning, even when presentation unchanged): report `raw_after / raw_before` per case. Threshold not bound by spec (raw growth expected from horizon extension), but ratio is useful early-warning signal — if any case > 1.20× raw ratio, Reviewer flags as informational note (potential systemic over-extension); if > 1.50× raw ratio, ESCALATE.
 
 Reviewer reports APPROVE / REQUEST CHANGES / ESCALATE. Worker incorporates feedback before final commit.
 
@@ -278,10 +305,20 @@ Mirror of TASK 8B safeguard:
 - **TASK 8E (this)** — BEFORE buffer extension + case 01 enrollment + 08 N-N W1 empirical recheck.
 - After 8E closure + 8D cascade closure + user explicit ack on final calibration report → Recovery program closes finally.
 
+**Closure cascade discipline (AMENDED 2026-05-15):**
+- TASK 8D + TASK 8E lifecycle close in single overlay commit (cascade).
+- **Marina framing memo NOT mixed with closure commit.** Per user direction 2026-05-15: «framing memo не смешивать с closure commit. После 8D+8E closure отдельным lightweight artifact.» TL prepares framing memo as separate post-closure artifact (lightweight markdown, не overlay-tracked TASK file). User decides when/if to ship to Marina.
+
 **Future work items (out of TASK 8E scope; documented для traceability):**
 - Pluto display rule (3 cards in audit § A.2.1.D).
 - Single-window alignment helper (6 cards в audit § A.2.1.D).
 - Case 03 P-Mars Marina typo (data-quality follow-up).
 - Анастасия TYPE-D (data-revision backlog).
 
-**Ready: no** — TL flips after user ack on TASK 8E spec + any refinements.
+**Ready: yes** — flipped 2026-05-15 после user ack + 5 refinements applied:
+
+1. **Lookbehind = 730d** with fixed rationale string «`730 = minimum systemic extension covering confirmed Marina pre-SR windows with >150d margin`». NOT symmetry-for-symmetry with TASK 8B 1096d AFTER.
+2. **08 N-N W1 retract — STOP-gated, not auto.** Per user 2026-05-15: Scenario 2 (converges to Marina) triggers Worker STOP + escalation memo; TL+user ack required before retraction; mirror of TASK 8B Path 1 ack process.
+3. **Reviewer scope** + item 8: per-case raw row count ratio before/after (early-warning; informational if > 1.20×, escalate if > 1.50×).
+4. **Calendar threshold ≤ 1.5×** preserved (presentation rows, post Phase 6 clipping).
+5. **Closure cascade discipline:** Marina framing memo NOT mixed with closure commit — separate lightweight post-closure artifact, user decides shipping.
