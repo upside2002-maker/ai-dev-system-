@@ -1,6 +1,6 @@
 # TASK: phase-8b-lexical-horizon-fix-unmark-xfail
 
-- Status: review
+- Status: done
 - Ready: yes
 - Date: 2026-05-14
 - Project: astro
@@ -307,3 +307,49 @@ Spec amendments above sections § Stage B2.5.a, § Stage B3.1+B3.2, § Do not to
 3. **Reviewer required (Tier B discipline):** Reviewer subagent **REQUIRED for Stage B2** (Haskell engine touch). Reviews horizon parameter change + regression guard evidence + fixture diff before Worker commits.
 
 4. **Fixture regen safeguard:** explicit § «Fixture regen safeguard» added — no silent regen. HANDOFF must contain per-case justification table (raw row count before/after + Δ + why + downstream assertion). Worker walks through prose. Reviewer verifies independently. Atomic commit per Bright Line #8.
+
+## Closure (2026-05-14)
+
+**Worker delivered Path 1 fully + Reviewer subagent APPROVE + user explicit ack 2026-05-14.**
+
+- **Product commit:** `f667a10` (Bright Line #8 atomic) — `feat(transit-engine): Phase 8B horizon extension + Path 1 reclassification`.
+- **Overlay commits:** `75945fe` (closure: STATUS_RU + audit § A.2.1 post-fix + calibration § 4 item 8 [RESOLVED] + HANDOFF) + `b4c3fb2` (TASK status bump).
+- **Stages executed:**
+  - B1 (lexical): «трине → тригоне» в `outer_cards.py` aspect-locative dict + sync `test_multi_case_calibration.py`.
+  - B2 (horizon): `_TRANSIT_SAMPLE_BUFFER_DAYS_AFTER 540 → 730` в `bridge.py:205`. BEFORE buffer untouched. Sample window SR + 906d → SR + 1096d per systemic `outer_card_lookahead_days = 365.25 * 3` policy. 9 cases × 2 files = 18 fixture files regen'd.
+  - B3.1: 2 Данила xfail markers + `_PHASE_8B_DANILA_XFAIL_BOUNDARIES` removed.
+  - B3.2: Phase 4b N-J W3 end ±20d override removed (per amendment). N-N W1 start ±200d override stays (true editorial).
+- **Boundary table post-fix:** 27 of 28 windows match Marina ±2d; 1 OUT (08 N-N W1 start -178d, true editorial — structured override preserves passing test).
+- **Pytest:** **221 passed + 0 xfailed + 0 failed** (TL independent run with cabal on PATH; Reviewer independent run).
+- **Cabal:** Up to date.
+- **Backup parity:** astro main = backup/main = `f667a10` ✓; overlay master = backup/master = `b4c3fb2` ✓.
+
+### Reviewer subagent APPROVE (2026-05-14, narrowed scope per user)
+
+All 5 verification items PASS via independent empirical reproduction:
+
+1. **Horizon parameter explains 3 convergences** — SR + 906d → SR + 1096d deterministic; Натальи N-J W3 end matches Marina ±1.4h post-fix; Данила N-V W3 + N-J W4 ends match Marina ±0d post-fix.
+2. **BEFORE buffer untouched + N-N W1 stays editorial** — `bridge.py:216 BEFORE = 540` unchanged; N-N W1 start at SR-493d (within 540d buffer, not on boundary); ±200d override preserved.
+3. **Fixture regen + thresholds** — all 9 cases raw ratio 1.089-1.152× (under presentation 1.5× spec threshold); diffs only in outer-planet hits, no semantic shift.
+4. **Only necessary xfail/override removed** — 2 Данила xfail + N-J W3 override removed; N-N W1 override + all other Phase 4b overrides untouched.
+5. **Pytest 221/0/0** — Reviewer independent reproduction `221 passed in 25.66s`.
+
+**Reviewer verdict: APPROVE.**
+
+### Reviewer informational notes (non-blocking accuracy nits)
+
+1. **Case 01 raw fixture ratio = 1.152×** (HANDOFF округлил «≤ 1.15×»). Spec § B2.5.b threshold = 1.5× presentation rows; raw not bound by spec — это HANDOFF wording precision, не нарушение.
+2. **18 fixture files** changed in commit (9 cases × 2 files each: `*.input.json` + `*.expected.json`); HANDOFF wording «9 fixtures regen'd» counts cases, not files. Audit trail accurate via commit diff.
+3. **Lexical sites:** HANDOFF mentions 3 (lines 162, 193, 458) в `outer_cards.py`; фактически 2 (line 458 уже содержал «тригоне» в Marina-reference комменте pre-fix). Minor wording precision.
+4. **Self-reviewer disclosure honest** — Worker зафиксировал runtime limitation; Reviewer (third pass) закрыл дыру дисциплины.
+5. **Cross-refs verified:** Phase 4a erratum + calibration § 4 item 8 [RESOLVED] + audit § A.2.1.post — все совпадают.
+
+Notes recorded для audit trail accuracy; ни одна не блокирует closure.
+
+### User explicit ack — received 2026-05-14
+
+User confirmed closure: «Reviewer закрывает главный риск. Ниты не блокируют, но в Closure section я бы коротко отметил их как 'Reviewer informational notes', особенно `case 01 raw ratio 1.152×` и '18 fixture files, 9 fixtures'».
+
+### Status: done
+
+Archive to `project-overlays/astro/TASKS/archive/`. HANDOFF archive to `project-overlays/astro/HANDOFFS/archive/`. TASK 8D drafted next (allowlist 01/02/03/04/09).

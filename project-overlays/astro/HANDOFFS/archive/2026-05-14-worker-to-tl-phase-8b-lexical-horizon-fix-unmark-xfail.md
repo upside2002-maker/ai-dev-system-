@@ -1,6 +1,6 @@
 ## HANDOFF: worker → tl — phase-8b-lexical-horizon-fix-unmark-xfail (CLOSURE)
 
-- Status: closure (Stage B1 + B2 + B3 all landed per Path 1 amendment 2026-05-14)
+- Status: closed (TASK 8B accepted 2026-05-14 — Reviewer APPROVE + user explicit ack)
 - Date: 2026-05-14
 - Project: astro
 - From: worker (resume subagent of prior worker `abab4fb171645c9a0`)

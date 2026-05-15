@@ -39,7 +39,7 @@
 
 **Phase 8A+8C ACCEPTED + archived 2026-05-14.** TASK 8A+8C lifecycle закрыт: TASK file + HANDOFF archived; calibration report § 4 расширен; pytest 219/2/0 preserved; CI green.
 
-**Phase 8B ACCEPTED 2026-05-14 (Path 1 amendment).** TASK 8B lifecycle закрыт. Изменения:
+**Phase 8B ACCEPTED + archived 2026-05-14 (Path 1 amendment + Reviewer APPROVE + user explicit ack).** TASK 8B lifecycle закрыт; TASK file + HANDOFF archived. **Reviewer informational notes (non-blocking):** case 01 raw fixture ratio 1.152× (HANDOFF округлил «≤ 1.15×»; under presentation 1.5× spec threshold); 18 fixture files в commit'е (9 cases × 2 files: input+expected; HANDOFF wording «9 fixtures regen'd» counts cases not files); lexical sites 2 не 3 (line 458 уже содержал «тригоне»); self-reviewer disclosure honest; cross-refs verified. Изменения TASK 8B:
 1. **Lexical:** «трине → тригоне» в `services/api-python/app/pdf/outer_cards.py` (aspect-locative dict + sync в `test_multi_case_calibration.py`).
 2. **Horizon extension:** `_TRANSIT_SAMPLE_BUFFER_DAYS_AFTER = 540 → 730` в `services/api-python/app/ephemeris/bridge.py` (sample window SR + 906d → SR + 1096d ≈ 3 solar years per `outer_card_lookahead_days = 365.25 * 3` systemic policy). 9 golden fixtures regen'ed (raw row count +9..+14 entries per case, ≤ 1.15× ratio); presentation calendar + monthly cells matrix bit-identical pre/post (1.00× ratio, Phase 6 clipping `[sr_jd, sr_jd + 365.25]` isolates calendar to solar year).
 3. **Reclassification:** Phase 4b N-J W3 end (-17d) reclassified из «Marina-editorial» в «engine finite-horizon truncation» — Worker B2.1 trace показал, что pre-fix `orb_exit_jd = 2461800.5928 = SR + 906d` exactly = sample window cutoff, ровно тот же артефакт как у Данилы. Post-fix engine `16.02.2028 10:23 UTC` сходится с Marina `16.02.2028 12:00 MSK = 09:00 UTC` в пределах 1.4h. Phase 4a memo (`transit-contact-window-semantics-2026-05-13.md`) получил Erratum (Phase 8B Path 1) subsection.
@@ -211,8 +211,7 @@ Path B (anchor convention convergence) deferred — strategically возможе
 
 ## Ждёт твоего решения
 
-- **Ack на TASK Phase 8B closure** (lexical + Данила horizon fix Path A + Path 1 reclassification + unmark xfail). Worker landed Stage B1+B2+B3; pytest 221/0/0; CI green. TL inline-verify ожидаем.
-- **TASK 8D draft** (allowlist + facts extension для 01/02/03/04/09 — Stage B-pattern, Tier C closed-config). Запускается **после** TASK 8B accept'ed, чтобы новые карты сразу получили correct sample horizon.
+- **Ack на TASK 8D spec** (allowlist + facts extension для 01/02/03/04/09 — Tier C closed-config, analog of TASK 7b Stage B). TL draft'ит spec в `project-overlays/astro/TASKS/2026-05-14-phase-8d-allowlist-extension-01-02-03-04-09.md` (Ready: no). Strict scope per user direction 2026-05-14: только allowlist/facts + boundary tests, **без TYPE-D и без horizon/engine touch**. Финальный implementation TASK Phase 8.
 - **Показ Марине — parallel artifact track, доступно сейчас:**
   - **Можно (post Phase 8B):** Наталю + Данилу + Екатерину (case 05 / 08 / 10). Case 05 lexical fix landed; case 08 N-J W3 end сошлось с Marina; case 10 Данила W3/W4 ends сошлись с Marina. TL подготовит framing memo для Marina про **1** Phase 4b Neptune accepted divergence (N-N W1 start +178d). PDFs нужно re-render'ить через `services/api-python/scripts/render_case.py --case-id ...` после Phase 8B commit landed.
   - **Нельзя:** Показывать cases 01/02/03/04/09 (allowlist gap, TASK 8D scope); Анастасию (TYPE-D SR mismatch); `_3.pdf` (TYPE-D natal data missing).
