@@ -1,8 +1,10 @@
 # TASK: phase-8d-allowlist-extension-01-02-03-04-09
 
-- Status: open
+- Status: review
 - Ready: yes
 - Date: 2026-05-14
+- HANDOFF: project-overlays/astro/HANDOFFS/2026-05-14-worker-to-tl-phase-8d-allowlist-extension-01-02-03-04-09.md
+- Product commit: ce35be1 (astro main)
 - Project: astro
 - Layer: services (Python presentation only — closed-config additions)
 - Risk tier: C (allowlist data + facts + tests; analogous to TASK 7b Stage B closed-config calibration pattern) — **Reviewer subagent REQUIRED (narrow-scope), per user direction 2026-05-14: main risk is human error in golden-rule fact transfer across 5 cases × ~20 outer cards × 5 fact cells, not code.**

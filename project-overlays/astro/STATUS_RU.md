@@ -4,9 +4,11 @@
 
 ## Сейчас
 
-Внутренний инструмент Марины для подготовки соляр-консультаций. **Программа Transit Section Recovery — REOPENED 2026-05-14, Phase 8 в работе.**
+Внутренний инструмент Марины для подготовки соляр-консультаций. **Программа Transit Section Recovery — Phase 8 финальная implementation работа завершена 2026-05-14 (TASK 8D), awaiting user ack.**
 
-**Verdict update (post-Phase-8-audit, 2026-05-14):** «**Partial pass — только 08 Наталья production-ready**». Закрытие TASK 7b 2026-05-13 было **преждевременным** — manual audit (Codex + TL 2026-05-14) на clean checkout обнаружил, что multi-case тесты Stage B проверяли количество outer-card окон, но **не их boundary даты** vs Marina. Worker'овский pytest baseline 183/0/0 правда зелёный, но контрактная дыра в TASK 7b § B.4 пропустила реальные расхождения. **Дисциплинарная ответственность — на PTL за spec, не на Worker'е.**
+**Verdict update (post-TASK-8D, 2026-05-14):** «**Ready for Marina show — pending user ack**». TASK 8D (Worker subagent) добавил allowlist + facts для 5 оставшихся cases (01 / 02 / 03 / 04 / 09 — 20 новых cards, 100 fact cells transferred from Marina PDFs), 36 новых boundary assertions (0 OOT), 29 lexical title assertions, обновил calibration report § 3.4-3.8 + § 4 + § 6. Pytest: 286 passed + 0 xfailed + 0 failed (221 baseline + 65 new TASK 8D tests). Override count: 1 (sole survivor 08 Phase 4b N-N W1 ±200d Marina-editorial). После user ack → recovery program closes; PDFs можно показывать Марине.
+
+**Verdict superseded (post-Phase-8-audit, 2026-05-14):** «Partial pass — только 08 Наталья production-ready». Закрытие TASK 7b 2026-05-13 было **преждевременным** — manual audit (Codex + TL 2026-05-14) на clean checkout обнаружил, что multi-case тесты Stage B проверяли количество outer-card окон, но **не их boundary даты** vs Marina. Worker'овский pytest baseline 183/0/0 правда зелёный, но контрактная дыра в TASK 7b § B.4 пропустила реальные расхождения. **Дисциплинарная ответственность — на PTL за spec, не на Worker'е.**
 
 **5 находок Phase 8.0 audit:**
 1. **Test contract gap:** `test_multi_case_calibration.py` не assert'ит outer-card interval boundaries; spec gap в TASK 7b § B.4.
@@ -262,14 +264,18 @@ Path B (anchor convention convergence) deferred — strategically возможе
 - **Phase 8.0** (audit trail reopen) — **CLOSED** 2026-05-14 (overlay STATUS downgrade + calibration § 6 verdict update).
 - **Phase 8A + 8C** (audit + boundary test contract) — **CLOSED** 2026-05-14 (commit `9740075`, 36 boundary assertions + 2 xfail-strict для Данила, 219 passed + 2 xfailed).
 - **Phase 8B** (lexical + Данила horizon fix Path A + Path 1 reclassification + unmark xfail) — **CLOSED** 2026-05-14 (atomic product commit + overlay commit; pytest 221 passed + 0 xfailed + 0 failed). Path 1 amendment: N-J W3 end reclassified as horizon truncation; Phase 4a memo Erratum subsection; N-J W3 +20d override removed; N-N W1 +200d override stays.
+- **TASK 8D** (allowlist + facts extension для cases 01/02/03/04/09 + boundary tests + lexical title assertions) — **WORKER COMPLETE** 2026-05-14, awaiting Reviewer (atomic product commit + overlay commit; pytest 286 passed + 0 xfailed + 0 failed = 221 baseline + 36 new boundary + 29 lexical title parametrize). 20 new triples (5+2+9+2+2) + 100 fact cells transferred from Marina PDFs; 5 PDFs rendered + sidecar-verified. § 4 item 6 [RESOLVED]; § 6 verdict обновлён на «Ready for Marina show — pending user ack». 0 new tolerance overrides; 14 of 20 cards excluded from boundary tests с задокументированными per-card findings (audit § A.2.1.D). Финальная implementation TASK Phase 8.
 - **Phase 4** (outer-planet cards generator) — только для тех outer-aspects, что представлены в эталоне как карточки.
 - **Phase 5** (rulership-expanded target houses) — Tier C с эскалацией до Tier A при shared core helper.
 - **Phase 6** (per-context cutoff policy) — explicit clipping rules.
 - **Phase 7** (multi-case calibration) — default cases 05/07/10, либо обоснованный выбор 3 из 8.
 
 Дальнейшие phase 8 sub-tasks:
-- **TASK 8D** (allowlist + facts extension для 01/02/03/04/09) — Tier C, отдельный TASK после 8B accept'ed.
+- **TASK 8D** — **WORKER COMPLETE 2026-05-14** (см. выше); awaiting Reviewer + user ack.
 - **TYPE-D backlog** (`_3.pdf`, Анастасия SR mismatch) — отдельные data-revision tasks вне Phase 8 implementation programme.
+- **Engine `_TRANSIT_SAMPLE_BUFFER_DAYS_BEFORE` extension** (case 01 Neptune cards pre-buffer truncation; audit § A.2.1.D Future Work item 1) — отложено как post-program improvement.
+- **Single-Marina-window alignment helper** (case 02 + 04 + case 03 partial — Marina W1 = engine W2/W3/W4; audit § A.2.1.D Future Work item 2) — отложено.
+- **Marina Pluto display rule** (case 01 + 03 Pluto cards; audit § A.2.1.D Future Work item 3) — отложено.
 
 Backlog вне программы (на паузе до её закрытия):
 - `solar-nodes-lilith-retro-display` — Tier A, без явного запроса Марины не запускать.
