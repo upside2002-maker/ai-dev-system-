@@ -1,12 +1,18 @@
 # Статус — Astro
 
-Дата последнего обновления: 2026-05-14.
+Дата последнего обновления: 2026-05-15.
 
 ## Сейчас
 
 Внутренний инструмент Марины для подготовки соляр-консультаций. **Программа Transit Section Recovery — Phase 8 финальная implementation работа завершена 2026-05-14 (TASK 8D), awaiting user ack.**
 
-**Verdict update (post-TASK-8D, 2026-05-14):** «**Ready for Marina show — pending user ack**». TASK 8D (Worker subagent) добавил allowlist + facts для 5 оставшихся cases (01 / 02 / 03 / 04 / 09 — 20 новых cards, 100 fact cells transferred from Marina PDFs), 36 новых boundary assertions (0 OOT), 29 lexical title assertions, обновил calibration report § 3.4-3.8 + § 4 + § 6. Pytest: 286 passed + 0 xfailed + 0 failed (221 baseline + 65 new TASK 8D tests). Override count: 1 (sole survivor 08 Phase 4b N-N W1 ±200d Marina-editorial). После user ack → recovery program closes; PDFs можно показывать Марине.
+**TASK 8D delivered + external Reviewer APPROVE 2026-05-15.** Status: review (lifecycle close deferred until TASK 8E lands per user direction Option δ). 20 new cards in `OUTER_CARD_ALLOWLIST` + `_OUTER_CARD_FACTS` (5+2+9+2+2 = 20 cards × 5 fact cells = 100 manual transfers, Reviewer spot-checked 15/20 directly от Marina PDFs); 36 new boundary assertions + 29 lexical title assertions (pytest 286/0/0). Override count: 1 (08 Phase 4b N-N W1 ±200d sole survivor).
+
+**Reviewer empirical finding (TASK 8D § A.2.1.D, confirmed 2026-05-15):** **Pre-buffer truncation finding** для case 01 N-Sun + N-Mars W1 starts. Engine emits W1 = `29.05.2023 06:14 GMT+3` = `_TRANSIT_SAMPLE_BUFFER_DAYS_BEFORE = 540` floor to-the-second exactly; Marina W1 = 17.04.2023 / 12.05.2023 lies in pre-buffer zone. **Симметрично TASK 8B Path 1 AFTER-buffer finding.** 14 of 20 new cards excluded from boundary tests (documented per category в audit § A.2.1.D); pre-buffer category requires TASK 8E to resolve (analogous Path 1' for BEFORE).
+
+**Phase 8E drafted 2026-05-15 (Ready: no).** BEFORE buffer extension: `_TRANSIT_SAMPLE_BUFFER_DAYS_BEFORE = 540 → 730` (default `outer_card_lookbehind_days = 365.25 * 2`, mirror of TASK 8B AFTER). Empirical recheck on 08 N-N W1 start — TL prediction: Δ stays -178d (true editorial, our orb_enter at SR-491d is inside even current buffer); if prediction wrong + converges → Phase 4a memo gets second erratum (analogous Path 1 retraction). Calendar/monthly clipping guards mandatory. Other 12 excluded cards (Pluto display rule / single-window alignment / case 03 P-Mars typo / Анастасия TYPE-D) NOT in 8E scope — future work items.
+
+**Verdict update (post-TASK-8D + Reviewer + Phase 8E pending, 2026-05-15):** «**Partial pass — TASK 8D implementation accepted; Phase 8 final verdict deferred до Phase 8E closure**». TASK 8D accepted в cascade with 8E post-Phase-8E closure. PDFs cases 01/02/03/04/09 рендерятся, но 14 cards имеют known boundary issues — НЕ показывать «всю папку» Марине до 8E closure.
 
 **Verdict superseded (post-Phase-8-audit, 2026-05-14):** «Partial pass — только 08 Наталья production-ready». Закрытие TASK 7b 2026-05-13 было **преждевременным** — manual audit (Codex + TL 2026-05-14) на clean checkout обнаружил, что multi-case тесты Stage B проверяли количество outer-card окон, но **не их boundary даты** vs Marina. Worker'овский pytest baseline 183/0/0 правда зелёный, но контрактная дыра в TASK 7b § B.4 пропустила реальные расхождения. **Дисциплинарная ответственность — на PTL за spec, не на Worker'е.**
 
@@ -213,7 +219,7 @@ Path B (anchor convention convergence) deferred — strategically возможе
 
 ## Ждёт твоего решения
 
-- **Ack на TASK 8D spec** (allowlist + facts extension для 01/02/03/04/09 — Tier C closed-config, analog of TASK 7b Stage B). TL draft'ит spec в `project-overlays/astro/TASKS/2026-05-14-phase-8d-allowlist-extension-01-02-03-04-09.md` (Ready: no). Strict scope per user direction 2026-05-14: только allowlist/facts + boundary tests, **без TYPE-D и без horizon/engine touch**. Финальный implementation TASK Phase 8.
+- **Ack на TASK 8E spec** (BEFORE buffer extension, symmetric to TASK 8B Path 1). TL draft'ит spec в `project-overlays/astro/TASKS/2026-05-15-phase-8e-before-buffer-extension.md` (Ready: no). Tier B (engine touch via Python bridge.py); Reviewer REQUIRED. После 8E APPROVE + Reviewer → cascade close TASK 8D + 8E + Phase 8 program final verdict.
 - **Показ Марине — parallel artifact track, доступно сейчас:**
   - **Можно (post Phase 8B):** Наталю + Данилу + Екатерину (case 05 / 08 / 10). Case 05 lexical fix landed; case 08 N-J W3 end сошлось с Marina; case 10 Данила W3/W4 ends сошлись с Marina. TL подготовит framing memo для Marina про **1** Phase 4b Neptune accepted divergence (N-N W1 start +178d). PDFs нужно re-render'ить через `services/api-python/scripts/render_case.py --case-id ...` после Phase 8B commit landed.
   - **Нельзя:** Показывать cases 01/02/03/04/09 (allowlist gap, TASK 8D scope); Анастасию (TYPE-D SR mismatch); `_3.pdf` (TYPE-D natal data missing).
