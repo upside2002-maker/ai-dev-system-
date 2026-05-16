@@ -1,0 +1,262 @@
+# TASK: transit-section-generic-output
+
+- Status: open
+- Ready: no
+- Date: 2026-05-16
+- Project: astro
+- Layer: services (Python presentation: transit_themes + outer_cards + template) + tests
+- Risk tier: C (presentation logic shift + new generic path for non-calibrated cases); **Reviewer subagent REQUIRED** per user direction 2026-05-16
+- Owner: Project Tech Lead
+- Created by: upside2002@gmail.com
+- Worker model: Claude Code
+- Mode: normal
+- Critical approved by: (нет)
+
+## Problem
+
+Two independent gaps в Transit Section для non-calibrated horoscope (e.g. Ольга consultation 10, `case_label=None`), discovered 2026-05-16:
+
+### Gap 1 — Bottom house interpretations diverge from monthly table
+
+В PDF `/Users/ilya/Downloads/solar-10.pdf`:
+- Table «Транзиты планет по домам» (`transit_matrix_by_month`) shows для Венеры houses: `4, 5, 5, 5, 5, 5, 6, 7, 9, 10, 11, 12, 1` (not 8).
+- Bottom interpretation block lists «Венера в 8 доме» — house 8 в table отсутствует.
+- Аналогично «Марс в 1 доме» появляется, но в table Mars never reaches 1.
+
+Root cause: template uses **two different functions** with different semantics:
+- Table: `transit_matrix_by_month(facts.annual_transit_table, sr_jd)` (line 544) — mid-15 snapshot per calendar month.
+- Bottom interpretations: `houses_visited(facts.annual_transit_table, p_key, horizon=solar_year)` (line 591) — houses where planet was at any point in solar year (включая short transits).
+
+Это два разных contract'а. Bottom interpretation surfaces houses planet briefly visited; table shows only mid-15 snapshots. Marina'in эталон bottom interpretations matches table snapshots, not extended «visited» list.
+
+### Gap 2 — Outer-planet cards absent for non-calibrated case
+
+Для Ольги (`case_label=None`) секция «Транзиты высших планет» полностью **отсутствует** в PDF, хотя engine'ом рассчитаны Uranus/Neptune/Pluto transits.
+
+Root cause: `app/pdf/outer_cards.py:outer_cards_for_case(case_id, ...)` returns empty list when `case_id not in OUTER_CARD_ALLOWLIST`. Для откалиброванных кейсов (05/08/10 Marina-reference subset + 01/02/03/04/09 Phase 8D extension) allowlist + facts populated; для новых case_id'ов — no allowlist entry → no cards rendered.
+
+Per Phase 4 design decision (Path 3 chosen 2026-05-13): allowlist + manually-curated card-facts с Marina reference visually transcribed. Это работает для известных кейсов; для новых клиентов нужен **generic fallback**.
+
+## Scope (Tier C; Reviewer REQUIRED)
+
+### Stage 1 — Bottom house interpretations parity with monthly table
+
+#### Stage 1.1 — Add helper
+
+`services/api-python/app/pdf/transit_themes.py`:
+
+```python
+def houses_from_transit_matrix(tmatrix: list[dict], planet_key: str) -> list[int]:
+    """Return sorted unique house numbers for `planet_key` from monthly-table snapshots.
+
+    Mirrors the contract of `transit_matrix_by_month`: every house listed
+    here MUST appear in some month-row of `tmatrix`. Used for bottom house-
+    interpretation block so it stays consistent with the rendered table.
+    """
+```
+
+#### Stage 1.2 — Template switch
+
+In `solar.html.j2:591`, replace:
+
+```jinja
+{% set visited = houses_visited(
+     facts.annual_transit_table, p_key, horizon=solar_year) %}
+```
+
+with:
+
+```jinja
+{% set visited = houses_from_transit_matrix(tmatrix, p_key) %}
+```
+
+(`tmatrix` already computed on line 544 — reuse.)
+
+#### Stage 1.3 — `houses_visited` callers audit
+
+Check that `houses_visited` callers besides this template usage stay correct:
+- `synthesis_themes.py` (Phase 3 horizon split) — может или должно остаться?
+- Test files — какие?
+
+Worker reports audit results в HANDOFF. **`houses_visited` саму функцию не удалять и не менять** — это Phase 3 contract; только template usage переключается на new helper.
+
+### Stage 2 — Generic outer-cards fallback
+
+#### Stage 2.1 — Detection rule
+
+In `services/api-python/app/pdf/outer_cards.py`, add function:
+
+```python
+def generic_outer_cards(
+    facts: dict,
+    *,
+    tz_id: str | None = None,
+) -> list[dict]:
+    """Build outer-card list deterministically from facts when no allowlist exists.
+
+    Includes any Uranus/Neptune/Pluto transit to a natal planet/MC/Asc that
+    forms a major aspect (existing aspect filter in outer_cards.py).
+    Returns card dicts in the same shape as build_outer_card() output.
+    """
+```
+
+#### Stage 2.2 — Wiring
+
+In `outer_cards_for_case(case_id, annual_transit_table, tz_id)`:
+- If `case_id in OUTER_CARD_ALLOWLIST` AND allowlist entry non-empty → existing allowlist behavior (UNCHANGED).
+- If `case_id is None` OR `case_id not in OUTER_CARD_ALLOWLIST` → invoke `generic_outer_cards(facts, tz_id=tz_id)`.
+
+Existing calibrated cases (05/08/10 Marina-reference + 01/02/03/04/09 Phase 8D extension) **MUST stay bit-identical pre/post** — regression check.
+
+#### Stage 2.3 — Generic card content (per user direction 2026-05-16)
+
+**Структура карточки полная**, БУТ texts **только из controlled source**:
+- **Title:** existing `_card_title()` helper в outer_cards.py — already deterministic.
+- **Intervals:** existing `aggregate_display_windows` — already deterministic from engine output.
+- **Golden-rule table (5 cells):**
+  - `transit_natal_house` — from `natal_chart` planet position house.
+  - `target_natal_house` — same for target.
+  - `transit_ruled_houses` — reuse `rulership_houses.py:rulership_houses()` (Phase 5).
+  - `target_ruled_houses` — same.
+  - `transit_walks_house` — reuse Phase 5 helper.
+- **`psychology` + `event_level`:**
+  - Per user direction: «если есть существующий словарь/шаблон — использовать его; если нет — короткий нейтральный deterministic fallback из фактов таблицы: планета, аспект, дома, управители. Никакой свободной красивой прозы 'под Марину'.»
+  - Worker checks `outer_cards.py` для existing dict mapping `(transit, aspect, target) → texts`. Если есть — use.
+  - Если нет existing dict OR specific (transit, aspect, target) tuple отсутствует → deterministic template like: `«Транзит {transit_ru} в {aspect_ru} с натальным {target_ru} затрагивает темы домов {target_natal_house} и {target_ruled_houses}. Транзитная планета проходит {transit_walks_house} дом, активируя {transit_natal_house} дом радикса.»`
+  - **Никакой свободной красивой прозы под Marina-style.** Detected fallback usage MUST be listed in HANDOFF.
+- **`provenance:` field в card dict:** `"calibrated"` для allowlist cases; `"generic-fallback"` для new path. Это нужно чтобы template или tests могли отличить.
+
+### Stage 3 — Tests + verification
+
+#### Stage 3.1 — Stage 1 parity tests
+
+- For each of 9 calibrated cases (01/02/03/04/05/07/08/09/10): bottom house list for Mars/Saturn/Jupiter/Venus MUST equal monthly-table snapshot column union. Assert via `houses_from_transit_matrix(tmatrix, planet_key) == set of houses in tmatrix planet column`.
+- Specific case for Ольга (consultation 10):
+  - `Венера в 8 доме` absent.
+  - `Марс в 1 доме` absent.
+  - Bottom interpretation set = table column union per planet.
+
+#### Stage 3.2 — Stage 2 generic-fallback tests
+
+- Test 1: Calibrated case 10 (Данила, `case_label='10-danila-2025-2026'`) — `outer_cards_for_case` returns allowlist cards (3 cards, existing facts). Bit-identical pre/post (regression).
+- Test 2: Non-calibrated case (Ольга consultation 10, `case_label=None`) — `outer_cards_for_case` returns generic cards. Expected count > 0 (engine emits Uranus/Neptune/Pluto major aspects for Ольга's natal chart and current SR). Worker MUST first inspect actual aspect candidates and report expected count in HANDOFF before writing test.
+- Test 3: Generic card structure assertions — every generic card has title + intervals + 5 golden-rule cells + psychology + event_level (non-empty strings or deterministic templates); `provenance=="generic-fallback"`.
+
+#### Stage 3.3 — Manual UI smoke (in acceptance)
+
+After Worker commits:
+- Render PDF для Ольги consultation 10 через API.
+- Extracted text contains:
+  - «Венера в 8 доме» absent (Stage 1).
+  - «Марс в 1 доме» absent (Stage 1).
+  - «Транзиты высших планет» section present (Stage 2).
+  - «Интервалы реализации» present (Stage 2).
+  - «Золотое правило транзита» present (Stage 2).
+  - «Психологический уровень» present (Stage 2).
+  - «Событийный уровень» present (Stage 2).
+
+## Files
+
+- modify:
+  - `services/api-python/app/pdf/transit_themes.py` — new helper `houses_from_transit_matrix`.
+  - `services/api-python/app/pdf/outer_cards.py` — new function `generic_outer_cards` + wiring in `outer_cards_for_case`.
+  - `services/api-python/app/pdf/builder.py` — register `houses_from_transit_matrix` в Jinja env (line ~404 analog to `houses_visited`).
+  - `services/api-python/app/pdf/templates/solar.html.j2` — line 591 switch helper invocation.
+  - Tests in `services/api-python/tests/test_transit_themes.py` (или new `test_transit_section_generic.py` — Worker decides).
+  - `project-overlays/astro/STATUS_RU.md`.
+
+- new: maybe new test file (Worker decides).
+
+- delete: —
+
+## Do not touch
+
+- Engine: Haskell core, schema, fixtures.
+- `houses_visited()` function itself — Phase 3 contract preserved.
+- Existing allowlist behavior for calibrated cases (05/08/10 + 01/02/03/04/09).
+- `OUTER_CARD_ALLOWLIST` data + `_OUTER_CARD_FACTS` data — не менять existing entries.
+- `render_case.py` — canonical script path stays as-is.
+- Phase 4b structured overrides (`test_natalya_transits_acceptance.py`).
+- Phase 8 archived TASKs.
+- Marina framing memo.
+- TASK A scope (directions section — отдельный TASK).
+- 12 future-work items audit § A.2.1.D (Pluto display rule, single-window alignment, case 03 P-Mars typo, Анастасия TYPE-D).
+
+## Reviewer subagent (REQUIRED per user direction 2026-05-16)
+
+After Stage 1-3 work, spawn Reviewer subagent (`general-purpose`). Reviewer scope:
+
+1. **Stage 1 helper correctness:** `houses_from_transit_matrix(tmatrix, planet_key)` returns exact column union from `tmatrix`. Spot-check 2-3 calibrated cases.
+2. **Stage 1 parity:** for calibrated cases (05/08/10), bottom interpretation set == monthly table column union (no «расхождения» as in pre-fix `solar-10.pdf`).
+3. **Stage 2 calibrated regression:** `outer_cards_for_case` для cases 05/08/10 returns bit-identical card list pre/post (no allowlist behavior change).
+4. **Stage 2 generic correctness:** для Ольги (case_label=None), generic cards generated with expected count + structure + provenance="generic-fallback". Texts deterministic, no Marina-style invention.
+5. **Pytest independent run:** `(301 baseline) + N new tests passed + 0 xfailed + 0 failed`.
+6. **Manual UI smoke replication:** render Ольгу consultation 10 PDF, extract text, verify Stage 3.3 assertions.
+
+Reviewer reports APPROVE / REQUEST CHANGES / ESCALATE.
+
+## Acceptance summary
+
+### Stage 1 — House interpretations parity
+
+- [ ] `houses_from_transit_matrix(tmatrix, planet_key)` helper added.
+- [ ] Template `solar.html.j2:591` switched to new helper.
+- [ ] For Ольга solar-10: `Венера в 8 доме` absent, `Марс в 1 доме` absent.
+- [ ] For all 9 calibrated cases: bottom interpretation set == monthly table column union.
+
+### Stage 2 — Generic outer cards fallback
+
+- [ ] `generic_outer_cards(facts, tz_id)` function added.
+- [ ] `outer_cards_for_case` wires to generic fallback for non-allowlisted cases.
+- [ ] Existing allowlist behavior for 05/08/10/01/02/03/04/09 bit-identical pre/post.
+- [ ] Generic card structure complete: title + intervals + 5-cell golden-rule + psychology + event_level + provenance.
+- [ ] Card texts from controlled source only: existing dict if present, else deterministic template (no Marina-style invention).
+- [ ] Worker HANDOFF lists every (transit, aspect, target) tuple where fallback fired.
+
+### Stage 3 — Tests
+
+- [ ] Stage 1 parity tests added (9 calibrated cases pass).
+- [ ] Stage 2 calibrated regression test (cases 05/08/10 bit-identical pre/post).
+- [ ] Stage 2 generic test для Ольги (expected count > 0, structure correct).
+- [ ] Manual UI smoke: text assertions per Stage 3.3.
+
+### Common
+
+- [ ] `cabal --project-dir core/astrology-hs build` clean.
+- [ ] `cd services/api-python && PATH="/Users/ilya/.ghcup/bin:$PATH" .venv/bin/pytest --tb=no -q`: `(301 baseline) + N new passed + 0 xfailed + 0 failed`.
+- [ ] `git status --short` clean.
+- [ ] Product commit(s) ≤ 2 (Stage 1 + Stage 2, ИЛИ combined). Justify split в HANDOFF.
+- [ ] Overlay commit (STATUS_RU + HANDOFF).
+- [ ] Push backup, parity verified.
+
+## STOP triggers
+
+- Calibrated cases 05/08/10/01/02/03/04/09 outer cards diverge bit-identical pre/post → STOP, regression в allowlist path.
+- Generic card texts include free Marina-style prose (any text not in existing dict and not deterministic from facts) → STOP, scope mismatch.
+- `houses_visited()` semantics change → STOP, Phase 3 contract violation.
+- Template touches outside line 591 helper switch → STOP, scope creep.
+- Worker tempted to add new entries to `OUTER_CARD_ALLOWLIST` для Ольги → STOP, allowlist is curated calibration set; generic fallback is the right path.
+- Generic card count for Ольга = 0 (no outer aspects detected) → STOP, escalation memo с diagnostic (либо engine не emitted, либо filter слишком узкий).
+- Reviewer escalates.
+
+## Context
+
+**Mode normal + Tier C.** Reviewer **REQUIRED** per user direction 2026-05-16 (new code path для клиентских PDF; integration risk).
+
+**Baseline:**
+- Product main @ `1536612` (post api-pdf-endpoint TASK closure).
+- Overlay master @ `fdfec88` (TASK A drafted; TASK B будет на top после TASK A closure OR в parallel — Worker launch waits TASK A completion per user order direction).
+- Pytest baseline: `301 passed + 0 xfailed + 0 failed`.
+- Cabal: clean.
+
+**Order per user direction 2026-05-16:** TASK A (directions filter) executes first; TASK B (this) starts ПОСЛЕ TASK A closure.
+
+**Not in scope (explicit):**
+- Engine changes.
+- TASK A scope (directions section filter).
+- 12 future-work items audit § A.2.1.D.
+- UI/API changes (presentation only).
+- New allowlist entries для Ольги или других non-calibrated persons.
+- Free Marina-style prose generation.
+
+**Ready: no** — TL flips after user ack + any refinements, AND after TASK A closure (per user direction order).
