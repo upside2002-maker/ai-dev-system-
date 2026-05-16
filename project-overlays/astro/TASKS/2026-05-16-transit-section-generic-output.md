@@ -1,7 +1,7 @@
 # TASK: transit-section-generic-output
 
 - Status: open
-- Ready: no
+- Ready: yes
 - Date: 2026-05-16
 - Project: astro
 - Layer: services (Python presentation: transit_themes + outer_cards + template) + tests
@@ -181,6 +181,7 @@ After Worker commits:
 - Marina framing memo.
 - TASK A scope (directions section — отдельный TASK).
 - 12 future-work items audit § A.2.1.D (Pluto display rule, single-window alignment, case 03 P-Mars typo, Анастасия TYPE-D).
+- **Formulas из directions (e.g. `1+5`, `1+7`, etc.) — OUT OF SCOPE для generic outer-card facts** (per user direction 2026-05-16). Formulas — отдельная presentation feature (existing для directions section); не смешивать с transit-card facts. Generic card golden-rule использует ONLY: transit planet / aspect / target / transit_natal_house / target_natal_house / transit_ruled_houses / target_ruled_houses / transit_walks_house.
 
 ## Reviewer subagent (REQUIRED per user direction 2026-05-16)
 
@@ -259,4 +260,11 @@ Reviewer reports APPROVE / REQUEST CHANGES / ESCALATE.
 - New allowlist entries для Ольги или других non-calibrated persons.
 - Free Marina-style prose generation.
 
-**Ready: no** — TL flips after user ack + any refinements, AND after TASK A closure (per user direction order).
+**Ready: yes** — flipped 2026-05-16 after user ack + 4 clarifications:
+
+1. **Spec clean** — нет новых требований; scope ровно по файлу (Stage 1 helper + Stage 2 generic fallback + Stage 3 tests).
+2. **Reviewer REQUIRED** confirmed. Runtime limitation path: если Agent tool недоступен у Worker'а — Worker self-review + **explicit note в HANDOFF**, потом TL spawns external Reviewer post-submission (same pattern как TASK api-pdf-endpoint-end-to-end + TASK 8B/8D/8E).
+3. **Formulas из directions — OUT OF SCOPE.** Generic outer-card facts use ONLY: transit planet, aspect, target, transit_natal_house, target_natal_house, transit_ruled_houses, target_ruled_houses, transit_walks_house. **NOT добавлять «формулы» из directions** (например `1+5`, `1+7`) в generic card facts. Это отдельная presentation feature (existing для directions section); не смешивать с transit-card facts.
+4. **Runtime limitation path:** Worker self-review + HANDOFF explicit note; TL spawns Reviewer afterwards.
+
+Worker order: TASK A closed (commit `ff7af69`); TASK B (this) executes сейчас.
