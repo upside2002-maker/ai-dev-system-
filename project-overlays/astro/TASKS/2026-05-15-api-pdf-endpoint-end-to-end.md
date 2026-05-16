@@ -1,7 +1,7 @@
 # TASK: api-pdf-endpoint-end-to-end
 
 - Status: open
-- Ready: no
+- Ready: yes
 - Date: 2026-05-15
 - Project: astro
 - Layer: services (API endpoint + DB schema + PDF persistence + tests) + manual UI smoke
@@ -234,4 +234,4 @@ Reviewer reports APPROVE / REQUEST CHANGES / ESCALATE.
 - 12 future-work items audit § A.2.1.D.
 - Phase 4+ template logic.
 
-**Ready: no** — TL flips after user ack + any refinements.
+**Ready: yes** — flipped 2026-05-15 after user ack + 5 refinements applied + scope expansion + Worker mental note: «if `curl` endpoint id `9` unstable after DB migration/backfill, Worker must first find actual consultation/person id via API (`GET /api/v1/persons/{id}/consultations`) or direct SQL, use that id in smoke commands. Не упасть на 'no such consultation'.»
