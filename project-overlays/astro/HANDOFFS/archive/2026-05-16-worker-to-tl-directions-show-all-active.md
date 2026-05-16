@@ -1,6 +1,6 @@
 # HANDOFF: worker → tl — directions-show-all-active
 
-- Status: open (Worker submission, awaiting TL inline-verify)
+- Status: closed (TL inline-verify APPROVE 2026-05-16; TASK accepted; Reviewer subagent explicit NOT spawned per user direction)
 - Date: 2026-05-16
 - Project: astro
 - From: worker

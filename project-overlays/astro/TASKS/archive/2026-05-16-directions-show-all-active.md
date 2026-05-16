@@ -1,6 +1,6 @@
 # TASK: directions-show-all-active
 
-- Status: review
+- Status: done
 - Ready: yes
 - Date: 2026-05-16
 - Project: astro
@@ -144,3 +144,48 @@ If Worker prefers Reviewer pass — может spawn'нуть, не блокер
 2. **Reviewer EXPLICIT NOT spawned** — TL inline-verify only. Если Worker предложит spawn — Worker должен НЕ spawn (per user direction explicit).
 3. **Sort discipline:** `enter_jd → directed → aspect_deg → target` — deterministic, independent of JSON input order.
 4. **Test data:** сначала искать existing fixture с non-Asc/MC active direction; synthetic minimal fixture OK fallback. Acceptance для Ольги (consultation 10) обязательный: `Дирекционный Сатурн 150° Марс` в PDF.
+
+## Closure (2026-05-16)
+
+**Worker delivered + TL inline-verify APPROVE.** Reviewer subagent explicit NOT spawned per user direction 2026-05-16 («Tier C trivial; TL inline-verify only»).
+
+- **Product commit:** `7775bde` (single commit: template + test bundled per spec). 52 deletions / 222 insertions (template 32 lines net; test file 202 lines new).
+- **Overlay commit:** `ccb6bf6` (HANDOFF + STATUS_RU + Status review bump).
+- **Pytest:** 301 → **305** (4 new tests passed). 0 xfailed, 0 failed.
+
+### Stage results
+
+- **Stage 1 (template fix):** 2 `selectattr` filters removed at lines 450, 453; «Ещё N дирекций…» line removed; layered stable sort `enter_jd → directed → aspect → target` (deterministic, JSON-input-order independent; `aspect_deg` proxied via 6-value `aspect` string — no Jinja filter registration needed). Worker noted auxiliary `client_dirs2` rejectattr block also removed (legacy of narrower filter).
+- **Stage 2 (regression test):** real fixture used (`04-valeriya-2025-2026.expected.json` — 8 active directions, 5 non-Asc/MC). Test file `test_directions_section.py` (4 tests): non-Asc/MC entry present, no «Ещё N…», monotonic enter_jd sort, Asc/MC entries preserved.
+
+### Mandatory smoke (consultation 10 Ольга) — TL independent run
+
+After force-clear cached PDF + curl, pdftotext extraction shows:
+
+```
+Активные дирекции
+
+1. Дирекционный MC 90° Асц — с 15.02.2025 по 20.03.2027.
+2. Дирекционный Луна 90° Солнце — с 18.05.2025 по 19.06.2027.
+3. Дирекционный Сатурн 150° Марс — с 04.05.2026 по 04.06.2028.
+4. Дирекционный Сатурн 90° Луна — с 27.05.2026 по 28.06.2028.
+5. Дирекционный MC 120° Уран — с 03.07.2026 по 03.08.2028.
+...
+9. Дирекционный Солнце 60° Асц — с 13.07.2027 по 14.08.2029.
+```
+
+All Primary acceptance criteria met:
+- `Дирекционный Сатурн 150° Марс` присутствует в основном списке (row 3).
+- `MC 90° Асц`, `MC 120° Уран`, `Солнце 60° Асц` сохранены (rows 1, 5, 9).
+- «Ещё N дирекций» substring отсутствует.
+- Sort monotonic by enter_jd (15.02.2025 → 18.05.2025 → 04.05.2026 → 27.05.2026 → 03.07.2026 → ...).
+
+### Reviewer informational notes (TL-side; non-blocking)
+
+1. **Worker'ский `aspect` proxy для sort** (вместо `aspect_deg`): 6 deterministic aspect string values (0/60/90/120/150/180), sort effectively equivalent. Trade-off: no Jinja filter registration overhead. Acceptable.
+2. **Auxiliary `client_dirs2` rejectattr block removed** as legacy artefact. Not in original spec but logically part of filter widening; Worker's call appropriate.
+3. **Bonus rendering:** «Формулы: 1+5 1+7 1+8 1+9 1+10» вывод для Сатурн 150° Марс — exactly user's mentioned formulas. Engine + presentation now correctly surfaces formula-relevant directions in main list (no separate subsection needed per user direction).
+
+### Status: done
+
+Archive to `project-overlays/astro/TASKS/archive/`. HANDOFF archive to `HANDOFFS/archive/`. Next: TASK B `transit-section-generic-output` (Ready: no; ack required before Worker launch).
