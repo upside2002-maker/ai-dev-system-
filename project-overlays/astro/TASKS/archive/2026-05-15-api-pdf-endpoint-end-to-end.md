@@ -1,6 +1,6 @@
 # TASK: api-pdf-endpoint-end-to-end
 
-- Status: review
+- Status: done
 - Ready: yes
 - Date: 2026-05-15
 - Project: astro
@@ -235,3 +235,53 @@ Reviewer reports APPROVE / REQUEST CHANGES / ESCALATE.
 - Phase 4+ template logic.
 
 **Ready: yes** — flipped 2026-05-15 after user ack + 5 refinements applied + scope expansion + Worker mental note: «if `curl` endpoint id `9` unstable after DB migration/backfill, Worker must first find actual consultation/person id via API (`GET /api/v1/persons/{id}/consultations`) or direct SQL, use that id in smoke commands. Не упасть на 'no such consultation'.»
+
+## Closure (2026-05-16)
+
+**Worker delivered + Reviewer APPROVE + user implicit closure ack (proceeded к новым findings, no blockers raised).**
+
+- **Product commits:** `e5f1bfd` (schema-change-gate atomic — person.schema.json + Pydantic models + TS types + persons.py + main.py + migration 003) + `1536612` (provenance.py api-render mode + test_api_pdf_endpoint.py 3 tests + test_provenance.py adjustment). Bright Line #8 honoured.
+- **Overlay commits:** `1297330` (HANDOFF + STATUS_RU initial submit) + `966db3c` (Status review bump).
+- **Pytest:** 298 → **301** (3 new acceptance tests). 0 xfailed, 0 failed.
+- **DB:** migration applied; PRAGMA integrity_check ok; Наташа backfilled `08-natalya-2025-2026`; Евгения + Ольга NULL (documented, not STOP).
+
+### Stage results
+
+- **Stage 0 (save/return trace):** Documented PDF_OUTPUT_DIR resolution, filename pattern, pdf_path DB update, FileResponse return. **3 latent edge-case bugs fixed** via `HTTPException(500, error=...)` envelopes: silent `mkdir(parents=True)` OSError, silent `write_solar_pdf` exception, undetected empty-file race.
+- **Stage 1-2:** Person.case_label field + migration 003 + CRUD endpoints accept/return.
+- **Stage 3:** API `download_pdf` builds `RenderProvenance(mode="api-render", extra={"case_label": person.case_label})` if not None, passes to `write_solar_pdf`. Graceful degradation case_label=None.
+- **Stage 4:** Backfill Наташа `08-natalya-2025-2026`; Евгения id=1 + Ольга id=3 NULL по умолчанию (documented per user direction NOT STOP).
+- **Stage 5:** 3 acceptance tests landed (case_label set / null / parity proxy).
+- **Stage 6:** TL ran smoke commands; user delegated UI smoke к post-closure separately.
+
+### External Reviewer subagent APPROVE (2026-05-16, 6 points)
+
+All 6 verification items PASS empirically:
+1. DB migration integrity (PRAGMA ok + 3 persons rows correct).
+2. `download_pdf` provenance + 3 error envelopes verified в source.
+3. Stage 0 trace documented + bugs fixed.
+4. Primary acceptance smoke independent run (curl HTTP 200 / pdfinfo valid / pdftotext 3 outer cards + no «Сатурн в 6 доме» + no DEBUG / ls -lh persisted / sidecar git_sha matches HEAD).
+5. Pytest 301/0/0 independent.
+6. API PDF ≈ render_case.py parity (18 pages, 3 outer cards, monthly headers match; only delta «Москва» vs «Москва, Россия» = different SoT, benign).
+
+**Reviewer informational notes (non-blocking):**
+1. Filename mismatch on-disk `consultation-{id}.pdf` vs Content-Disposition `solar-{id}.pdf` — UX cosmetic, out-of-scope.
+2. `birth_place` divergence API («Москва») vs canonical fixture («Москва, Россия») — benign, разные SoT (Person row vs input.birth.place).
+3. DB state hygiene (consultation 9 had pre-Phase-8 facts) — one-shot recovery via /compute regeneration; not recurring.
+4. Working tree clean post-commits; HEAD `1536612` matches sidecar git_sha exactly.
+
+### User implicit closure ack
+
+User moved on к новым findings (TASK A directions section + TASK B transit section generic) without explicit «ack closure», но и без blockers. Per TL discipline: Reviewer APPROVE + TL inline verify + no blockers raised → cascade-cleanup допускаемо отдельным commit. User explicit «procedure β» direction 2026-05-16 confirms: «Сначала отдельным commit закрыть `api-pdf-endpoint` lifecycle.»
+
+### Production state at closure
+
+- Product main = backup/main = `1536612`.
+- Overlay master pre-closure-commit = `966db3c`.
+- Pytest: 301 passed.
+- Cabal: clean.
+- uvicorn (PID 57424) serving fresh PDFs `mode=api-render`, `case_label`, `git_sha=1536612`.
+
+### Status: done
+
+Archive to `project-overlays/astro/TASKS/archive/`. HANDOFF archive to `HANDOFFS/archive/`. Next: TASK A directions filter (separate commit per user direction β); TASK B transit section generic (после TASK A closure).

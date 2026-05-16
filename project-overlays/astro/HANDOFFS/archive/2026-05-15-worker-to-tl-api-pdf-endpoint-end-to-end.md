@@ -1,6 +1,6 @@
 # HANDOFF: worker → tl — api-pdf-endpoint-end-to-end
 
-- Status: open
+- Status: closed (TASK accepted 2026-05-16 — Reviewer APPROVE + user implicit ack)
 - Date: 2026-05-15 20:23
 - Project: astro
 - From: worker

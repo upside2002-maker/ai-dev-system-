@@ -1,12 +1,12 @@
 # Статус — Astro
 
-Дата последнего обновления: 2026-05-15.
+Дата последнего обновления: 2026-05-16.
 
 ## Сейчас
 
 Внутренний инструмент Марины для подготовки соляр-консультаций. **Программа Transit Section Recovery — CLOSED 2026-05-15.** **API PDF endpoint end-to-end repaired 2026-05-15** (TASK api-pdf-endpoint-end-to-end, Tier C + Reviewer-equivalent APPROVE).
 
-**API PDF endpoint repair (TASK api-pdf-endpoint-end-to-end, 2026-05-15):** `GET /api/v1/consultations/{id}/pdf` теперь собирает `RenderProvenance(mode="api-render", extra={"case_label": person.case_label})` и передаёт его в `write_solar_pdf` — outer cards секция активируется per Marina-show contract. Stage 0 save/return trace зафиксировал 3 latent edge-case бага (silent mkdir OSError, silent render exception, undetected empty-file race) — все исправлены envelope'ами `HTTPException(500, error=...)`. DB schema расширена `case_label TEXT` (migration `003_persons_case_label.sql`); backfill: Наташа `08-natalya-2025-2026`; Евгения / Ольга — NULL по умолчанию (no canonical mapping, NOT STOP per user direction). 3 acceptance test'а в `tests/test_api_pdf_endpoint.py` (case_label set / null / parity ≈ render_case.py). Pytest 298 → **301** (3 new passed). Schema-change-gate (bright line #8) honoured: `packages/contracts/person.schema.json` + `apps/web-react/src/types.ts` + Pydantic models в одном атомарном коммите (Haskell roundtrip-тест не применим — Person это operational data per bright line #1).
+**API PDF endpoint repair (TASK api-pdf-endpoint-end-to-end, ACCEPTED + archived 2026-05-16, external Reviewer APPROVE):** `GET /api/v1/consultations/{id}/pdf` теперь собирает `RenderProvenance(mode="api-render", extra={"case_label": person.case_label})` и передаёт его в `write_solar_pdf` — outer cards секция активируется per Marina-show contract. Stage 0 save/return trace зафиксировал 3 latent edge-case бага (silent mkdir OSError, silent render exception, undetected empty-file race) — все исправлены envelope'ами `HTTPException(500, error=...)`. DB schema расширена `case_label TEXT` (migration `003_persons_case_label.sql`); backfill: Наташа `08-natalya-2025-2026`; Евгения / Ольга — NULL по умолчанию (no canonical mapping, NOT STOP per user direction). 3 acceptance test'а в `tests/test_api_pdf_endpoint.py` (case_label set / null / parity ≈ render_case.py). Pytest 298 → **301** (3 new passed). Schema-change-gate (bright line #8) honoured: `packages/contracts/person.schema.json` + `apps/web-react/src/types.ts` + Pydantic models в одном атомарном коммите (Haskell roundtrip-тест не применим — Person это operational data per bright line #1).
 
 **Final verdict (per user explicit ack 2026-05-15):**
 > «**Recovery program CLOSED — Natalya/05/07/10 production-ready; full-folder supply requires Marina framing and excludes TYPE-D/Pluto-rule future work.**»
