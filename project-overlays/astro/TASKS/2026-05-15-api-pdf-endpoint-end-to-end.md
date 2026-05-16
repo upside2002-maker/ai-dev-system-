@@ -1,6 +1,6 @@
 # TASK: api-pdf-endpoint-end-to-end
 
-- Status: in-progress
+- Status: review
 - Ready: yes
 - Date: 2026-05-15
 - Project: astro
