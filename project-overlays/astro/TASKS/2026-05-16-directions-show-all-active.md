@@ -1,6 +1,6 @@
 # TASK: directions-show-all-active
 
-- Status: open
+- Status: review
 - Ready: yes
 - Date: 2026-05-16
 - Project: astro
