@@ -1,7 +1,7 @@
 # TASK: directions-show-all-active
 
 - Status: open
-- Ready: no
+- Ready: yes
 - Date: 2026-05-16
 - Project: astro
 - Layer: services (Python presentation: Jinja template) + tests
@@ -138,4 +138,9 @@ If Worker prefers Reviewer pass — может spawn'нуть, не блокер
 - Outer cards generic fallback (TASK B scope).
 - House interpretations parity with monthly table (TASK B scope).
 
-**Ready: no** — TL flips after user ack + any refinements.
+**Ready: yes** — flipped 2026-05-16 after user ack + 4 clarifications:
+
+1. **Scope clean** — нет расширений; только 2 selectattr removals + sort + «Ещё N…» removal + 1 regression test.
+2. **Reviewer EXPLICIT NOT spawned** — TL inline-verify only. Если Worker предложит spawn — Worker должен НЕ spawn (per user direction explicit).
+3. **Sort discipline:** `enter_jd → directed → aspect_deg → target` — deterministic, independent of JSON input order.
+4. **Test data:** сначала искать existing fixture с non-Asc/MC active direction; synthetic minimal fixture OK fallback. Acceptance для Ольги (consultation 10) обязательный: `Дирекционный Сатурн 150° Марс` в PDF.
