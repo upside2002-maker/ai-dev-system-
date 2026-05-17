@@ -1,6 +1,6 @@
 # HANDOFF: worker → tl — transit-section-generic-output
 
-- Status: submitted (awaiting TL accept-task cascade)
+- Status: closed (TL inline-verify + external Reviewer APPROVE + user explicit closure ack 2026-05-16)
 - Date: 2026-05-16
 - Project: astro
 - From: worker

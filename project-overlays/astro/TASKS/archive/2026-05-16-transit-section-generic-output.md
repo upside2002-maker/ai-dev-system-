@@ -1,6 +1,6 @@
 # TASK: transit-section-generic-output
 
-- Status: review
+- Status: done
 - Ready: yes
 - Date: 2026-05-16
 - Project: astro
@@ -268,3 +268,61 @@ Reviewer reports APPROVE / REQUEST CHANGES / ESCALATE.
 4. **Runtime limitation path:** Worker self-review + HANDOFF explicit note; TL spawns Reviewer afterwards.
 
 Worker order: TASK A closed (commit `ff7af69`); TASK B (this) executes сейчас.
+
+## Closure (2026-05-16)
+
+**Worker delivered + TL inline-verify + external Reviewer APPROVE + user explicit closure ack.**
+
+- **Product commits:** `2670f4e` (Stage 1: `houses_from_transit_matrix` helper + Jinja env registration + template switch) + `aca694b` (Stage 2-3: `generic_outer_cards` + dispatch + `provenance` field + `"07-mariya-2025-2026": []` allowlist entry + 63 new tests).
+- **Overlay commits:** `43f44b5` (Worker submission + STATUS_RU initial) + this closure commit.
+- **Pytest:** 305 baseline → **368 passed + 2 skipped (vacuous case 07) + 0 failed.**
+
+### Stage results
+
+- **Stage 1 — bottom interpretations parity:** Helper `houses_from_transit_matrix(tmatrix, planet_key)` projects already-computed `tmatrix` (line 532 шаблона) в sorted unique houses. Template `solar.html.j2:579` switched от `houses_visited(...)` к новому helper. **`houses_visited()` функция не тронута** (Phase 3 contract preserved). Для Ольги: «Венера в 8 доме» / «Марс в 1 доме» больше не появляются.
+- **Stage 2 — generic outer-cards fallback:** `generic_outer_cards(facts, tz_id=...)` строит карточки из engine output: 5 Ptolemaic aspects only (Quincunx filtered per Correction 009), 5-cell golden-rule через `rulership_houses.py` (Phase 5), psychology + event_level — deterministic templates. `provenance` field: `"calibrated"` / `"generic-fallback"`. `outer_cards_for_case` extended kwarg `facts=None` (Option A — backward-compatible). Calibrated cases (05/08/10 + 01/02/03/04/09) **bit-identical pre/post** (verified Reviewer Item 3 — 9/9 cases). **Mariya case 07:** explicit empty allowlist `"07-mariya-2025-2026": []` (Marina editorial zero; pinned by `test_case_07_allowlist_explicit_zero`).
+- **Stage 3 — tests:** 63 new в `tests/test_transit_section_generic.py` (parity для 9 calibrated cases × planets, bit-identity calibrated regression, generic для Ольги, deterministic re-run, no Marina-style prose contract). 2 skipped = case 07 vacuous parametrize.
+
+### External Reviewer APPROVE (2026-05-16, 6 points)
+
+All 6 items PASS via independent empirical reproduction:
+1. Helper correctness — 12 spot-checks across 3 cases × 4 planets.
+2. Bottom interpretation parity — 36 parity checks calibrated + Ольга PDF zero occurrences both bug strings.
+3. Calibrated bit-identity — 9/9 cases; case 10 spot-check (3 cards inc. Нептун кв Юпитеру 4 windows).
+4. Generic Ольга — 7 cards `provenance="generic-fallback"`; texts deterministic from facts; **0 formulas**; engine emit 10 → 7 (3 quincunx filtered).
+5. Pytest 368/2/0 independent.
+6. Manual UI smoke replication — 24 pages / 154 KB; 5/5 outer-card markers; 7 outer card titles (Уран×3 + Нептун×3 + Плутон×1); Phase 3 guard ✓.
+
+### Reviewer beyond-scope notes — recorded as non-blocking future polish
+
+1. **`Asc/MC` nominative dict gap в golden-rule natural radix cell:** card 4 «Нептун кв Асц» title shows Cyrillic «Асц» but `golden_rule.row_natural.radix` shows Latin `'Asc'` fallback (т.к. `_PLANET_NOM_RU` не содержит `'Asc'`/`'MC'` keys). **Calibrated path имеет такой же gap** — out of TASK B scope; deferred as future cosmetic polish.
+2. **Test name `test_calibrated_cards_bit_identical_except_provenance`** немного misleading (test asserts full equality including provenance — both sides emit `"calibrated"`, equality holds). Contract correct; deferred as future cleanup.
+3. **Runtime limitation 5-я occurrence** (Agent tool недоступен в Worker subagent runtime) — infrastructure pattern, не product code. Worker correctly self-reviewed + escalated к TL для external Reviewer post-submission per established discipline (TASK 8B/8D/8E/api-pdf-endpoint precedent).
+
+### User explicit closure ack — received 2026-05-16
+
+User confirmed all 5 closure items:
+1. Status review → done.
+2. HANDOFF open → closed.
+3. Archive TASK + HANDOFF.
+4. STATUS_RU update: post-recovery follow-ups closed; API/render/PDF pipeline works for calibrated AND non-calibrated clients.
+5. Single overlay commit + push backup.
+3 Reviewer informational notes recorded as non-blocking future polish.
+
+### Production state at closure
+
+- Product main = backup/main = `aca694b`.
+- Overlay master = backup/master = (this closure commit).
+- Pytest **368 passed + 2 skipped + 0 failed**.
+- Cabal Up to date.
+- uvicorn serving Ольга consultation 10 PDF: 24 pages, 7 generic outer cards, deterministic content.
+
+### Pipeline state at closure (post 3 follow-ups)
+
+API → render → PDF pipeline теперь **полностью работает для любого клиента**:
+- **Calibrated cases** (Наталья / 01/02/03/04/05/07/08/09/10): existing allowlist + curated card-facts (Phase 4+5+7b+8D).
+- **Non-calibrated cases** (любой новый клиент): generic-fallback с deterministic templates; no Marina-style invention; no formulas; engine-driven 5-Ptolemaic aspects filter.
+
+### Status: done
+
+Archive to `project-overlays/astro/TASKS/archive/`. HANDOFF archive to `HANDOFFS/archive/`. 3 post-recovery follow-up TASKs all closed (api-pdf-endpoint-end-to-end + directions-show-all-active + transit-section-generic-output).
