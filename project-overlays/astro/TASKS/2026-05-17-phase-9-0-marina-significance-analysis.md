@@ -1,7 +1,7 @@
 # TASK: phase-9-0-marina-significance-analysis
 
 - Status: open
-- Ready: no
+- Ready: yes
 - Date: 2026-05-17
 - Project: astro
 - Layer: overlay (analytical memo deliverable only — NO code, NO data, NO PDF changes)
@@ -56,7 +56,7 @@ Different sub-problems may follow different rules — some deterministic, some e
 | 08-natalya | ✓ | `/Users/ilya/Downloads/Gmail (3)/Соляр 2025-2026_5.pdf` | fixture |
 | 09-anastasiya | ✓ | `/Users/ilya/Downloads/Gmail (3)/...` | fixture (TYPE-D mismatch noted) |
 | 10-danila | ✓ | `/Users/ilya/Downloads/Gmail (3)/Соляр 2025-2026 для Данилы.pdf` | fixture |
-| **11-olga (consultation 11)** | **NO** | **User to provide path** | DB consultation_id=11 |
+| **11-olga (consultation 11)** | **NO** | **`/Users/ilya/Downloads/Соляр 2026-2027 (1).pdf`** (per user direction 2026-05-17) | DB consultation_id=11; current script output для compare: `/Users/ilya/Downloads/solar-11.pdf` |
 
 Worker first reads Phase 8A audit § A.1 inventory table for confirmed Marina-PDF → fixture mapping. For Ольга consultation 11 — Marina-reference path is **out-of-scope-default**; Worker requests path from TL via STOP+escalation if not pre-provided.
 
@@ -118,7 +118,7 @@ Per sub-problem, test 4-6 hypotheses against the 10-case dataset:
 
 **Summary themes hypotheses (test set):**
 - H1: «highest signal count» (theme with most input signals across all streams).
-- H2: «5-11 axis» (relationships+social: structural for Marina's discipline).
+- H2: «5-11 axis» (relationships+social) — **case-specific hypothesis** (per user direction 2026-05-17: «оставь, но пометь как case-specific, не как универсальную аксиому. Worker должен проверять, повторяется ли это в других кейсах»). NOT axiom; if H2 fits только Ольга и 0-2 calibrated cases → не general rule.
 - H3: «consultation goal alignment» (client's stated questions in request_note).
 - H4: «5/7/10 dom-stack priority» (creative/partnership/career as central solar themes).
 - H5: «cross-stream confirmation» (direction + transit + progression all touch same house).
@@ -252,4 +252,12 @@ If Worker prefers Reviewer pass — может spawn'нуть post-completion. �
 - Implementation work — that's next-TASK-after.
 - Specific case rendering / fixture changes.
 
-**Ready: no** — TL flips after user ack + any refinements.
+**Ready: yes** — flipped 2026-05-17 after user ack + 3 substantive clarifications:
+
+1. **Marina-reference для Ольги:** `/Users/ilya/Downloads/Соляр 2026-2027 (1).pdf` (per user direction). Script result для compare: `/Users/ilya/Downloads/solar-11.pdf`. Stage 0 path resolution: путь pre-provided; no STOP required.
+
+2. **H2 «5-11 axis»** в Summary hypotheses помечен **case-specific**, не universal axiom. Worker должен testить, повторяется ли pattern в других calibrated cases. Если H2 fits only Ольга + 0-2 others → не general rule.
+
+3. **Reviewer optional:** TL inline-verify acceptable. Если вывод спорный — отдельный Reviewer можно поднять после.
+
+**Scope discipline confirmed:** «Никаких code changes, allowlist entries, PDF fixes, даже obvious quick wins. Только memo, scoring, verdict, next TASK proposals.»
