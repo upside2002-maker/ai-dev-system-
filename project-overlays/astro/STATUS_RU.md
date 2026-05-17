@@ -1,10 +1,27 @@
 # Статус — Astro
 
-Дата последнего обновления: 2026-05-16.
+Дата последнего обновления: 2026-05-17.
 
 ## Сейчас
 
-Внутренний инструмент Марины для подготовки соляр-консультаций. **Программа Transit Section Recovery — CLOSED 2026-05-15.** **3 post-recovery follow-up TASKs CLOSED 2026-05-16:** API PDF endpoint end-to-end (Tier C + external Reviewer APPROVE) + Directions section full-list surfacing (Tier C trivial, TL inline-verify) + Transit Section bottom interpretation parity + generic outer-cards fallback (Tier C + external Reviewer APPROVE). **API/render/PDF pipeline теперь полностью работает для любого клиента** — calibrated (Наталья / 01/02/03/04/05/07/08/09/10) через allowlist + curated card-facts, non-calibrated (любой новый клиент) через deterministic generic-fallback (no Marina-style invention, no formulas, 5 Ptolemaic aspects).
+Внутренний инструмент Марины для подготовки соляр-консультаций. **Программа Transit Section Recovery — CLOSED 2026-05-15.** **3 post-recovery follow-up TASKs CLOSED 2026-05-16** (API PDF endpoint + directions full-list + transit section generic-output). **Phase 9.0 — Marina Significance Selection Analysis** delivered 2026-05-17 — analytical memo only, no product code changes.
+
+**Phase 9.0 memo delivered 2026-05-17 (Worker subagent, Tier C memo-only):** `project-overlays/astro/ARCHITECTURE/marina-significance-selection-analysis-2026-05-17.md`. Memo тестирует 4-6 hypotheses на 10 cases (8/10 analyzable per stream — 7 calibrated + Ольга consultation 11) для 4 sub-problems (active directions / outer cards / touch intervals / summary themes). **Per-sub-problem verdicts:**
+
+- **A — directions (hybrid/deterministic-leaning):** Marina's verbatim rule «aspects touching Asc/MC/1st-house elements» fits 8/8 calibrated. Combined rule (target ∈ 1st-element + transpersonal-source bias + duplicate-formula avoidance) предсказывает 4 of 9 Ольгиных engine emit точно как Marina (4 chosen). Engine post-`directions-show-all-active` сейчас inverted to show ALL 9 — нужен filter. → **TASK 9.1 proposal** (Tier B, filter implementation).
+- **B — outer cards (hybrid):** Marina's rule «target ≠ angle (AC/MC/IC/DC); target ∈ per-client significator set» fits 10/10. Engine `generic_outer_cards` нужен 1-line filter + per-client significator heuristic. → **TASK 9.2 proposal** (Tier B, filter + heuristic).
+- **C — intervals (hybrid, strong editorial residual):** Default «show engine N windows» fits 60-70%. Cases 02/04 + Ольга card-narrowing (1 of 3 engine windows shown) — editorial choice, не deterministic из 10-case sample. → **TASK 9.3 proposal** (Tier C, per-case `display_window_count` override).
+- **D — summary themes (deterministic):** Engine post-`transit-section-generic-output` axis-density via cusp-count already matches Marina для 8/8 cases (Ольга: «ось 5-11, подсчёт 4 из 12» = Marina's verbatim primary theme). → **TASK 9.4 proposal** (Tier C, regression tests only — no code change).
+
+**Re-confirmation of user prediction 2026-05-17:** «directions могут оказаться hybrid/deterministic, outer cards и intervals — hybrid/editorial, summary почти точно editorial. Но это надо доказать на данных, а не ощущением.» Worker findings: A hybrid/deterministic ✓ matches, B hybrid ✓ matches, C hybrid (strong editorial) ✓ matches, D **deterministic ✗ DIFFERS** — engine already implements correctly. Summary surprise win — engine post-`transit-section-generic-output` correctly emits Marina-matching primary theme without further work.
+
+**Key critical finding для sub-problem A:** Marina **explicitly writes the rule** в каждом calibrated PDF: «Чтобы событие произошло, то, в первую очередь, мы должны рассмотреть аспекты к Асц (1 дом), элементам 1 дома и МС». Это **deterministic, не editorial** — Marina просто формализованно следует одной формуле через 8 PDFs + Ольгу. Phase 9.1 filter implementation становится мини-TASK (1 file + 1 test).
+
+**Acceptance Phase 9.0:** memo (~970 lines), STATUS_RU update, HANDOFF, 1 overlay commit, backup parity verified. NO product code touched (368 passed + 2 skipped pytest preserved; product `git status --short` clean; cabal не трогался). Reviewer subagent optional per Tier C.
+
+---
+
+**Post-recovery follow-up TASKs (2026-05-16):** API PDF endpoint end-to-end (Tier C + external Reviewer APPROVE) + Directions section full-list surfacing (Tier C trivial, TL inline-verify) + Transit Section bottom interpretation parity + generic outer-cards fallback (Tier C + external Reviewer APPROVE). **API/render/PDF pipeline теперь полностью работает для любого клиента** — calibrated (Наталья / 01/02/03/04/05/07/08/09/10) через allowlist + curated card-facts, non-calibrated (любой новый клиент) через deterministic generic-fallback (no Marina-style invention, no formulas, 5 Ptolemaic aspects).
 
 **Transit Section generic-output repair (TASK transit-section-generic-output, ACCEPTED + archived 2026-05-16, external Reviewer APPROVE + user explicit closure ack):** Две независимые дыры закрыты для consultation 10 (Ольга, `case_label=None`, non-calibrated):
 

@@ -1,6 +1,6 @@
 # TASK: phase-9-0-marina-significance-analysis
 
-- Status: open
+- Status: review
 - Ready: yes
 - Date: 2026-05-17
 - Project: astro
