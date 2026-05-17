@@ -1,6 +1,6 @@
 # TASK: transit-section-generic-output
 
-- Status: open
+- Status: review
 - Ready: yes
 - Date: 2026-05-16
 - Project: astro
