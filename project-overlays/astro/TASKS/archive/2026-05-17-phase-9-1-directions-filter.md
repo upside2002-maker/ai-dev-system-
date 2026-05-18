@@ -1,10 +1,10 @@
 # TASK: phase-9-1-directions-filter
 
-- Status: open (Worker STOP-at-Stage-0 2026-05-17 — pending TL re-spec OR closure decision)
+- Status: done (closed honestly without code change per user direction 2026-05-17 Option β; Worker STOP discipline honored)
 - Ready: yes
 - Date: 2026-05-17
-- STOP_AT_STAGE_0: yes (per user direction 2026-05-17 «не "улучшать" правило молча»)
-- HANDOFF: `project-overlays/astro/HANDOFFS/2026-05-17-worker-to-tl-phase-9-1-directions-filter-STOP.md`
+- STOP_AT_STAGE_0: yes (per user direction «не "улучшать" правило молча»)
+- HANDOFF: `project-overlays/astro/HANDOFFS/archive/2026-05-17-worker-to-tl-phase-9-1-directions-filter-STOP.md`
 - Project: astro
 - Layer: services (Python presentation: directions filter helper + template wiring + tests)
 - Risk tier: B (1 filter function + 1 template wiring + 1 regression test; no schema; no fixtures)
@@ -241,3 +241,63 @@ If Worker prefers Reviewer pass — может spawn'нуть, не блокер
 3. **Moon fallback discipline (per user direction):** Moon applies ONLY if Asc-ruler not determinable (no data / missing sign / edge case). If Asc-ruler known → Moon NOT added (fallback must NOT expand selection when primary value exists). Worker codes as explicit fallback gate, not «include both» logic.
 4. **Reviewer optional** confirmed (TL inline-verify acceptable).
 5. **New file `services/api-python/app/pdf/directions.py`** confirmed (avoid bloating `transit_themes.py`).
+
+## Closure (2026-05-17) — Option β: closed honestly without code change
+
+**Worker STOP-at-Stage-0 discipline honored + user explicit closure ack (Option β) 2026-05-17.**
+
+### What Worker found (empirical Stage 0)
+
+Worker tested 4 filter variants (V1-V4) across 9 cases. **No formulation of A1+A2+A3 satisfies all cases simultaneously:**
+
+- **Ольга (9 directions emitted):** V2 (A1 + A2 simple-drop-transpersonal + A3 Jaccard>0.8 dedup) achieves EXACT 4/4 Marina match.
+- **Calibrated cases drop Marina-selected transpersonal-source directions:**
+  - Case 01: «Нептун 120° Сатурн» (Marina-selected, V2 drops as transpersonal).
+  - Case 05: «Нептун 0° Asc» (Marina-selected, V2 drops).
+  - Case 09: «Нептун 90° Меркурий» (single Marina-selected emit, V2 drops).
+  - Case 10: «Плутон 180° Юпитер» + «Уран 90° Марс» (Marina-selected, V2 drops).
+- **A3 dedup** independently drops Marina-selected «Sun 60° Asc» в Ольге если enter_jd ordering picks «Moon 90° Sun» first.
+
+**A1-alone** (без A2/A3) matches 9/9 для Ольги — too broad (over-prediction by 5).
+
+**Marina's verbatim rule statement** («аспекты к Асц / 1 дому / МС») is NECESSARY but INSUFFICIENT. Her actual selections add editorial filtering not captured by any tested A2/A3 supplement.
+
+### User decision: Option β — close 9.1 без code change
+
+Per user direction 2026-05-17:
+> «Worker сделал правильно: STOP был именно для этого. Раз A1 слишком широкий, а A2/A3 ломают calibrated cases, значит clean deterministic filter для дирекций не найден. Шипить "Ольга-only V2" нельзя: это будет очередная двойная семантика и технический долг. Текущее поведение "show all active" оставляем как production default.»
+
+### Current production state preserved (no code change)
+
+- Template `solar.html.j2:440-475` — directions section shows ALL `facts.analysis.directions.active` (post TASK A 2026-05-16 «directions-show-all-active»).
+- For Ольги PDF: 9 directions visible.
+- For calibrated cases: all engine-emitted directions visible.
+- Marina-curated 4 directions per case NOT enforced presentationally.
+- **Net:** «show all active» as production default; explicit decision NOT to implement deterministic filter.
+
+### Memo § 5.1 verdict downgrade
+
+Per user direction 2026-05-17, Phase 9.0 memo gets erratum subsection (analogous to Phase 4a Path 1 erratum 2026-05-14) downgrading directions verdict from `hybrid / deterministic-leaning` to `editorial / curation-required`. Verbatim formulation (per user):
+
+> Phase 9.1 empirical validation downgraded directions verdict from `hybrid / deterministic-leaning` to `editorial / curation-required`. Marina's written A1 rule is necessary but insufficient. A1 over-predicts; A2/A3 reproduce Olga but contradict calibrated Marina selections in cases 01/05/09/10. No deterministic direction filter is accepted as of 2026-05-17.
+
+### Phase 4a precedent (recurring pattern)
+
+Phase 4a memo (2026-05-13) tested 4 hypotheses on Marina window BOUNDARIES — concluded H4 (editorial). Phase 4 chose Path 3 (allowlist + curated facts per case). Phase 9.1 empirical reality matches same family: Marina states a rule (A1), но actual selections add editorial filtering Worker hypotheses can't predict. Programme conclusion: **don't fight editorial; accept curated allowlist OR accept «show all» display default**.
+
+### Lifecycle
+
+- **TASK Status:** open (STOP-at-Stage-0) → done (closure без code change).
+- **Worker scope discipline:** ZERO product code touched; pytest 368/2/0 preserved; cabal clean. Worker honored user STOP-gate exactly.
+- **HANDOFF Status:** review/STOP → closed.
+- Archive TASK + HANDOFF.
+
+### Next steps per user direction 2026-05-17
+
+Order:
+1. **Close 9.1 honestly** (this) + Phase 9.0 memo erratum.
+2. **Open 9.4 Summary regression tests** (Tier C tests-only; engine already correct per memo § 5.4 + Worker findings).
+3. **Phase 9.2 outer-card filter** — deferred. После урока 9.1 не прыгать в карточки сразу. Возвращаться отдельным аккуратным TASK после 9.4.
+4. **Phase 9.3 single-window narrowing** — deferred (Tier C per-case override, editorial; same lesson applies).
+
+### Status: done

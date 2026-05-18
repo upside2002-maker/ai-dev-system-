@@ -941,3 +941,48 @@ Pytest baseline preserved (368 passed + 2 skipped + 0 failed — no test changes
 Product `git status --short` clean. One overlay commit will include memo + STATUS_RU update + HANDOFF.
 
 End of Phase 9.0 memo.
+
+---
+
+## Erratum (Phase 9.1 empirical validation, 2026-05-17)
+
+> **Status: ERRATUM** — appended after Phase 9.1 Worker STOP-at-Stage-0 empirical validation 2026-05-17. Memo body above is **NOT rewritten** (historical record per audit-trail discipline); this erratum subsection documents the corrective reclassification of § 5.1 verdict.
+
+### Finding
+
+Phase 9.1 Worker (TASK `2026-05-17-phase-9-1-directions-filter`) tested 4 filter variants (V1-V4) against the 9-case sample (8 calibrated + Ольга consultation 11) implementing Rule A1 + A2 + A3 per memo § 5.1. **No formulation of A1+A2+A3 satisfies all cases simultaneously:**
+
+- **Ольга (9 emitted directions):** V2 (A1 + A2 simple-drop-transpersonal + A3 Jaccard>0.8 dedup) achieves EXACT 4/4 Marina match.
+- **Calibrated cases:** V2 drops Marina-selected transpersonal-source directions in cases 01 («Нептун 120° Сатурн»), 05 («Нептун 0° Asc»), 09 («Нептун 90° Меркурий»), 10 («Плутон 180° Юпитер» + «Уран 90° Марс»).
+- **A3 alone** drops Marina-selected «Sun 60° Asc» в Ольге если enter_jd ordering picks «Moon 90° Sun» first (identical formula tokens).
+- **A1-alone** (no A2/A3) matches 9/9 for Ольги — too broad (over-prediction by 5).
+
+Worker correctly honored user STOP-gate direction («не "улучшать" правило молча») и escalated к TL вместо silent rule refinement.
+
+### Verdict downgrade (per user direction 2026-05-17)
+
+> **Phase 9.1 empirical validation downgraded directions verdict from `hybrid / deterministic-leaning` to `editorial / curation-required`. Marina's written A1 rule is necessary but insufficient. A1 over-predicts; A2/A3 reproduce Olga but contradict calibrated Marina selections in cases 01/05/09/10. No deterministic direction filter is accepted as of 2026-05-17.**
+
+### What this changes
+
+- Memo § 5.1 «Sub-problem A: Active-directions selection» verdict text «hybrid (deterministic-leaning)» — superseded by «editorial / curation-required» per Erratum.
+- Memo § 6 TASK 1 proposal (Phase 9.1 directions filter implementation) — **closed without code shipping**. TASK file `2026-05-17-phase-9-1-directions-filter.md` archived в `TASKS/archive/` без code change (production default «show all active» from TASK A 2026-05-16 preserved).
+- Memo § 5.2 (outer cards) + § 5.3 (intervals) + § 5.4 (summary) verdicts — NOT changed by this erratum. Independently verified separately.
+
+### Programme implication (Phase 4a precedent recurring)
+
+Phase 4a memo (2026-05-13) tested 4 hypotheses on Marina window BOUNDARIES across 3 examples and concluded H4 (editorial). Phase 4 chose Path 3: allowlist + curated facts per case (NOT generic rule). Phase 9.1 empirical reality replicates same family pattern: Marina states a rule (A1) in calibrated PDFs, but actual selections add editorial filtering Worker hypotheses cannot predict.
+
+**Programme conclusion (recurring):** «Don't fight editorial; accept curated allowlist (per-case) OR accept "show all active" as display default».
+
+### Why misclassified at original Phase 9.0 analysis
+
+Phase 9.0 memo § 3.1 hypothesis testing measured A1 fit-rate at 8/8 calibrated cases level (Marina's rule statement matches calibrated selections trivially — Marina selections ARE the curated set). Memo did NOT test whether **inverse direction** holds (engine output filtered by A1 alone == Marina selections), which would have exposed A1's over-prediction on Ольги and A2/A3's contradiction on transpersonal-source calibrated cases.
+
+**Lesson:** Future analytical memos should test both directions of significance rules: «Marina-selected items match rule» AND «rule applied to engine output reproduces Marina selections». First direction trivially holds for any rule consistent with Marina's text; second direction is the empirical contract.
+
+### Cross-references
+
+- TASK 9.1 closure: `project-overlays/astro/TASKS/archive/2026-05-17-phase-9-1-directions-filter.md` § Closure.
+- Worker STOP HANDOFF: `project-overlays/astro/HANDOFFS/archive/2026-05-17-worker-to-tl-phase-9-1-directions-filter-STOP.md`.
+- Phase 4a memo Erratum (Phase 8B Path 1, 2026-05-14): `project-overlays/astro/ARCHITECTURE/transit-contact-window-semantics-2026-05-13.md` § Erratum.

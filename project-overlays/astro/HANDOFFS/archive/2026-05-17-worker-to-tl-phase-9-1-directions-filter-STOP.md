@@ -1,5 +1,6 @@
-# HANDOFF: Worker → TL — Phase 9.1 Directions Filter — **STOP**
+# HANDOFF: Worker → TL — Phase 9.1 Directions Filter — **STOP** (CLOSED 2026-05-17)
 
+- Status: closed (Option β — TASK closed honestly без code change per user direction 2026-05-17; Phase 9.0 memo § 5.1 erratum landed)
 - Дата: 2026-05-17.
 - TASK: `project-overlays/astro/TASKS/2026-05-17-phase-9-1-directions-filter.md` (Ready: yes; Status: open).
 - Tier: B (Reviewer optional).
