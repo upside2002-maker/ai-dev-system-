@@ -1,7 +1,7 @@
 # TASK: phase-9-4-summary-axis-regression-tests
 
 - Status: open
-- Ready: no
+- Ready: yes
 - Date: 2026-05-17
 - Project: astro
 - Layer: services (Python tests only — NO product code changes)
@@ -156,4 +156,10 @@ Per user direction 2026-05-17 Phase 9.4 series: «9.4 Reviewer не нужен, 
 - Phase 9.3 (single-window narrowing) — deferred.
 - Any «improve summary» heuristics beyond pinning current correct behavior.
 
-**Ready: no** — TL flips after user ack + any refinements.
+**Ready: yes** — flipped 2026-05-18 after user ack + 5 clarifications:
+
+1. **Spec clean** — no new requirements.
+2. **Case selection:** minimum `02 / 05 / 08 / 10 / Ольга 11`. Others (01/03/04/07/09) — only if Marina-primary theme already extracted в memo § 1.1. **Worker не extract'ит из Marina PDFs заново в этой TASK.**
+3. **Test file:** Worker chooses (new preferred; extend existing if natural fit).
+4. **Field name:** Worker traces; pre-mapped not required.
+5. **STOP discipline (CRITICAL):** if engine output ≠ memo § 5.4 finding — **NOT fix code, NOT adjust test**; STOP + escalation memo. Memo § 5.4 may be wrong OR engine drifted. Worker investigates root cause before any «fix».
