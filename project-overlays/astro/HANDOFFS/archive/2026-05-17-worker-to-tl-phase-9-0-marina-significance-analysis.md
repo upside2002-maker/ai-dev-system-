@@ -1,6 +1,6 @@
 # HANDOFF: worker → tl — phase-9-0-marina-significance-analysis
 
-- Status: review (submitted; awaiting TL ack)
+- Status: closed (TL inline-verify + user explicit closure ack 2026-05-17)
 - Date: 2026-05-17
 - Project: astro
 - From: worker

@@ -1,6 +1,6 @@
 # TASK: phase-9-0-marina-significance-analysis
 
-- Status: review
+- Status: done
 - Ready: yes
 - Date: 2026-05-17
 - Project: astro
@@ -261,3 +261,56 @@ If Worker prefers Reviewer pass — может spawn'нуть post-completion. �
 3. **Reviewer optional:** TL inline-verify acceptable. Если вывод спорный — отдельный Reviewer можно поднять после.
 
 **Scope discipline confirmed:** «Никаких code changes, allowlist entries, PDF fixes, даже obvious quick wins. Только memo, scoring, verdict, next TASK proposals.»
+
+## Closure (2026-05-17)
+
+**Worker delivered + TL inline-verify + user explicit closure ack.** Reviewer subagent optional per Tier C memo-only — TL inline-verify acceptable.
+
+- **Deliverable:** `project-overlays/astro/ARCHITECTURE/marina-significance-selection-analysis-2026-05-17.md` (943 lines, 30 sections).
+- **Worker submission commit:** `4003062` (memo + HANDOFF + STATUS_RU initial + TASK Status open → review TL bump).
+
+### Per-sub-problem verdicts (verified by TL via memo § 5)
+
+- **A — Active directions selection:** **`hybrid` (deterministic-leaning)**. Marina **дословно записывает rule** в каждом calibrated PDF: «аспекты к Асц (1 дом), элементам 1 дома и МС». Rule A1 + A2 + A3 (per memo § 5.1) derive deterministic filter.
+- **B — Outer-card selection:** **`hybrid`**. Rule «target ∉ {Asc, MC, IC, DC}» fits 10/10 cases. Per-client significator heuristic supplements deterministic angle-exclusion.
+- **C — Touch-interval selection:** **`hybrid` (strong editorial residual)**. Default «show engine N windows» fits 60-70%. Cases 02/04/Ольга single-window narrowing = editorial per-case override.
+- **D — Summary thematic selection:** **`deterministic`**. **Surprise win:** engine post-`transit-section-generic-output` axis-density via cusp-count уже matches Marina **8/8 cases**. No code change required.
+
+### User predictions vs Worker findings (2026-05-17)
+
+| Sub-problem | User prediction | Worker finding | Match |
+|---|---|---|---|
+| A directions | hybrid/deterministic | hybrid (deterministic-leaning) | ✓ |
+| B outer cards | hybrid/editorial | hybrid | ✓ |
+| C intervals | hybrid/editorial | hybrid (strong editorial residual) | ✓ |
+| D summary | almost certainly editorial | **deterministic** | ✗ (surprise win) |
+
+### TL inline-verify checks
+
+- Memo structure: 30 sections including § 5 verdicts (4 sub-problems) + § 6 next-TASK proposals (4) + § 7 final summary table.
+- Product code untouched (git status --short clean post-Worker).
+- Pytest 368 passed + 2 skipped + 0 failed preserved (no test changes).
+- Cabal Up to date (no Haskell changes).
+- 4 next-TASK proposals well-scoped per Worker:
+  - Phase 9.1 (Tier B): Directions filter implementation.
+  - Phase 9.2 (Tier B): Outer-card target-not-angle filter + significator heuristic.
+  - Phase 9.3 (Tier C): Outer-card single-window narrowing per-case override.
+  - Phase 9.4 (Tier C): Summary theme regression tests only.
+
+### User closure ack — received 2026-05-17
+
+User confirmed:
+1. Memo accepted.
+2. Ordering 9.1 → 9.2 → 9.3 → 9.4 (sequential fenced TASKs; no combined Worker session).
+3. Reviewer policy per next-TASK:
+   - 9.1 Reviewer optional (TL inline acceptable).
+   - 9.2 Reviewer REQUIRED.
+   - 9.3 Reviewer optional + hard visual/text assertions.
+   - 9.4 Reviewer not needed (tests-only).
+4. **Critical guard для 9.1:** Rule must strictly rely on Marina's explicitly-found rule (memo § 5.1 Rule A1 + A2 + A3). If A2/A3 begin contradicting Marina's text — Worker MUST STOP, NOT silently «improve» rule.
+
+### Status: done
+
+Archive to `project-overlays/astro/TASKS/archive/`. HANDOFF archive to `HANDOFFS/archive/`.
+
+Next: TASK Phase 9.1 (Directions filter implementation) — drafted next, Ready: no, awaiting user ack with potential refinements.
