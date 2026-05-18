@@ -1,8 +1,10 @@
 # TASK: phase-9-1-directions-filter
 
-- Status: open
+- Status: open (Worker STOP-at-Stage-0 2026-05-17 — pending TL re-spec OR closure decision)
 - Ready: yes
 - Date: 2026-05-17
+- STOP_AT_STAGE_0: yes (per user direction 2026-05-17 «не "улучшать" правило молча»)
+- HANDOFF: `project-overlays/astro/HANDOFFS/2026-05-17-worker-to-tl-phase-9-1-directions-filter-STOP.md`
 - Project: astro
 - Layer: services (Python presentation: directions filter helper + template wiring + tests)
 - Risk tier: B (1 filter function + 1 template wiring + 1 regression test; no schema; no fixtures)
