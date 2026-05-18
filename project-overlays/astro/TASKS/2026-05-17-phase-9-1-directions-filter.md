@@ -1,7 +1,7 @@
 # TASK: phase-9-1-directions-filter
 
 - Status: open
-- Ready: no
+- Ready: yes
 - Date: 2026-05-17
 - Project: astro
 - Layer: services (Python presentation: directions filter helper + template wiring + tests)
@@ -39,7 +39,7 @@ A direction is Marina-significant **iff** at least ONE of `direction.directed` o
 - `MC` (midheaven point).
 - Any planet placed in natal 1st house (in `natal_chart.houses[1]`).
 - Asc-ruler (the planet ruling the sign of the Asc).
-- **Fallback if Asc-ruler not in natal chart:** Moon (universal personal-life significator).
+- **Fallback if Asc-ruler not determinable:** Moon (universal personal-life significator). **Discipline (per user direction 2026-05-17):** Moon fallback applies **ONLY** if Asc-ruler cannot be determined (no data, missing sign, edge case). If Asc-ruler is known, Moon is **NOT** added to S — fallback must NOT expand selection when primary value exists. Worker codes this as explicit fallback gate, not as «include both» logic.
 
 ### Rule A2 (Worker supplement — verify against Marina text before applying)
 
@@ -232,4 +232,10 @@ If Worker prefers Reviewer pass — может spawn'нуть, не блокер
 - Engine changes.
 - New heuristic rules beyond A1 (A2/A3 already STOP-gated against Marina text).
 
-**Ready: no** — TL flips after user ack + any refinements.
+**Ready: yes** — flipped 2026-05-17 after user ack + 5 clarifications:
+
+1. **Spec clean** — no new requirements.
+2. **A1-alone discipline confirmed:** Stage 0 validates A1 alone first; if exactly 4 matches Marina → A2/A3 NOT coded.
+3. **Moon fallback discipline (per user direction):** Moon applies ONLY if Asc-ruler not determinable (no data / missing sign / edge case). If Asc-ruler known → Moon NOT added (fallback must NOT expand selection when primary value exists). Worker codes as explicit fallback gate, not «include both» logic.
+4. **Reviewer optional** confirmed (TL inline-verify acceptable).
+5. **New file `services/api-python/app/pdf/directions.py`** confirmed (avoid bloating `transit_themes.py`).
