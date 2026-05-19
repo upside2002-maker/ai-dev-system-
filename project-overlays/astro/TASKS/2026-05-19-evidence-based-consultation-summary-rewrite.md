@@ -1,7 +1,7 @@
 # TASK: evidence-based-consultation-summary-rewrite
 
 - Status: open
-- Ready: no
+- Ready: yes
 - Date: 2026-05-19
 - Project: astro
 - Layer: services (Python presentation: `synthesis_themes.py` + tests for Olga summary)
@@ -58,37 +58,60 @@ Worker maps which evidence sources drive which themed block.
 
 **2.2 — `_THEME_PROSE["ЛИЧНОСТЬ"].lead_in`:** drop hardcoded «наедине с собой, подведение итогов внутреннего цикла (1-12)». Replace with conditional template — assembled from evidence per case.
 
-**2.3 — Other 9 themed blocks:** audit for analogous Natalya-only phrasings. Worker decision per § Ready clarification: incremental fix (ЛИЧНОСТЬ only) OR full sweep all 10 blocks.
+**2.3 — Other 9 themed blocks (per user clarification 1 = (b) full sweep):** audit ALL 10 themed blocks (ЛИЧНОСТЬ + ФИНАНСЫ + ОТНОШЕНИЯ + ИТОГИ\ТАЙНЫ\ИЗОЛЯЦИЯ + remaining 6) for Natalya-specific defaults. Refactor каждый block to evidence-driven. No incremental ЛИЧНОСТЬ-only fix.
 
-### Stage 3 — Evidence-driven template architecture
+### Stage 3 — Evidence-driven template architecture (per user clarification 2 = (γ) hybrid)
 
-Worker proposes architecture; this is implementation choice. Sketch options:
+**Chosen architecture:** keep `LIFE_THEMES` houses+priority_themes+caution_keywords structure (proven скелет привязки домов/тем — Phase 0.10c-c heritage); drive narrative text **purely from evidence presence**, no hardcoded lead_in defaults.
 
-- **(α) Conditional template builder:** for each block, collect evidence (axes touched, directions firing, transits, outer cards relevant). Template renders only confirmed-by-evidence phrasings.
-- **(β) Per-house topical lookup:** for each natal house 1-12, store catalog of «when solar/natal/aspect activates this house» phrasings. Synthesis picks phrasings from the catalog based on what's active.
-- **(γ) Hybrid:** keep current `LIFE_THEMES` houses+keywords structure, но drive narrative text from evidence presence (e.g., «если progressed Moon ∈ block.houses → mention it»).
+For each themed block:
+- Collect active evidence: solar→natal house links, axes touched, directions firing on block houses, transits активирующие block houses, outer-card themes relevant.
+- Render narrative paragraph composed ONLY from evidence found.
+- **If no evidence found for block → produce empty block** (или omit block entirely from output per Worker discretion + Stage 5 inline doc).
+- NO hardcoded lead_in defaults that fill empty blocks с generic text.
 
-Architecture choice per § Ready clarification 2.
+**Critical guard (per user direction 2026-05-19, verbatim):**
 
-### Stage 4 — Acceptance tests
+> «Worker не должен превращать итог в generic soup. Каждый абзац итогов должен ссылаться на конкретный evidence-source: solar grid / progressions / directions / transits. If no evidence, лучше не писать блок, чем писать красивую пустоту.»
 
-New file `services/api-python/tests/test_consultation_summary_evidence.py` OR extend existing `test_summary_themes.py` (Worker discretion per § Ready clarification 3).
+Architecture must enforce this — Worker designs templates such that empty-evidence path produces empty/omitted block, не «красивую пустоту».
 
-**Olga consultation 11 acceptance (per user verbatim 2026-05-19):**
+### Stage 4 — Acceptance tests (per user clarification 3 = (a) new file)
 
-Negative assertions (text MUST NOT contain):
-- `"1-12"` (as axis label или in phrasing context).
+**New file:** `services/api-python/tests/test_consultation_summary_evidence.py`. Clean isolation from Phase 9.4 `test_summary_themes.py` (which pins `primary_axis` engine values, semantically distinct).
+
+**Olga consultation 11 acceptance (per user clarification 5 = (c) hybrid — strict negative, semantic positive):**
+
+**Strict-string negative assertions (text MUST NOT contain — exact substring match):**
+- `"1-12"`.
 - `"наедине с собой"`.
 - `"подводить итоги внутреннего цикла"`.
 - `"завершение этапа"` (Natalya-specific).
 - `"переход в новый цикл"` (Natalya-specific).
 
-Positive assertions (text MUST contain semantically equivalent — see clarification 5 for strict-string vs semantic):
-- **ЛИЧНОСТЬ block:** reference to `1 → 5` link («ребёнок / творчество / хобби / самовыражение»).
-- **Выводы / final synthesis:** Asc в Весах (партнёрство / договорённости), MC в Раке (дом / семья / почва под ногами), ось `5-11` (дети, хобби, планы, коллектив), прогрессивная Луна в 11 доме.
+**Semantic positive assertions (test checks structural evidence-presence; не strict-string phrase pin):**
+- **ЛИЧНОСТЬ block:** references `1 → 5` axis (creativity / kids / hobbies / self-expression keywords); contains semantically «дети/творчество/хобби/самовыражение».
+- **Statement about `10 → 1`:** status зависит от личной активности (semantic equivalent).
+- **Выводы / final synthesis** references:
+  - Asc Весы (партнёрство / договорённости).
+  - MC Рак (дом / семья).
+  - Primary axis `5-11` (дети / хобби / планы / коллектив).
+  - Progressed Moon в 11 доме.
 
-**Calibrated case regression (per § Ready clarification 4):**
-- Either: existing Natalya / 05 / 07 / 10 PDFs maintain current synthesis text bit-identical OR sensible-divergence-allowed.
+Semantic tests use structural assertions on rendered text (e.g., regex/contains check на synonyms, not exact phrase pin).
+
+**Calibrated case regression (per user clarification 4 = (b) sensible-divergence-allowed):**
+
+Natalya / 05 / 07 / 10 PDFs MAY have different synthesis text pre/post rewrite. NOT required bit-identical.
+
+Worker MUST:
+- Generate calibrated PDFs pre-rewrite (baseline) и post-rewrite.
+- Extract synthesis section text для каждого calibrated case.
+- Show diff в HANDOFF (per-case).
+- **Justify each diff с reference к specific evidence-source** that drives the new text.
+- If diff is «improved factuality» (e.g., Natalya keeps «наедине с собой» because evidence supports `1→12` axis) → accept.
+- If diff is «lost meaningful content» → STOP, escalate to TL для review.
+- If diff is «added noise» (generic-soup-style padding) → STOP, fix architecture per Stage 3 guard.
 
 ### Stage 5 — Documentation
 
@@ -146,7 +169,9 @@ Inline comments updating Phase 0.10c-c lineage note (line 103-104) to reflect ev
 - [ ] NO engine modifications.
 - [ ] NO schema modifications.
 - [ ] Evidence sources used ⊆ existing facts.
-- [ ] Worker decides scope per § Ready clarifications 1-2.
+- [ ] **Each rendered block paragraph cites concrete evidence-source** (solar grid / progressions / directions / transits / outer cards). Block can be omitted if no evidence; NEVER filled with generic padding.
+- [ ] Empty-evidence path produces empty/omitted block, NOT «красивую пустоту».
+- [ ] Calibrated diff documented per case в HANDOFF (clarification 4 = (b)).
 
 ## STOP triggers
 
@@ -154,16 +179,28 @@ Inline comments updating Phase 0.10c-c lineage note (line 103-104) to reflect ev
 - Worker tempted to modify engine output для new facts field → STOP, use existing evidence.
 - Worker tempted to keep ЛИЧНОСТЬ `houses = {1, 12}` as default fallback → STOP, this IS the bug being fixed.
 - Worker tempted to copy Marina-narrative from другого case PDF as «better default» → STOP, evidence-driven only.
-- Worker finds calibrated case (Natalya / 05 / 07 / 10) PDF text changes substantively → STOP, escalate; decide bit-identical vs sensible-divergence per clarification 4.
+- **Worker tempted to fill empty-evidence block с generic padding** («Прогностика этого года не выводит на яркие внешние события — рисунок располагает к ...») → STOP, omit block instead. «Generic soup» rule.
+- **Worker tempted to write narrative paragraph without citing concrete evidence-source** → STOP, evidence-driven means each sentence traces to specific facts data.
+- Worker finds calibrated case (Natalya / 05 / 07 / 10) PDF diff is «lost meaningful content» → STOP, escalate.
+- Worker finds calibrated diff adds noise / generic padding → STOP, fix architecture (Stage 3 guard).
 - Worker finds existing Phase 9.4 test breaks → STOP, investigate (Phase 9.4 pins primary_axis only, не narrative text, so should NOT break — if it does, regression).
 
-## Reviewer subagent — per § Ready clarification 6
+## Reviewer subagent — REQUIRED (per user clarification 6 = (b))
 
-Tier B normally Reviewer-required (substantive rewrite + tests). Per recent precedent (9.2B): user may opt Reviewer optional + TL inline-verify.
+Tier B substantive rewrite + multi-block templates. External Reviewer pass REQUIRED after Worker self-submit. Если Agent tool недоступен в Worker runtime (per recurring precedent Phase 8/9), TL spawns external Reviewer post-submission.
+
+**Reviewer criteria:**
+- Architecture follows γ-hybrid (LIFE_THEMES structure kept; narrative purely evidence-driven).
+- No hardcoded lead_in defaults остались для empty-evidence path.
+- No «generic soup» padding for empty-evidence blocks.
+- All 10 blocks audited and refactored (full sweep).
+- Acceptance tests cover negative-strict + positive-semantic per Olga criteria.
+- Calibrated diff documented + justified per case.
+- 0 STOP triggers fired (or all escalated correctly).
 
 ## Context
 
-**Mode normal + Tier B (Reviewer disposition per § Ready).** Worker mode: normal.
+**Mode normal + Tier B (Reviewer REQUIRED per user clarification 6).** Worker mode: normal.
 
 **Baseline:**
 - Product main @ `7751d46` (Phase 9.2B angle-filter landed; Phase 9.3A validation-only).
@@ -187,35 +224,22 @@ Tier B normally Reviewer-required (substantive rewrite + tests). Per recent prec
 - Marina-style synthesis emulation (deterministic templates only).
 - Other client PDFs regeneration (unless calibrated regression detected per clarification 4).
 
-**Ready: no** — pending 6 clarifications below.
+**Ready: yes** — 6 clarifications applied 2026-05-19 + additional «no generic soup» guard:
 
-## Ready clarifications (pending user direction 2026-05-19)
+1. **Scope = (b) Full sweep.** All 10 themed blocks audited for Natalya-specific defaults; refactor all to evidence-driven. Applied Stage 2.3.
 
-1. **Scope of rewrite — incremental vs full sweep:**
-   - (a) Incremental: fix `ЛИЧНОСТЬ` block only (smallest change to address Olga's immediate factual error); other 9 blocks unchanged.
-   - (b) Full sweep: audit all 10 themed blocks для Natalya-specific phrasings; refactor all to evidence-driven.
+2. **Architecture = (γ) Hybrid.** Keep `LIFE_THEMES` houses+priority_themes+caution_keywords structure; narrative text purely from evidence presence; no hardcoded lead_in defaults. Applied Stage 3.
 
-2. **Architecture choice:**
-   - (α) Conditional template builder (collect evidence per block, render only confirmed phrasings).
-   - (β) Per-house topical lookup catalog (catalog phrasings per house; synthesis picks based on active evidence).
-   - (γ) Hybrid (keep current `LIFE_THEMES` houses structure, drive narrative from evidence presence).
-   - (δ) Worker proposes alternative architecture в HANDOFF before implementing.
+3. **Test file = (a) New file** `services/api-python/tests/test_consultation_summary_evidence.py`. Applied Stage 4.
 
-3. **Test file location:**
-   - (a) New file `test_consultation_summary_evidence.py`.
-   - (b) Extend existing `test_summary_themes.py` (Phase 9.4 file).
-   - (c) Worker discretion.
+4. **Calibrated regression = (b) Sensible-divergence-allowed.** Calibrated cases (Natalya / 05 / 07 / 10) may produce different synthesis text. Worker MUST: generate baseline pre-rewrite, generate post-rewrite, extract synthesis section diff per case, justify each diff с specific evidence-source. STOP if diff is «lost meaningful content» OR «added noise / generic padding». Applied Calibrated regression section.
 
-4. **Calibrated case regression policy:**
-   - (a) Strict bit-identical — Natalya / 05 / 07 / 10 PDFs must produce identical synthesis text pre/post rewrite (high constraint; may block clean refactor).
-   - (b) Sensible-divergence-allowed — calibrated cases may produce different synthesis text IF evidence supports; Worker documents diff in HANDOFF.
-   - (c) Per-case override via Phase 4b structured-overrides pattern (analogous to `STRUCTURED_OVERRIDES` for transit section).
+5. **Acceptance strictness = (c) Hybrid.** Strict-string negative assertions (no Natalya phrasings); semantic positive assertions (structural evidence-presence). Applied Olga acceptance section.
 
-5. **Acceptance assertion strictness:**
-   - (a) Strict-string: tests pin exact phrases (e.g. `"5-11"` substring).
-   - (b) Semantic: tests check evidence-presence via structural assertions (e.g. ЛИЧНОСТЬ block references house 5; final synthesis mentions Asc sign).
-   - (c) Hybrid: negative assertions strict-string (no Natalya phrasings); positive assertions semantic.
+6. **Reviewer = (b) REQUIRED.** External Reviewer pass after Worker self-submit; criteria detailed в Reviewer section. Applied Reviewer section.
 
-6. **Reviewer subagent:**
-   - (a) Optional like 9.2B — TL inline-verify.
-   - (b) Required Tier B external Reviewer.
+**Additional guard (verbatim user direction 2026-05-19):**
+
+> «Worker не должен превращать итог в generic soup. Каждый абзац итогов должен ссылаться на конкретный evidence-source: solar grid / progressions / directions / transits. If no evidence, лучше не писать блок, чем писать красивую пустоту.»
+
+Applied across Stage 3 (architecture must enforce empty-block-when-no-evidence) + Acceptance Discipline («each rendered block paragraph cites concrete evidence-source») + STOP triggers («generic padding» = STOP) + Reviewer criteria («No «generic soup» padding»).
