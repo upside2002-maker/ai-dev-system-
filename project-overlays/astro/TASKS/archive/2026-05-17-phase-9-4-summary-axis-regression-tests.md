@@ -1,6 +1,6 @@
 # TASK: phase-9-4-summary-axis-regression-tests
 
-- Status: review (Worker delivered β-scope 2026-05-18; awaiting TL accept-cascade)
+- Status: done
 - Ready: yes
 - Date: 2026-05-17
 - Project: astro
@@ -195,3 +195,44 @@ Per user direction 2026-05-17 Phase 9.4 series: «9.4 Reviewer не нужен, 
 4. **Field name:** Worker traces; pre-mapped not required.
 5. **STOP discipline (CRITICAL):** if engine output ≠ memo § 5.4 finding для **4 pinned cases** — **NOT fix code, NOT adjust test**; STOP + escalation memo. Memo § 5.4 may be wrong OR engine drifted. Worker investigates root cause before any «fix».
 6. **Memo § 5.4 erratum** (per user verbatim 2026-05-18) + **programme lesson note** — both landed in memo as part of this TASK's overlay commit. See § Memo erratum spec + § Programme lesson note above for exact wording.
+
+## Closure (2026-05-18)
+
+**Worker delivered β-scope + TL inline-verify + user explicit closure ack 2026-05-18.**
+
+- **Product commit:** `941b78f` (`services/api-python/tests/test_summary_themes.py` — 4 parametrized tests pinning 02 / 03 / 08 / 10).
+- **Overlay commits:** `e5a5266` (Worker submission landing: memo erratum + programme lesson + STATUS_RU + HANDOFF) + this closure commit.
+
+### β-scope outcome (per user direction 2026-05-18)
+
+- **Pinned:** 02 / 03 / 08 / 10 (engine == Marina-primary; strict equality).
+- **NOT pinned (documented as known divergences):** 05 (tie-break engine 1-7 vs Marina 6-12), 09 (super-solar engine None vs Marina 1-7), 11 Ольга (no fixture; DB-only).
+
+### Memo § 5.4 erratum landed (verbatim user formulation 2026-05-18)
+
+«Phase 9.4 empirical validation revises Phase 9.0 § 5.4. The previous "deterministic 8/8" verdict was overstated. Strict fixture validation shows Marina match for 4/6 analyzable fixture cases: 02, 03, 08, 10. Case 05 diverges on equal-strength tie-break: engine selects numeric low-pole axis 1-7, Marina selects editorially significant 6-12. Case 09 diverges on super-solar fallback: engine returns no primary axis, Marina uses chart-anchor/editorial 1-7. Olga 11 matches Marina but is DB-only/no fixture and is not pinned in this tests-only task. Revised verdict: partial deterministic with editorial residual.»
+
+### Programme lesson landed (verbatim)
+
+«All Phase 9 memo verdicts now require Stage 0 strict empirical validation before implementation. This is confirmed by Phase 9.1 directions and Phase 9.4 summary findings.»
+
+### Final state at closure
+
+- Product main = backup/main = `941b78f`.
+- Overlay master = backup/master = (this commit).
+- Pytest **372 passed + 2 skipped + 0 failed** (vs 368 baseline; +4 new β tests).
+- Cabal Up to date.
+- Zero product code modifications (`git diff aca694b..941b78f -- services/api-python/app/` empty).
+
+### Phase 9.x lessons cumulative (2 STOPs in 2 days)
+
+- **Phase 9.1 STOP** (2026-05-17): A1/A2/A3 directions filter contradicts calibrated Marina selections. Memo § 5.1 erratum: «editorial / curation-required».
+- **Phase 9.4 STOP→β** (2026-05-18): memo § 5.4 «deterministic 8/8» empirically falsified для 2 cases (tie-break + super-solar). Programme lesson added: all Phase 9 verdicts require Stage 0 strict empirical validation.
+
+### Status: done
+
+Archive to `project-overlays/astro/TASKS/archive/`. HANDOFF archive to `HANDOFFS/archive/`.
+
+Next per user direction 2026-05-18:
+- **Phase 9.2 — re-spec as validation-first TASK.** Stage 0 mandatory: prove `target ∉ angles` filter applied to engine output не drops Marina-selected items across all 10 cases. Only on Stage 0 PASS → implementation proposal. If FAIL → memo/erratum, no code changes.
+- **Phase 9.3 (intervals)** — deferred (editorial residual identified; revisit after 9.2).

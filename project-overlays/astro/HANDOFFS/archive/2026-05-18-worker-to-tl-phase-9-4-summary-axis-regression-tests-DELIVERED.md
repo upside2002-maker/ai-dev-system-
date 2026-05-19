@@ -1,6 +1,6 @@
 # HANDOFF: Worker → TL — Phase 9.4 Summary Axis Regression Tests — **DELIVERED (β scope)**
 
-- Status: DELIVERED — Worker landed β-scope execution (4 tests + memo erratum + STATUS_RU + this HANDOFF).
+- Status: closed (TL inline-verify + user explicit closure ack 2026-05-18; TASK 9.4 archived).
 - Дата: 2026-05-18.
 - TASK: `project-overlays/astro/TASKS/2026-05-17-phase-9-4-summary-axis-regression-tests.md` (Status: in-progress → review pending TL closure ack).
 - Tier: C (tests-only; Reviewer NOT required per user direction).
