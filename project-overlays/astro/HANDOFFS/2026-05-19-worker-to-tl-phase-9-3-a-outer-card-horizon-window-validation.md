@@ -1,13 +1,17 @@
-# HANDOFF: Worker → TL — Phase 9.3A Outer Card Horizon / Window Selection Validation
+# HANDOFF: worker → tl — phase-9-3-a-outer-card-horizon-window-validation
 
-- Date: 2026-05-19
-- From: Worker (Claude Code, Opus 4.7 1M ctx)
-- To: Project Tech Lead
-- TASK: `project-overlays/astro/TASKS/2026-05-19-phase-9-3-a-outer-card-horizon-window-validation.md`
-- Mode: Worker / normal
+- Status: open
+- Date: 2026-05-19 13:00
+- Project: astro
+- From: worker
+- To: tl
+- Agent runtime: Claude Code
+- Model: claude-opus-4-7 (1M context)
+- Role mode: Worker
+- TASK: project-overlays/astro/TASKS/2026-05-19-phase-9-3-a-outer-card-horizon-window-validation.md
 - Tier: C (validation-only memo; no product code; no tests; no engine recomputation)
-- Status proposal: TASK `open → review`
-- Reviewer: NOT spawned (Reviewer optional per clarification 6; Agent tool unavailable in Worker runtime per Phase 8B/8D/8E/api-pdf precedent; self-review applied; TL inline-verify sufficient).
+- Product repo status: not applicable (Tier C overlay-only; product `git status --short` clean throughout)
+- Reviewer: NOT spawned (Reviewer optional per clarification 6; Agent tool unavailable in Worker runtime per Phase 8B/8D/8E/api-pdf precedent; self-review applied; TL inline-verify sufficient)
 
 ---
 
