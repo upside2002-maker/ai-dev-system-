@@ -1,6 +1,6 @@
 # HANDOFF: worker → tl — human-readable-consultation-summary
 
-- Status: ready_for_review
+- Status: closed
 - Date: 2026-05-19
 - Project: astro
 - From: worker
