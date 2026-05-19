@@ -1,6 +1,6 @@
 # TASK: phase-9-2-b-outer-cards-angle-filter-implementation
 
-- Status: review
+- Status: done
 - Ready: yes
 - Date: 2026-05-18
 - Project: astro

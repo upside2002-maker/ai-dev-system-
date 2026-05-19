@@ -1,6 +1,6 @@
 # HANDOFF: worker → tl — phase-9-2-b-outer-cards-angle-filter-implementation
 
-- Status: open
+- Status: closed
 - Date: 2026-05-18 21:30
 - Project: astro
 - From: worker
