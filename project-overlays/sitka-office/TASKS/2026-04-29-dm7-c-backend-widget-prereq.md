@@ -2,6 +2,7 @@
 
 - Status: open
 - Ready: no
+- Mode: strict
 - Date: 2026-04-29
 - Project: sitka-office
 - Layer: core

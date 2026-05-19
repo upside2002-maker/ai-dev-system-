@@ -1,76 +1,96 @@
 # Sitka Office — Next Actions
 
-Дата: 2026-05-02
-Основано на snapshot `b58e5fb`
+Дата: 2026-05-19
+Snapshot commit: `7b069a7`
 
-Ниже не исторический Phase 1 план, а ближайшие практические шаги после
-закрытия DM-7 Phase B и включения cashbox.
+Ближайшие практические шаги после общего аудита 2026-05-19/20.
+DM-7 Phase A/B/C — закрыты целиком (master `7b069a7`), production
+живой с 2026-05-02 на `94.72.112.106:8088`, perimeter close
+2026-05-11, auto-deploy включён 2026-05-14.
 
-## Приоритет 0 — держать overlay в синхроне с repo
+Текущие mini-tasks и drive-by — в `OPERATING/backlog.md`. Полные
+TASK — в `TASKS/`.
 
-Это не продуктовая фича, но сейчас это обязательный шаг:
+## Приоритет 0 — overlay в синхроне с repo
 
-- после каждого заметного milestone обновлять `CURRENT_STATE`,
-  `NEXT_ACTIONS`, `PROJECT_MAP`
-- не использовать старые `PHASE_0/1` документы как текущую картину мира
-- фиксировать snapshot commit в overlay
+Это постоянный процесс, не разовая задача:
 
-Иначе `ai-dev-system` перестаёт быть системой разработки и снова
-становится набором отставших markdown-файлов.
+- после каждого заметного milestone обновлять `CURRENT_STATE.md`,
+  `NEXT_ACTIONS.md`, `KNOWN_ISSUES.md`, `PROJECT_MAP.md`.
+- фиксировать snapshot commit в overlay.
+- `check-overlay-consistency.sh` зелёный — обязательное условие
+  принятия TASK.
 
-## Приоритет 1 — DM-7 Phase C/D + post-Phase-B стабилизация
+## Приоритет 1 — закрыть оставшийся production-safety backlog
 
-DM-6.2.5 message loop теперь в operationally-stable состоянии (буквы
-m/n/o/r закрыли inbox bugs; PR #69 закрыл cold-cache parser UX).
-DM-7 Phase A и Phase B закрыты целиком (PR #63–#66 + live-smoke
-фиксы #68–#70).
+Из общего аудита 2026-05-19 — что осталось после немедленных
+фиксов того же дня:
 
-Практический фокус:
+1. **Restore drill из бэкапа.** Контейнер бэкапов запущен 2026-05-19,
+   первый дамп лёг. Гипотеза «дамп рабочий» — не проверена.
+   Нужен прогон: поднять чистый postgres, накатить последний дамп,
+   убедиться что core стартует. ~30 минут + чек-лист в `DEPLOY.md`.
+2. **HTTPS + домен.** Frontend bearer auth flow тоже завязан на
+   эту работу — без HTTPS он не имеет смысла. Решение:
+   договориться с FounderOS об едином nginx 80/443 + наш
+   subdomain, либо отдельный Let's Encrypt на 8088 с собственным
+   доменом. Класс задачи Tier C ~100-200 LOC + конфигурация на
+   сервере.
+3. **Audit trail вне `deal_event`** — отдельный append-only event
+   stream для операций которые не связаны со сделкой (manual
+   expenses, settings changes, channel-account ops). Tier B
+   backend, нужен дизайн перед стартом.
+4. **Contract / golden tests для всех API endpoint'ов** — сейчас
+   они есть выборочно (PR #76 для cashbox snapshot). Прогон по
+   списку: что покрыто vs что нет, добавить недостающее.
 
-1. **Phase C/D DM-7** — содержание в `/Users/ilya/Projects/sitka-office/docs/DM-7-cashbox.md`. Первая итерация требует приоритизации у TL; в overlay пока не зафиксировано.
-2. **Post-Phase-B стабилизация** — собрать operator feedback на полный cashbox flow (foundation + ConfirmPurchase + shipping-expense + ReservationOverrun + FulfillmentStep) перед стартом Phase C.
-3. **Realistic fixture coverage** — три бага PR #68–#70 поймались только на live local smoke, не unit-тестами. При новых engine/risk модулях добавлять golden tests с realistic non-round numbers и slow-network timing, а не только happy-path round-numbers.
+## Приоритет 2 — Phase D DM-7 (когда триггер от оператора)
 
-## Приоритет 2 — убрать очевидный legacy debt
+Phase D content (widget breakdown по `expense_category.kind`,
+графики/аналитика по cashbox, transactions ledger viewer) — без
+явного operator UX триггера не приоритет. Backend prerequisite
+(`TASKS/2026-04-29-dm7-c-backend-widget-prereq.md`) — DRAFT,
+помечен `Mode: strict / Tier A`.
 
-После DM-6.4 часть legacy surface уже мертва в runtime, но ещё видна в
-типах и helper-ах.
+Запускать когда оператор реально захочет breakdown, не раньше.
 
-Ближайший cleanup-кандидат:
+## Приоритет 3 — мелкие хвосты из backlog
 
-- dead `DealStatus` / `Transition` constructors, которые остались только
-  ради старых stage-mapping helper-ов
-- устаревшие комментарии и docs, где процесс всё ещё описан как
-  `Client -> Deal -> Sourcing -> QuoteReady`
+Не блокеры, но видны:
 
-Это делать только после того, как не пострадает текущий analytics/read-side.
-
-## Приоритет 3 — production-safety backlog
-
-В `architecture-invariants.md` уже перечислен реальный safety backlog.
-Самые практичные вещи оттуда:
-
-1. более явный audit trail вне `deal_event`
-2. contract / golden tests для DTO
-3. backup + restore drill
-4. единый audit env / secrets
-
-Это даёт больший ROI, чем новые большие сущности "на будущее".
+- **Парсер: 2-словные запросы режут валидные товары** (`OPERATING/backlog.md`,
+  оператор наткнулся 2026-05-13). Tier C, ~1-3 LOC. Самое
+  быстрое улучшение DX парсера.
+- **Avito cursor cold-start race** (Codex audit 2026-05-06).
+  Tier A backend, ~10-15 LOC. Не теряет данных систематически,
+  максимум окно ~60s раз в холодном старте.
+- **`recordEvent` на `manual_expense` insert.** Без него
+  CashboxWidget не получает event-driven refresh после ручного
+  расхода (оператор должен ручками F5). Tier A backend ~10-15 LOC.
+- **Frontend localhost build default** в `client.ts:78-80` (Codex
+  audit 2026-05-06). Tier C ~3-5 LOC.
+- **Парсер калькулятор cleanup** — защита `usdRate < 0`,
+  `.parser-calculator-submit` CSS cleanup, неиспользуемый
+  `offerSavedCount` prop. Tier C ~25 LOC suite.
 
 ## Приоритет 4 — знания и операторские ассистенты
 
-После стабилизации message loop уже можно безопасно двигать:
+После стабилизации message loop можно безопасно двигать:
 
-- базу знаний по моделям
-- внутреннего помощника для оператора
-- структурированную product knowledge
-- аккуратные инструменты поиска по CRM + knowledge base
+- база знаний по моделям (уже seed'нута 2026-05-02 — 284 модели),
+- внутренний помощник для оператора,
+- структурированная product knowledge,
+- инструменты поиска по CRM + knowledge base.
 
-Но это следующий слой, а не то, на чём стоит снова переписывать core.
+Это следующий слой, не основная задача.
 
 ## Не делать
 
-- не возвращать Client-first flow
-- не плодить новые большие подсистемы до стабилизации message loop
-- не тащить knowledge / assistant прямо в runtime core без ясной границы
-- не считать старые Phase 0 / Phase 1 документы текущим roadmap'ом
+- не возвращать Client-first flow;
+- не плодить новые большие подсистемы до стабилизации message loop;
+- не тащить knowledge / assistant прямо в runtime core без ясной
+  границы;
+- не считать старые Phase 0/1 документы текущим roadmap'ом
+  (отсутствуют в overlay, для истории — git log);
+- не публиковать порты сервисов на 0.0.0.0 без слоя auth (после
+  инцидента 2026-05-13/14 это закреплено как инвариант).

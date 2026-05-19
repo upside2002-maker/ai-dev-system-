@@ -17,7 +17,7 @@
 
 - **Frontend localhost build default** (Codex audit 2026-05-06, ПРИНЯТЬ): `sitka-web/src/api/client.ts:78-80` имеет `import.meta.env.VITE_CORE_API_URL ?? 'http://localhost:8080'` — без VITE_ env override на build время в bundle вшит `localhost`. На проде fix'ed server-only `sitka-web/.env` (2026-05-02). Mini-PR TL inline Tier C ~3-5 LOC: заменить default на `''` (relative URLs) + `'/services'`. Same-origin works на любом хосте без override.
 
-- **Mirror server inline patches в `docker-compose.prod.yml`** — на сервере `/opt/sitka-office/docker-compose.override.yml` имеет: `web ports !override 8088:80`, `LANG/LC_ALL=C.UTF-8` в core+services (чтобы dev-format Russian logs не крашили `commitBuffer: invalid argument`), `CORE_DB_CONN` в services env (knowledge_search нужен прямой DB access), `CORE_CORS_ORIGINS` с prod URL. Без mirror в repo — каждый next deploy будет повторять inline patches вручную. Tier C ~30 LOC.
+- ~~**Mirror server inline patches в `docker-compose.prod.yml`**~~ — закрыто PR #88 (2026-05-19): `deploy/docker-compose.override.example.yml` + `deploy/nginx-server.conf` зеркалируют текущее prod-состояние, новый deploy подымается через `cp deploy/...example.yml docker-compose.override.yml` с заменой `<HOST_IP>`.
 
 - **web container wget healthcheck** — busybox wget работает, но docker reports unhealthy после ранних failed checks (cosmetic; функция OK). Mini-PR ~5 LOC чтобы поменять healthcheck на `wget --spider` или TCP probe.
 
