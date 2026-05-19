@@ -1,7 +1,7 @@
 # TASK: human-readable-consultation-summary
 
 - Status: open
-- Ready: no
+- Ready: yes
 - Date: 2026-05-19
 - Project: astro
 - Layer: services (Python presentation: `synthesis_themes.py` substantive architecture + tests; minimal template changes if needed)
@@ -58,7 +58,11 @@ Reference example для Olga — Worker MUST design generator that produces out
 >
 > Год про обновление через людей, творчество, детей, планы, обучение и личную инициативу. Не про закрыться, а про выйти в более живой контакт с жизнью. [...]
 
-Full text recorded in source message 2026-05-19. Style features:
+Full text recorded in source message 2026-05-19.
+
+**Codex example status (per user clarification 2): STYLE ANCHOR, NOT EXACT TARGET.** Не копировать дословно. Worker MUST держать уровень: живой язык, смысловые переходы, практический вывод, минимум голой символики. Semantic acceptance criteria cover content; Codex text shows tone/depth bar.
+
+Style features (from Codex example, used as anchor):
 - Human consultation tone (NOT engine-output style).
 - Explanatory connectives: «год просит», «при этом», «важно вернуть себе ощущение».
 - Astrological symbolism present but as **context**, не main text.
@@ -86,7 +90,7 @@ Normalize structured facts из уже рассчитанной прогност
 
 Выбрать главные темы года **по силе подтверждения**, не по статическому списку.
 
-Weighting (user-provided directional, Worker proposes numerics per § Ready clarification 3):
+Weighting (user-provided directional; **Worker proposes concrete numerics с justification в HANDOFF per user clarification 3**):
 
 - солярная ось / доминирующая ось: **высокий вес**.
 - прогрессивная Луна: **высокий вес**.
@@ -94,6 +98,8 @@ Weighting (user-provided directional, Worker proposes numerics per § Ready clar
 - транзиты высших планет: **высокий вес**.
 - Юпитер / Сатурн по домам: **средний вес**.
 - повтор темы в нескольких методах: **boost**.
+
+User direction 2026-05-19 verbatim: «Важно не само число, а чтобы было видно: почему тема попала в итог, какие сигналы её усилили.» Worker HANDOFF must include per-theme score breakdown (which signals fired + their contributions) для Olga + 2-3 calibrated cases.
 
 «Если тема не подтверждена фактами, не надо писать про неё длинный абзац "для красоты"». Empty-block guard preserved from previous TASK.
 
@@ -105,14 +111,18 @@ Output = **текст консультации**, не list символов.
 
 ✅ Good format: «В этом году личная тема раскрывается через детей, творчество, хобби, удовольствие и право на собственное желание. Это не год ухода в себя, а год включённости: важно проявляться, пробовать новое, общаться, создавать и не обесценивать то, что действительно радует.»
 
-**Architecture choice for layer 3 (Worker proposes per § Ready clarification 4):**
+**Architecture choice for layer 3 (per user clarification 4 — Worker proposes architecture с hard guard):**
+
+Worker выбирает между:
 - (a) Per-theme deep templates с conditional phrase composition based on evidence patterns.
 - (b) Phrase-library + composition rules per (evidence-shape, theme).
-- (c) Marina-style consultation phrase corpus + facts-driven selection.
+- (c) Hybrid (a) + (b) или Worker-proposed alternative.
+
+**Hard guard (per user verbatim clarification 4): «не generic soup».** Worker MUST доказать на Olga + 2-3 calibrated cases, что текст **case-specific**, не generic-applicable-to-anyone. Side-by-side рендеринг в HANDOFF (Olga ЛИЧНОСТЬ vs Maxim ЛИЧНОСТЬ vs Natalya ЛИЧНОСТЬ): blocks должны явно различаться по содержанию (not just by inserted dates/numbers).
 
 ## Required output structure
 
-Section structure (per user direction):
+Section structure (per user clarification 1 — **12 sections required**):
 
 1. **Выводы** (opening synthesis paragraph(s) — top-level themes of the year).
 2. **ЛИЧНОСТЬ**.
@@ -125,8 +135,7 @@ Section structure (per user direction):
 9. **ЗАГРАНИЦА / ОБУЧЕНИЕ / ЮРИДИЧЕСКИЕ ВОПРОСЫ**.
 10. **СТАТУС**.
 11. **ПЛАНЫ / ДРУЗЬЯ / КОЛЛЕКТИВ**.
-
-Optional 12th section **«Общий вывод»** at bottom (per § Ready clarification 1) — closing synthesis paragraph.
+12. **Общий вывод** (closing synthesis paragraph — gathers text into consultation, не leaves набор разделов; per user verbatim 2026-05-19: «Финальный абзац важен: он собирает текст в консультацию»).
 
 Each section evidence-driven: weak themes brief or omitted; strong themes deeper.
 
@@ -140,7 +149,7 @@ Each section evidence-driven: weak themes brief or omitted; strong themes deeper
 - Asc Libra → партнёрство, договорённости, баланс.
 - MC Cancer → цель связана с домом, семьёй, опорой, недвижимостью.
 - Прогрессивная Луна 11 дом → планы, друзья, группы, будущее.
-- Mars ingress / shift after **02.09.2026** → больше инициативы и лидерства (date dynamically derived per § Ready clarification 5).
+- Mars ingress / shift after **02.09.2026** → больше инициативы и лидерства. **Date MUST be dynamically derived per user clarification 5** — Worker сначала investigates which engine fact yields this date (вероятнее всего progressed Moon sign-change / house-state transition или Mars ingress). **If source unclear → STOP and report; DO NOT hardcode Olga's 02.09.2026 date.** Worker HANDOFF documents derivation algorithm.
 - Уран к Венере → обновление вкусов, чувств, удовольствий, темы детей/творчества.
 - Нептун / Юпитер → мечта, расширение, профессиональный план.
 - Вывод **звучит как консультация живому человеку**.
@@ -179,16 +188,37 @@ Each section evidence-driven: weak themes brief or omitted; strong themes deeper
 
 > «Это подтверждается сразу несколькими методами прогностики: соляр выделяет ось планов и творчества, прогрессивная Луна идёт по теме коллектива, а дирекции включают личную активность и статус.»
 
+## Additional guard — «Human-read» smoke test (per user direction 2026-05-19, verbatim)
+
+> «Итоговый текст должен проходить "human read" smoke: если убрать астрологические термины, абзац всё равно должен оставаться понятным советом человеку. Если абзац держится только на формулах домов/аспектов — это FAIL.»
+
+**Operationalisation:**
+- Take any rendered paragraph from «Итоги консультации».
+- Mentally strip astrological terms: «солярный», «натальный», «дом», «градусы», «аспект», «оппозиция / тригон / квадрат / секстиль», planet names (Солнце / Луна / Меркурий / Венера / Марс / Юпитер / Сатурн / Уран / Нептун / Плутон), sign names (Овен / Телец / ...), formula tokens («1+5», «10+1»), «ось 5-11», «прогрессивная Луна» as label.
+- **Remaining text must still be understandable as life advice к конкретному человеку.**
+- If остаток reads as «mumble formulas mumble dates» с no human content → FAIL.
+
+**Examples:**
+
+✅ PASS: «В этом году личная тема раскрывается через детей, творчество, хобби, удовольствие и право на собственное желание. Это не год ухода в себя, а год включённости: важно проявляться, пробовать новое, общаться, создавать и не обесценивать то, что действительно радует.» (Strip astrology terms → still meaningful советы человеку.)
+
+❌ FAIL: «Тематически это личность, самопредъявление, начало нового цикла; дети, творчество, любовь, хобби, самовыражение; статус, карьера, публичная роль, цель (дома 1-5-10); сетка соляра: сол. 1 → нат. 5, сол. 2 → нат. 5, сол. 5 → нат. 9, сол. 6 → нат. 10, сол. 10 → нат. 1; engine отмечает главная ось 5-11 (подсчёт 4).» (Strip astrology terms → unintelligible fragments. Current predecessor output. This is the bar we are RAISING.)
+
+This guard applied across:
+- Style requirements (output prose must pass smoke).
+- Acceptance (test verifies smoke for Olga + 2-3 calibrated).
+- STOP triggers (paragraph fails smoke → STOP architecture).
+- Reviewer criteria (manual smoke spot-check ≥3 cases).
+
 ## Files
 
 - modify:
   - `services/api-python/app/pdf/synthesis_themes.py` — substantive 3-layer architecture rewrite on top of existing evidence-collection helpers.
-  - `services/api-python/tests/test_consultation_summary_evidence.py` (extend OR replace per § Ready clarification 6).
+  - `services/api-python/tests/test_consultation_summary_evidence.py` — **EXTEND existing file per user clarification 6** (16 strict-negative + positive tests preserved as foundation; new semantic-human tests added в same file).
   - `project-overlays/astro/STATUS_RU.md`.
   - `services/api-python/app/templates/solar.html.j2` — ONLY if current template cannot render new output structure (verify first, modify minimally).
 
-- new (likely):
-  - `services/api-python/tests/test_consultation_summary_human.py` (per § Ready clarification 6) — Olga semantic positive + Natalya regression + 4 calibrated regression.
+- new: —
 
 - delete: —
 
@@ -236,7 +266,8 @@ Each section evidence-driven: weak themes brief or omitted; strong themes deeper
 - [ ] One product commit (synthesis_themes.py + new test file + optional template tweak).
 - [ ] One overlay commit (STATUS_RU + HANDOFF).
 - [ ] Push backup, parity verified.
-- [ ] External Reviewer pass (per § Ready clarification 7).
+- [ ] External Reviewer pass REQUIRED (per user clarification 7).
+- [ ] **Human-read smoke test passes для Olga + 2-3 calibrated** — paragraph stripped of astrological terms remains понятным советом человеку.
 
 ### Discipline
 
@@ -249,7 +280,7 @@ Each section evidence-driven: weak themes brief or omitted; strong themes deeper
 - [ ] Theme planner uses evidence-weight scoring (NOT static priority list).
 - [ ] Calibrated diff documented per case в HANDOFF.
 
-## STOP triggers (per user verbatim 2026-05-19)
+## STOP triggers (per user verbatim 2026-05-19 + clarifications 2026-05-19)
 
 Worker MUST stop and escalate if:
 
@@ -260,17 +291,22 @@ Worker MUST stop and escalate if:
 - Тесты проходят, но **текст выглядит как символический список** → STOP, narrative renderer не достигает quality bar.
 - Для calibrated cases появляются **очевидно чужие темы** → STOP, theme planner regression.
 - Невозможно получить нужные факты из **текущего `facts_json`** → STOP, escalate (NO engine modifications для new fields).
+- **«После 02.09.2026» date derivation source неочевиден** → STOP, доклад через HANDOFF, NOT hardcode Olga's date (per clarification 5).
+- **Paragraph fails «human-read» smoke** (held only by formulas/houses/aspects, no advice meaning remaining when astrology terms stripped) → STOP, fix architecture (per additional guard 2026-05-19).
+- Side-by-side case comparison shows blocks **generic-applicable-to-anyone** (only differ by dates/numbers, not content) → STOP (per clarification 4 hard guard).
 
-## Reviewer subagent — per § Ready clarification 7
+## Reviewer subagent — REQUIRED (per user clarification 7)
 
-Tier B+ substantive rewrite. Previous similar TASK (`evidence-based-consultation-summary-rewrite`) used Reviewer REQUIRED (clarification 6 = (b)). Same disposition likely для этого TASK.
+Tier B+ substantive rewrite. User direction 2026-05-19 verbatim: «Это уже не "подправить фразу", а качество консультационного синтеза. Нужен внешний pass.»
 
-If Agent tool unavailable в Worker runtime (recurring Phase 8/9 precedent), Worker self-review + TL spawns external Reviewer post-submission.
+External Reviewer pass REQUIRED after Worker self-submit. If Agent tool unavailable в Worker runtime (recurring Phase 8/9 precedent — 5th+ occurrence), Worker self-review + TL spawns external Reviewer post-submission.
 
 **Reviewer criteria:**
 - Architecture follows 3-layer (extraction + planner + renderer) verbatim.
-- Theme planner uses evidence-weight scoring (not static).
-- Narrative renderer produces consultation-quality prose (verified by reading sample output).
+- Theme planner uses evidence-weight scoring (not static); HANDOFF includes per-theme score breakdown.
+- Narrative renderer produces consultation-quality prose (verified by reading sample output Olga + 2-3 calibrated).
+- **Side-by-side case comparison shows text is case-specific, not generic-applicable-to-anyone** (hard guard per clarification 4).
+- **Human-read smoke test passes:** убрать астрологические термины из абзаца — оставшийся текст должен быть понятным советом человеку. Если абзац держится только на формулах домов/аспектов → FAIL.
 - All STOP triggers honoured.
 - No Olga-only hardcoded text.
 - Calibrated cases independently spot-checked (≥3 of 6).
@@ -278,7 +314,7 @@ If Agent tool unavailable в Worker runtime (recurring Phase 8/9 precedent), Wor
 
 ## Context
 
-**Mode normal + Tier B+ (Reviewer disposition per § Ready).** Worker mode: normal.
+**Mode normal + Tier B+ (Reviewer REQUIRED per user clarification 7).** Worker mode: normal.
 
 **Baseline:**
 - Product main @ `a6a3331` (previous TASK closed).
@@ -304,38 +340,24 @@ If Agent tool unavailable в Worker runtime (recurring Phase 8/9 precedent), Wor
 - Calendar-aspect over-include (Phase 9.5A deferred).
 - LLM / GPT integration.
 
-**Ready: no** — pending 7 clarifications below.
+**Ready: yes** — 7 clarifications applied 2026-05-19 + additional «human-read smoke» guard:
 
-## Ready clarifications (pending user direction 2026-05-19)
+1. **12 sections required.** Opener `Выводы` + 10 themed blocks + closer `Общий вывод`. Финальный абзац важен — собирает текст в консультацию. Applied output structure section.
 
-1. **«Общий вывод» bottom section.** Codex example has both top «Выводы» (opener) и bottom «ОБЩИЙ ВЫВОД» (closer). User-provided 11-block structure list has only top «Выводы». Confirm:
-   - (a) 11 sections (1 opener + 10 themed) — Codex's bottom «ОБЩИЙ ВЫВОД» rolled into top «Выводы».
-   - (b) 12 sections (1 opener + 10 themed + 1 closer «Общий вывод»).
+2. **Codex example = style anchor, NOT exact target.** Не копировать дословно; держать level: живой язык, смысловые переходы, практический вывод, минимум голой символики. Applied Codex example section + style requirements.
 
-2. **Codex example status.**
-   - (a) Canonical: Worker должен reproduce этот exact tone/depth/length для Olga acceptance (strict «sounds like Codex»).
-   - (b) Illustrative: shows direction/style; Worker может vary as long as quality is similar и semantic criteria pass.
+3. **Theme planner scoring numerics — Worker proposes с justification в HANDOFF.** Не само число важно; важно чтобы было видно почему тема попала в итог и какие сигналы её усилили. Per-theme score breakdown в HANDOFF для Olga + 2-3 calibrated. Applied Layer 2 section.
 
-3. **Theme planner scoring numerics.**
-   - (a) Worker proposes numerics (e.g. axis=10, prog_moon=10, directions=8, outer_transits=8, social_transit=4, repeat_boost=+3) с justification в HANDOFF.
-   - (b) User pre-sets numerics before Worker starts.
+4. **Narrative renderer architecture — Worker proposes** (per-theme templates / phrase-library / hybrid). **Hard guard: not generic soup.** Worker должен доказать на Olga + 2-3 calibrated, что текст case-specific (not generic-applicable-to-anyone). Side-by-side рендеринг блоков в HANDOFF. Applied Layer 3 section.
 
-4. **Layer 3 narrative renderer architecture choice.**
-   - (a) Per-theme deep templates с conditional phrase composition based on evidence patterns.
-   - (b) Phrase-library + composition rules per (evidence-shape, theme).
-   - (c) Worker proposes alternative в HANDOFF before implementing.
+5. **«После 02.09.2026» dynamic derivation.** Worker investigates which engine fact yields the date (вероятнее всего progressed Moon sign-change / house-state transition или Mars ingress). **Если source неочевиден → STOP and report**; NOT hardcode Olga's date. Worker HANDOFF documents derivation algorithm. Applied Acceptance + STOP trigger.
 
-5. **«После 02.09.2026 переход к инициативности» — dynamic date derivation.**
-   - (a) Worker derives this date from engine facts (Mars/Sun ingress, или какой signal?). Specify which.
-   - (b) Worker adds heuristic: «activity-shift date» = solar Mars ingress into fire sign within solar year.
-   - (c) Worker proposes algorithm в HANDOFF before implementing.
+6. **Extend existing `test_consultation_summary_evidence.py`.** 16 existing tests preserved as foundation; new semantic-human tests добавлены в same file. NO new test file. Applied Files section.
 
-6. **Test file disposition.**
-   - (a) Extend existing `test_consultation_summary_evidence.py` (16 tests preserved, new semantic-human tests added).
-   - (b) New `test_consultation_summary_human.py` (separate file для human-narrative tests; existing file unchanged).
-   - (c) Replace: drop existing 16 tests, write new comprehensive suite.
-   - (d) Hybrid: keep strict-negatives from existing file, write new positive-semantic in new file.
+7. **Reviewer REQUIRED.** External Reviewer pass after Worker submit. User verbatim: «Это уже не "подправить фразу", а качество консультационного синтеза. Нужен внешний pass.» If Agent tool unavailable в Worker runtime, TL spawns external Reviewer post-submission. Applied Reviewer section + Acceptance.
 
-7. **Reviewer subagent.**
-   - (a) REQUIRED external Reviewer pass (same as previous TASK clarification 6 = (b)).
-   - (b) Optional + TL inline-verify (lower discipline than predecessor).
+**Additional guard (per user direction 2026-05-19, verbatim):**
+
+> «Итоговый текст должен проходить "human read" smoke: если убрать астрологические термины, абзац всё равно должен оставаться понятным советом человеку. Если абзац держится только на формулах домов/аспектов — это FAIL.»
+
+Applied across Style requirements + Acceptance + STOP triggers + Reviewer criteria. Operationalised в dedicated «Additional guard» section с PASS/FAIL examples.
