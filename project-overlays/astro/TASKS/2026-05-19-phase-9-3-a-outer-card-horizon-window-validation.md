@@ -1,7 +1,7 @@
 # TASK: phase-9-3-a-outer-card-horizon-window-validation
 
 - Status: open
-- Ready: no
+- Ready: yes
 - Date: 2026-05-19
 - Project: astro
 - Layer: presentation analysis (Python: `outer_cards.py` window selection — analytical memo only, no code)
@@ -46,18 +46,20 @@ Per Phase 9.x meta-lesson (verbatim): «All Phase 9 memo verdicts now require St
 - For each over-include card: first-touch date relative to `solar_chart.return_jd`.
 - For each Marina-selected card: full window inventory + per-window start/end дата + JD относительно SR.
 
-**0.2 — Calibrated cases window inventory (from existing source-of-truth):**
+**0.2 — Calibrated cases window inventory — main scoring set (per user clarification 3 = (a)):**
 - Data source: `services/api-python/tests/test_multi_case_calibration.py:870-967` `MARINA_OUTER_CARD_BOUNDARIES`.
-- Available cases с full Marina window boundary data: **01-kseniya, 03-artem, 05-ekaterina, 10-danila** (4 cases).
-- For each card в `MARINA_OUTER_CARD_BOUNDARIES[case_id]`: tabulate Marina window count + start/end dates + relation to solar return.
-- Compare engine emit (via `_OUTER_CARD_FACTS` / `OUTER_CARD_ALLOWLIST` raw data) — count and boundary divergence.
+- **Main scoring set: 4 cases** — `01-kseniya-2024-2025`, `03-artem-2025-2026`, `05-ekaterina-2025-2026`, `10-danila-2025-2026` — full Marina window boundary data available.
+- For each card в `MARINA_OUTER_CARD_BOUNDARIES[case_id]`: tabulate Marina window count + start/end dates + relation to solar return JD.
+- Compare engine emit (via `_OUTER_CARD_FACTS` / `OUTER_CARD_ALLOWLIST` raw data OR re-derive via `generic_outer_cards`-style logic from `consultations.facts_json` if DB row exists) — count and boundary divergence.
+- **Informational caveat set: 4 cases** — `02-maksim`, `04-valeriya`, `08-natalya`, `09-anastasiya` — NOT в main hypothesis scoring (single-Marina-window divergence; Marina W1 = engine W2/W3 partial alignment per Phase 8 audit § A.2.1.D). Worker может cite их в memo § 4 background only; NOT в Stage 2.3 verdict scoring.
 
-**0.3 — Marina-Olga window source decision (open clarification — see § Ready clarifications):**
-- Phase 9.2A § 0.4 STOP discipline forbade ad-hoc Marina PDF re-extraction.
-- Open question: для 9.3A Olga window inventory нужны Marina-specific dates («02.12.2026–15.04.2027» user verbatim per `solar-12.pdf` verify). Worker нуждается в explicit user direction:
-  - **(a)** Use only user's verbatim formulation в этом TASK (4 cards с dates) + Phase 9.2A § 1.3 partial extract (no PDF re-extract).
-  - **(b)** Allow Marina-Olga PDF window-date extraction (strict scope: window boundaries only, no free-form text), source PDF: `/Users/ilya/Downloads/Соляр 2026-2027.pdf`.
-  - **(c)** Document Olga as «no Marina window reference available — diagnostic only»; full hypothesis testing на 4 calibrated cases.
+**0.3 — Marina-Olga window source — strict-scope PDF extraction (per user clarification 1 = (b)):**
+- Source PDF: `/Users/ilya/Downloads/Соляр 2026-2027.pdf`.
+- **Strict scope:** extract window boundaries (start / end dates) ONLY для 6 Marina-selected Olga cards: Uranus Square Venus, Uranus Opposition Uranus, Uranus Opposition Jupiter, Neptune Trine Jupiter, Neptune Trine Uranus, Pluto Sextile Uranus.
+- **NO free-form text re-interpretation**, NO secondary inference, NO scope creep beyond window dates.
+- Output structure: dict `{(transit_planet, aspect, target): [(start_date, end_date), ...]}` parallel `MARINA_OUTER_CARD_BOUNDARIES` shape, stored в memo § 1 inventory table.
+- Confirm against user verbatim formulation (4 cards explicit dates per user manual verify 2026-05-19): Uranus Square Venus `02.12.2026–15.04.2027`, Uranus Opposition Jupiter `28.12.2026–22.03.2027`, Neptune Trine Jupiter `18.10.2026–05.02.2027`, Pluto Sextile Uranus «windows смещены» (no Marina dates verbatim — Worker extracts from PDF). Remaining 2 cards (Uranus Opposition Uranus, Neptune Trine Uranus) — Worker extracts from PDF.
+- Cross-reference Phase 9.2A § 1.3 partial extract for any consistency check.
 
 ### Stage 1 — Hypothesis enumeration
 
@@ -70,9 +72,15 @@ User-provided starter list (6 hypotheses):
 5. **H5** — `show latest touch before solar year + following loop within solar year` (Marina display rule «last pre-SR + intra-SR cluster»).
 6. **H6** — `planet-specific cap` для Uranus / Neptune / Pluto (e.g., Uranus max 3 windows; Pluto max 1-2).
 
-**Worker scope re: hypotheses (per user open clarification — see § Ready):**
-- **(a)** Test exactly these 6, no expansion.
-- **(b)** Test these 6 + Worker может propose дополнительные если patterns suggest.
+**Worker scope re: hypotheses (per user clarification 2 = (b) — starter + composite expansion):**
+
+H1-H6 above are starter set. Worker authorized to propose дополнительные composite rules (e.g. `H_X AND H_Y`, `H_X OR H_Y`, planet-conditional variants), **обязательно separately:**
+
+- Show base H1-H6 score first (raw, no composites).
+- Show composite rule score with delta vs best base hypothesis.
+- **Test for overfit risk:** apply composite rule к Olga set (6 Marina cards) AS HELD-OUT; document если composite rule trained на calibrated 4 cases ломается на Olga.
+- Document «hypothesis discovered post-hoc» каждой composite rule с explicit naming convention (e.g. `H7 = H2 AND H6`, `H8 = (H4 OR H5) AND planet-cap`).
+- **Final aggregate recommendation** must distinguish: «best base hypothesis (no overfit risk)» vs «best composite (with overfit caveat)».
 
 ### Stage 2 — Per-hypothesis evaluation
 
@@ -99,7 +107,12 @@ For each hypothesis H1-H6 (+ any added):
 - Per-case + per-card FN / FP counts.
 - Aggregate Marina-window-coverage rate (∑ Marina windows covered ÷ ∑ Marina windows total).
 - Aggregate Marina-card-coverage rate (∑ Marina-selected cards preserved ÷ ∑ Marina-selected cards total).
-- Verdict label per hypothesis: **PASS** (0 card-FN ∧ ≥90% window coverage), **PARTIAL** (0 card-FN ∧ 60-90% window coverage), **FAIL** (1+ card-FN OR <60% window coverage).
+- Verdict label per hypothesis (per user clarification 4 — confirmed):
+  - **PASS** = 0 card-FN ∧ ≥90% window coverage.
+  - **PARTIAL** = 0 card-FN ∧ 60-90% window coverage.
+  - **FAIL** = 1+ card-FN OR <60% window coverage.
+- Window coverage = (Marina windows matched by hypothesis ÷ total Marina windows across 4 calibrated cases). Match tolerance ±2 days (consistent с `_OUTER_CARD_BOUNDARY_TOLERANCE_DAYS` Phase 8 convention).
+- Card-FN counted across 4 calibrated cases + 6 Olga Marina-selected cards (= 10-card гate).
 
 ### Stage 3 — Verdict synthesis
 
@@ -114,11 +127,15 @@ Memo output structure:
 - If all hypotheses PARTIAL → **§ 5.2 partial-acceptance verdict** (best-fit hypothesis + residual editorial scope).
 - If all hypotheses FAIL → **§ 5.3 editorial verdict** + per-case override proposal (extend `_OUTER_CARD_FACTS` или add separate window-override structure, similar to Phase 4b `STRUCTURED_OVERRIDES`). NOT implementation, just framing.
 
-**§ 6.** Phase 9.0 memo § 5.3 erratum (per user clarification — see § Ready):
-- PASS path: confirm memo § 5.3 «hybrid, strong editorial residual» replaced by hypothesis-X deterministic rule.
-- PARTIAL path: superseded → «partial deterministic, X% coverage, residual editorial».
-- FAIL path: superseded → «editorial / curation-required» (parallel к Phase 9.1 § 5.1 erratum).
-- Per user clarification: erratum drafting in HANDOFF for TL ack? OR strict FAIL-only convention from 9.2A?
+**§ 6.** Phase 9.0 memo § 5.3 erratum (per user clarification 5 = (b) — all-paths draft в HANDOFF):
+
+Worker drafts erratum в HANDOFF for **every verdict path**, не FAIL-only convention:
+
+- **PASS path erratum draft:** «Memo § 5.3 verdict `hybrid / strong editorial residual` superseded → `deterministic / rule H_i confirmed`. Hypothesis [name] yields 0 card-FN ∧ ≥90% window coverage across 4 calibrated cases + 6 Olga Marina-selected. Implementation deliverable proposed Phase 9.3B (Tier B, 1-file modification in `outer_cards.py`).»
+- **PARTIAL path erratum draft:** «Memo § 5.3 verdict `hybrid / strong editorial residual` superseded → `partial deterministic [H_i] + editorial residual`. Hypothesis [name] yields 0 card-FN ∧ X% window coverage; residual Y% requires per-case override structure (similar Phase 4b `STRUCTURED_OVERRIDES`).»
+- **FAIL path erratum draft:** «Memo § 5.3 verdict `hybrid / strong editorial residual` superseded → `editorial / curation-required`, parallel к Phase 9.1 § 5.1 erratum (directions). No deterministic horizon/window rule accepted as of 2026-05-19. Per-case override structure proposed в § 5.3 этого memo.»
+
+Erratum landed в memo file **только после user explicit ack** (FAIL-only convention из 9.2A не applicable здесь — PASS/PARTIAL/FAIL all require user ack before memo § 5.3 modification, parallel Phase 9.1 erratum landing pattern).
 
 ## Files
 
@@ -185,13 +202,13 @@ Memo output structure:
 - Worker tempted к Phase 9.0 memo § 5.3 modification (in-place edit) → STOP, erratum convention applies (FAIL-only OR per user clarification).
 - Worker tempted to propose multi-hypothesis combination rule («H_X AND H_Y») without empirical support → STOP, only test discrete hypotheses.
 
-## Reviewer subagent — per § Ready clarification
+## Reviewer subagent — OPTIONAL (per user clarification 6)
 
-Tier C normally Reviewer-optional. Per Phase 9.2A precedent (Tier C validation): «Reviewer optional. TL inline-verify достаточно.» Open clarification — see § Ready.
+Tier C validation-only. Reviewer optional; TL inline-verify достаточно per Phase 9.2A precedent. Если Worker prefers Reviewer pass — может spawn'нуть, не блокер.
 
 ## Context
 
-**Mode normal + Tier C (Reviewer optional per § Ready).** Worker mode: normal.
+**Mode normal + Tier C (Reviewer optional per user clarification 6).** Worker mode: normal.
 
 **Baseline:**
 - Product main @ `7751d46` (Phase 9.2B angle-filter landed; pytest 382/2/0).
@@ -212,18 +229,16 @@ Tier C normally Reviewer-optional. Per Phase 9.2A precedent (Tier C validation):
 - Summary axis editorial (Olga 5-11 axis) — Phase 9.4 editorial residual, separate track.
 - Implementation (Phase 9.3B placeholder if 9.3A produces PASS hypothesis).
 
-**Ready: no** — pending 5 clarifications below.
+**Ready: yes** — 6 clarifications applied 2026-05-19:
 
-## Ready clarifications (pending user direction 2026-05-19)
+1. **Marina-Olga window source = (b):** allow strict-scope PDF window-date extraction (`/Users/ilya/Downloads/Соляр 2026-2027.pdf`), window boundaries only для 6 Olga-selected cards; no free-form re-interpretation. Applied Stage 0.3.
 
-1. **Marina-Olga window source:** (a) user verbatim в TASK + 9.2A § 1.3 only, no PDF re-extract; OR (b) allow PDF window-date extraction `/Users/ilya/Downloads/Соляр 2026-2027.pdf` strict scope; OR (c) Olga «no Marina reference» diagnostic only, full hypothesis testing на 4 calibrated.
+2. **Hypothesis enumeration = (b):** H1-H6 starter + Worker может propose composite rules; обязательно показать base score first, composite delta, overfit risk (test on Olga as held-out). Applied Stage 1.
 
-2. **Hypothesis enumeration:** (a) strictly H1-H6 fixed; OR (b) H1-H6 starter + Worker propose additional if empirical patterns suggest.
+3. **Calibrated cases = (a):** main scoring restricted к 4 cases с full `MARINA_OUTER_CARD_BOUNDARIES` (01/03/05/10); cases 02/04/08/09 informational caveat only (memo § 4 background), NOT в Stage 2.3 verdict scoring. Applied Stage 0.2.
 
-3. **Calibrated cases scope:** (a) restrict к 4 cases с full `MARINA_OUTER_CARD_BOUNDARIES` data (01/03/05/10); OR (b) include 02/04/08/09 с caveat «single-Marina-window divergence — partial data».
+4. **Verdict thresholds confirmed:** PASS = 0 card-FN ∧ ≥90% window coverage; PARTIAL = 0 card-FN ∧ 60-90%; FAIL = 1+ card-FN OR <60%. Match tolerance ±2 days. Applied Stage 2.3.
 
-4. **Stage 2 verdict label thresholds:** confirm PASS = «0 card-FN ∧ ≥90% window coverage», PARTIAL = «0 card-FN ∧ 60-90%», FAIL = «1+ card-FN OR <60%» — OR user prefers different thresholds.
+5. **Erratum convention = (b):** ALL paths (PASS / PARTIAL / FAIL) draft erratum в HANDOFF for user ack; erratum landed в memo file только после user explicit ack. Applied § 6.
 
-5. **Erratum convention для memo § 5.3:** (a) FAIL-only path drafts erratum в HANDOFF (parallel 9.1 / 9.4 pattern, не 9.2A PASS); OR (b) all paths draft erratum в HANDOFF for TL/user ack including PASS (memo § 5.3 «hybrid» upgrade/confirm).
-
-6. **Reviewer subagent:** (a) optional like 9.2A — TL inline-verify; OR (b) required Tier C external Reviewer.
+6. **Reviewer subagent = optional:** TL inline-verify достаточно per Phase 9.2A precedent. Applied Reviewer section.
