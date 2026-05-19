@@ -1,6 +1,6 @@
 # TASK: phase-9-4-summary-axis-regression-tests
 
-- Status: open
+- Status: review (Worker delivered β-scope 2026-05-18; awaiting TL accept-cascade)
 - Ready: yes
 - Date: 2026-05-17
 - Project: astro

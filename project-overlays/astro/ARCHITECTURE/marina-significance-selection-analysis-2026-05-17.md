@@ -986,3 +986,25 @@ Phase 9.0 memo § 3.1 hypothesis testing measured A1 fit-rate at 8/8 calibrated 
 - TASK 9.1 closure: `project-overlays/astro/TASKS/archive/2026-05-17-phase-9-1-directions-filter.md` § Closure.
 - Worker STOP HANDOFF: `project-overlays/astro/HANDOFFS/archive/2026-05-17-worker-to-tl-phase-9-1-directions-filter-STOP.md`.
 - Phase 4a memo Erratum (Phase 8B Path 1, 2026-05-14): `project-overlays/astro/ARCHITECTURE/transit-contact-window-semantics-2026-05-13.md` § Erratum.
+
+---
+
+## Erratum (Phase 9.4 empirical validation, 2026-05-18)
+
+> Phase 9.4 empirical validation revises Phase 9.0 § 5.4. The previous "deterministic 8/8" verdict was overstated. Strict fixture validation shows Marina match for 4/6 analyzable fixture cases: 02, 03, 08, 10. Case 05 diverges on equal-strength tie-break: engine selects numeric low-pole axis 1-7, Marina selects editorially significant 6-12. Case 09 diverges on super-solar fallback: engine returns no primary axis, Marina uses chart-anchor/editorial 1-7. Olga 11 matches Marina but is DB-only/no fixture and is not pinned in this tests-only task. Revised verdict: partial deterministic with editorial residual.
+
+### Programme lesson
+
+> All Phase 9 memo verdicts now require Stage 0 strict empirical validation before implementation. This is confirmed by Phase 9.1 directions and Phase 9.4 summary findings.
+
+### What this changes
+
+- Memo § 5.4 «deterministic 8/8» — superseded by «partial deterministic 4/6 with editorial residual».
+- Memo § 5.2 (outer cards) + § 5.3 (intervals) — NOT changed by this erratum, BUT per programme lesson require Stage 0 strict empirical validation before any implementation TASK ships.
+- Phase 9.4 TASK closure: 4 tests pin 02/03/08/10. Cases 05/09/Ольга 11 documented as known divergences here; not pinned.
+
+### Cross-references
+
+- TASK 9.4 closure: `project-overlays/astro/TASKS/archive/2026-05-17-phase-9-4-summary-axis-regression-tests.md` § Closure.
+- Phase 9.1 Erratum (precedent, same pattern): same memo file, prior subsection.
+- Phase 4a memo Erratum (original recurring precedent): `project-overlays/astro/ARCHITECTURE/transit-contact-window-semantics-2026-05-13.md` § Erratum.
