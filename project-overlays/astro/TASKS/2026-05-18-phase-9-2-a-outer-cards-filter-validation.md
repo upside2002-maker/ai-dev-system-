@@ -1,6 +1,6 @@
 # TASK: phase-9-2-a-outer-cards-filter-validation
 
-- Status: in-progress
+- Status: review
 - Ready: yes
 - Date: 2026-05-18
 - Project: astro
