@@ -1,7 +1,7 @@
 # TASK: phase-9-2-a-outer-cards-filter-validation
 
 - Status: open
-- Ready: no
+- Ready: yes
 - Date: 2026-05-18
 - Project: astro
 - Layer: overlay (analytical/empirical validation memo only — NO product code, NO tests, NO PDF changes)
@@ -61,19 +61,25 @@ Worker produces **validation memo** в `project-overlays/astro/ARCHITECTURE/phas
   
 - **§ 2 Aggregate score:** Stage 0 PASS если 10/10 cases match Marina without false negatives. Filter MAY over-include (false positives = «engine emits more than Marina; filter doesn't enforce Marina significator subset») — this is acceptable if filter's role is «remove invalid angle-targets», not «enforce full Marina significator subset».
 
-- **§ 3 Significator hypothesis additional check:** memo § 5.2 mentioned «target ∈ per-client significator set» as supplement к angle-exclusion. Worker tests:
+- **§ 3 Significator hypothesis additional check (DIAGNOSTIC ONLY, NOT a gate per user direction 2026-05-18):**
+
+  > «Significator supplement оставить как secondary check. Но это не должен быть gate для implementation. Gate только: `target ∉ angles` не drop'ает Marina-selected cards. Significator-гипотеза пусть будет диагностикой false positives, не основанием молча усложнять фильтр.»
+
+  Worker tests significator-supplement как **secondary diagnostic** (NOT as gate criterion):
   - Compute significator set per case (Asc-ruler, MC-ruler, 1st-house planets, Sun-sign ruler, stellium-ruler) per memo § 6 TASK 2 proposal.
-  - Apply both rules: `target ∉ angles` AND `target ∈ significator-set OR target ∈ outers (U/N/P)`.
-  - Per-case match rate.
+  - Apply hypothetical both-rules combination: `target ∉ angles` AND `target ∈ significator-set OR target ∈ outers (U/N/P)`.
+  - Compute per-case match rate.
+  - Output is **informational** для understanding false-positive structure. **DO NOT use this as gate** для implementation proposal. Gate is angle-exclusion alone.
 
-- **§ 4 Verdict:**
-  - **PASS** — both filters together yield 10/10 без false negatives. Recommend Phase 9.2B implementation TASK с specified scope.
-  - **PARTIAL** — angle-exclusion alone PASS but significator-supplement FAIL. Recommend angle-only implementation; significator-set эditorial.
-  - **FAIL** — angle-exclusion drops Marina-selected cards в M cases. STOP, memo § 5.2 erratum, NO implementation TASK ships.
+- **§ 4 Verdict (AMENDED 2026-05-18 per user direction — gate is angle-exclusion alone):**
+  - **PASS** — `target ∉ angles` filter yields 10/10 без false negatives для Marina-selected cards. Recommend Phase 9.2B implementation TASK с angle-only scope (significator-supplement deferred OR documented as informational only).
+  - **FAIL** — `target ∉ angles` drops Marina-selected cards в M cases. STOP, Worker drafts memo § 5.2 erratum text в HANDOFF (NOT lands erratum в memo himself per user direction 5; TL/user ack formulation first, then separate overlay commit). NO implementation TASK ships.
 
-- **§ 5 Recommended next step:**
-  - If PASS / PARTIAL → Phase 9.2B implementation TASK draft outline.
-  - If FAIL → memo § 5.2 erratum landed in memo + STATUS_RU note + closure.
+  Note: значительный significator-supplement false-positive count is **informational** в § 3, не gate condition. Even если significator-supplement reduces false-positive count, gate decision уже locked by § 4 angle-exclusion result.
+
+- **§ 5 Recommended next step (AMENDED 2026-05-18 per user direction 5):**
+  - If **PASS** → Worker writes validation memo (§ 1-4 above) + Phase 9.2B implementation TASK draft outline. NO implementation в этом TASK; that's 9.2B.
+  - If **FAIL** → Worker writes validation memo (§ 1-4 above) + **erratum draft text в HANDOFF** (NOT lands erratum в memo himself). TL/user ack erratum formulation first, then separate overlay commit lands erratum into Phase 9.0 memo. NO implementation proposal. NO code changes.
 
 ### Stage 0 acceptance
 
@@ -81,26 +87,27 @@ Worker produces **validation memo** в `project-overlays/astro/ARCHITECTURE/phas
 - [ ] § 1 per-case empirical table for 10 cases.
 - [ ] § 2 aggregate score (PASS / PARTIAL / FAIL).
 - [ ] § 3 significator-hypothesis check.
-- [ ] § 4 verdict с explicit Stage 0 outcome.
-- [ ] § 5 next step recommendation (implementation proposal OR erratum landing).
-- [ ] Memo § 5.2 erratum landed в Phase 9.0 memo if FAIL (per programme lesson; analogous Phase 9.1/9.4 patterns).
+- [ ] § 4 verdict с explicit Stage 0 outcome (PASS / FAIL only; significator-supplement informational).
+- [ ] § 5 next step recommendation (implementation proposal if PASS, OR erratum draft text in HANDOFF if FAIL — NOT landed in memo by Worker).
+- [ ] If FAIL: erratum draft text **в HANDOFF** for TL/user ack; **Worker does NOT land erratum в Phase 9.0 memo** (per user direction 5 — TL/user must ack formulation first, separate overlay commit lands erratum).
 
-### Stage 0 stop discipline
+### Stage 0 stop discipline (AMENDED 2026-05-18 per user direction)
 
-**If `target ∉ angles` filter DROPS any Marina-selected card в any of 10 cases:**
-- **STOP** Stage 0 (do not proceed to significator-supplement check).
+**If `target ∉ angles` filter DROPS any Marina-selected card в any of 10 cases (GATE):**
+- **STOP** Stage 0 main verdict path.
 - Document false-negative case в memo § 1 + § 4.
-- Verdict = FAIL.
+- Verdict = **FAIL**.
+- Worker may STILL complete § 3 significator-diagnostic для informational value (does NOT change FAIL verdict; merely diagnoses false-positive structure).
 - No implementation TASK 9.2B drafted.
-- Add Phase 9.0 memo § 5.2 erratum (verbatim user-formulation if provided OR Worker-draft for TL review).
+- Worker drafts memo § 5.2 erratum text **в HANDOFF** (NOT lands в memo himself). TL/user ack first.
 
-**If significator-set supplement DROPS Marina-selected cards but angle-only alone PASSes:**
-- Verdict = PARTIAL.
-- Recommend angle-only implementation; significator-set deferred / editorial.
+**If significator-set supplement reduces false-positive count (informational only):**
+- Record в § 3 as diagnostic.
+- **Does NOT change § 4 verdict** (gate is angle-exclusion alone per user direction).
 
-**If both filters together yield 10/10 без false negatives:**
-- Verdict = PASS.
-- Recommend Phase 9.2B implementation TASK с full filter scope.
+**If angle-exclusion yields 10/10 без false negatives:**
+- Verdict = **PASS**.
+- Recommend Phase 9.2B implementation TASK с angle-only scope (significator-supplement deferred OR documented as informational only).
 
 ## Files
 
@@ -162,4 +169,10 @@ Tier C validation-only memo, analogous Phase 9.0 memo TASK. Reviewer not require
 - 9.2B — implementation TASK, drafted ONLY if 9.2A PASSes.
 - 9.3 — deferred.
 
-**Ready: no** — TL flips after user ack + any refinements.
+**Ready: yes** — flipped 2026-05-18 after user ack + 5 clarifications:
+
+1. **Spec clean** — no new requirements.
+2. **Memo path** `project-overlays/astro/ARCHITECTURE/phase-9-2-a-outer-cards-validation-2026-05-18.md` confirmed.
+3. **Significator-supplement** = diagnostic-only (NOT gate). Gate is `target ∉ angles` no-Marina-drop. Significator informational для understanding false-positive structure; не reason to silently complicate filter.
+4. **Reviewer optional** confirmed (TL inline-verify acceptable).
+5. **Erratum pattern (CRITICAL):** if Stage 0 FAIL → Worker drafts erratum text **в HANDOFF** для TL/user ack first. Worker **does NOT land erratum в Phase 9.0 memo** himself. Separate overlay commit lands erratum after ack.
