@@ -1,6 +1,6 @@
 # HANDOFF: worker → tl — phase-9-2-a-outer-cards-filter-validation
 
-- Status: open
+- Status: closed (TL inline-verify + user explicit closure ack 2026-05-18; Stage 0 PASS)
 - Date: 2026-05-18 20:37
 - Project: astro
 - From: worker

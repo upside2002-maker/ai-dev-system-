@@ -1,6 +1,6 @@
 # TASK: phase-9-2-a-outer-cards-filter-validation
 
-- Status: review
+- Status: done
 - Ready: yes
 - Date: 2026-05-18
 - Project: astro
@@ -176,3 +176,51 @@ Tier C validation-only memo, analogous Phase 9.0 memo TASK. Reviewer not require
 3. **Significator-supplement** = diagnostic-only (NOT gate). Gate is `target ∉ angles` no-Marina-drop. Significator informational для understanding false-positive structure; не reason to silently complicate filter.
 4. **Reviewer optional** confirmed (TL inline-verify acceptable).
 5. **Erratum pattern (CRITICAL):** if Stage 0 FAIL → Worker drafts erratum text **в HANDOFF** для TL/user ack first. Worker **does NOT land erratum в Phase 9.0 memo** himself. Separate overlay commit lands erratum after ack.
+
+## Closure (2026-05-18) — Stage 0 PASS
+
+**Worker delivered validation memo + TL inline-verify + user explicit closure ack 2026-05-18.**
+
+- **Overlay commits:** `292c18d` (memo + HANDOFF + STATUS_RU + Worker scope discipline) + `29ee3e3` (submit-task Status: in-progress → review) + this closure commit.
+- **Validation memo:** `project-overlays/astro/ARCHITECTURE/phase-9-2-a-outer-cards-validation-2026-05-18.md` (22963 bytes, 6 sections × 15 subsections).
+- **Pytest baseline preserved:** `372 passed + 2 skipped + 0 failed` (no test changes).
+- **Cabal:** clean (no Haskell changes).
+- **Product code:** zero modifications (`git status --short` empty post-Worker).
+
+### Stage 0 verdict: PASS
+
+**Gate condition met:** `target ∉ {Asc, MC, IC, DC}` filter yields **0 false negatives across all 10 cases**.
+
+Worker findings:
+1. Engine ADT (`core/astrology-hs/src/Domain/TransitCalendar.hs:79-94` `TransitTarget`) constructively eliminates `IC`/`DC` — engine эмитит только `Asc`/`MC`/planets. Filter `{Asc, MC, IC, DC}` empirically equivalent to `{Asc, MC}`.
+2. 35/35 Marina-selected card targets across 10 cases are non-angle planets (29 calibrated allowlist + 6 Olga from memo § 1.3).
+3. Per-case: 9 × match (cases 01-10), 1 × over-include (11-olga; ~13 cards filter-output vs 6 Marina-selected).
+
+### § 3 significator-supplement diagnostic (informational only, per user direction)
+
+Worker confirmed for Olga: combined rule (`target ∉ angles` AND `target ∈ significator-set OR target ∈ {U/N/P}`) **drops 3 of 6 Marina-selected cards** (Уран кв Венера; Уран опп Юпитер; Нептун триг Юпитер — Venus/Jupiter not в Olga's `{Moon, Mars, U, N, P}` extended significator set).
+
+**Replicates Phase 9.1 over-pruning pattern.** Significator-supplement NOT accepted as gate criterion per user direction 2026-05-18.
+
+### Memo § 5.2 verdict status
+
+PASS path → memo § 5.2 verdict NOT downgraded. Stays «hybrid». **No erratum drafted by Worker** (per user direction 5: erratum is FAIL-only path).
+
+### Worker Phase 9.2B proposal (per memo § 5.1)
+
+- **Tier:** B.
+- **Target file:** `services/api-python/app/pdf/outer_cards.py:1656-1748` (`generic_outer_cards`).
+- **Scope:** single-line filter addition.
+- **Tests:** 1-2 (Worker recommendation: property test + Olga regression).
+
+User refinements 2026-05-18 для 9.2B draft:
+1. Test scope: **property-test only** (strict: filter must not include angle targets). NOT pin Olga count.
+2. Filter spec: **conservative** `{Asc, MC, IC, DC}` (defensive even if IC/DC unreachable currently).
+3. Significator supplement: **documented only**, not implementation. Verbatim formulation per user: «Significator supplement empirically drops Marina-selected cards for Olga; therefore it is not accepted as implementation gate and remains editorial/curation territory.»
+4. Reviewer **optional** (TL inline-verify acceptable).
+
+### Status: done
+
+Archive to `project-overlays/astro/TASKS/archive/`. HANDOFF archive to `HANDOFFS/archive/`.
+
+Next: draft Phase 9.2B implementation TASK (Tier B; conservative `{Asc, MC, IC, DC}` filter; property-test only; significator deferred as documented editorial).
