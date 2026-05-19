@@ -1,6 +1,6 @@
 # HANDOFF: worker → tl — evidence-based-consultation-summary-rewrite
 
-- Status: open
+- Status: closed
 - Date: 2026-05-19
 - Project: astro
 - From: worker
