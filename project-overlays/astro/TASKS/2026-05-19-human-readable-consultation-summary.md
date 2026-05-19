@@ -1,6 +1,6 @@
 # TASK: human-readable-consultation-summary
 
-- Status: open
+- Status: review
 - Ready: yes
 - Date: 2026-05-19
 - Project: astro
