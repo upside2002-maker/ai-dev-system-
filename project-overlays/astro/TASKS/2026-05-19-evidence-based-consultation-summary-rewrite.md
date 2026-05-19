@@ -1,6 +1,6 @@
 # TASK: evidence-based-consultation-summary-rewrite
 
-- Status: open
+- Status: review
 - Ready: yes
 - Date: 2026-05-19
 - Project: astro

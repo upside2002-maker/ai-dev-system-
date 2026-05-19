@@ -9,6 +9,7 @@
 - Model: claude-opus-4-7 (1M context)
 - Role mode: Worker
 - TASK: project-overlays/astro/TASKS/2026-05-19-evidence-based-consultation-summary-rewrite.md
+- Product repo status: committed (product main @ a6a3331; backup parity ✓)
 - Risk tier: B (1 file substantive rewrite + new acceptance test file + 1 page-count assertion widening)
 - Reviewer policy: REQUIRED (per clarification 6 = (b))
 
@@ -79,9 +80,9 @@ Net delta: +~150 lines (more helpers + more comments) — but `_THEME_PROSE` del
 
 ### `project-overlays/astro/STATUS_RU.md` (overlay, modified)
 
-- Top «Сейчас» entry added (TASK DELIVERED 2026-05-19, full implementation summary).
+- Top «Сейчас» entry added (TASK DELIVERED 2026-05-19, full implementation summary; product `a6a3331`).
 
-### `project-overlays/astro/HANDOFFS/2026-05-19-worker-to-tl-evidence-based-consultation-summary-rewrite.md` (overlay, NEW)
+### `project-overlays/astro/HANDOFFS/2026-05-19-worker-to-tl-evidence-based-consultation-summary-rewrite.md` (overlay, NEW; overlay `ed63521`)
 
 - This file.
 
@@ -292,7 +293,7 @@ detail; sensible-divergence per TASK clarification 4).
 
 Pytest 382 → 398 passed + 2 skipped + 0 failed.
 
-TASK: evidence-based-consultation-summary-rewrite (2026-05-19).
+TASK: evidence-based-consultation-summary-rewrite (2026-05-19; product `a6a3331`).
 ```
 
 **Overlay commit** (`project-overlays/astro/...`):
