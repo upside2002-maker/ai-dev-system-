@@ -1008,3 +1008,48 @@ Phase 9.0 memo § 3.1 hypothesis testing measured A1 fit-rate at 8/8 calibrated 
 - TASK 9.4 closure: `project-overlays/astro/TASKS/archive/2026-05-17-phase-9-4-summary-axis-regression-tests.md` § Closure.
 - Phase 9.1 Erratum (precedent, same pattern): same memo file, prior subsection.
 - Phase 4a memo Erratum (original recurring precedent): `project-overlays/astro/ARCHITECTURE/transit-contact-window-semantics-2026-05-13.md` § Erratum.
+
+---
+
+## Erratum (Phase 9.3A empirical validation, 2026-05-19)
+
+> Phase 9.3A empirical validation confirms Phase 9.0 § 5.3 as `hybrid with strong editorial residual`. Default engine show-all windows are the best generalisable rule under overlap-positional scoring. Olga's single-window narrowing for URV/UOJ/NTJ is editorial/per-case and no deterministic general rule is accepted as of 2026-05-19. Post-hoc H11 rule fits Olga but fails held-out calibrated cases, so it is explicitly rejected as overfit.
+
+### Empirical data
+
+Phase 9.3A Worker (TASK `2026-05-19-phase-9-3-a-outer-card-horizon-window-validation`) tested 13 hypotheses (H1-H6 starter list per TASK Stage 1 + H7-H13 post-hoc composite expansion with explicit «discovered post-hoc» tagging per clarification 2) against main scoring set of **4 calibrated cases** (`01-kseniya`, `03-artem`, `05-ekaterina`, `10-danila` per `MARINA_OUTER_CARD_BOUNDARIES`) + **6 Olga Marina-selected cards** (PDF strict-scope window-date extraction per clarification 1) = 14 cards / 57 Marina windows total.
+
+Two metric views computed:
+
+- **STRICT view** (TASK literal ±2d boundary match): ALL hypotheses FAIL, including engine baseline (1 card-FN on Pluto Sextile Uranus due to boundary tightness — Phase 4a/8 territory, NOT horizon/window selection).
+- **OVERLAP view** (positional overlap, selection-focused; decoupled from boundary tightness): engine baseline PASS 100% window coverage; H8 (first-3-windows cap) PASS 94.7%; H9-H13 PARTIAL (70-86%); H1-H7 FAIL (<60%).
+
+H11 («drop windows whose end-date < SR») discovered post-hoc from Olga's narrowing pattern: 6/6 perfect fit on Olga; 9-window FN across 5 calibrated cards under held-out test. **Empirically falsified as general rule** per STOP discipline («no silent adjust hypothesis to fit data»).
+
+### What this changes
+
+- Memo § 5.3 «Sub-problem C: Touch-interval selection per card» — verdict «hybrid (strong editorial residual)» **CONFIRMED**, не downgrade. Label refinement: «hybrid (strong editorial residual)» → «editorial single-window narrowing confirmed per-case; default engine show-all is correct generalisable rule».
+- Memo § 6 TASK 3 proposal (Phase 9.3 per-case `display_window_count` override) — **NOT implemented as of 2026-05-19**; per-case `_OUTER_CARD_WINDOW_OVERRIDES` structure outlined в Phase 9.3A memo § 5.3.1 as future Phase 9.3B Tier B placeholder. User decision 2026-05-19: NO implementation (Phase 9.1 β-style closure — accept editorial divergence, Marina narrows manually).
+- Memo § 5.1 (directions) + § 5.2 (outer cards angle-filter) + § 5.4 (summary β) verdicts — NOT changed by this erratum. Independently closed in prior errata / phases.
+
+### Programme implication (Phase 9.x meta-lesson confirmed third time)
+
+> «All Phase 9 memo verdicts now require Stage 0 strict empirical validation before implementation. This is confirmed by Phase 9.1 directions, Phase 9.4 summary, and now Phase 9.3A intervals findings.»
+
+Phase 9.3A is the **first PARTIAL-confirmation** (not downgrade) erratum in this series. Memo § 5.3 was originally written with the correct «strong editorial residual» qualifier; Phase 9.3A empirical validation refines (но не contradicts) that verdict. Phase 9.1 + 9.4 errata corrected over-optimistic verdicts; Phase 9.3A confirms an accurately-cautious one.
+
+### Production state after Phase 9.3A closure
+
+- Engine baseline (show-all windows) = production default for outer-card window display.
+- Olga URV / UOJ / NTJ 3-card narrowing — editorial / per-case curation; no code change.
+- H11 (or any horizon-trim variant) — explicitly rejected as overfit.
+- Phase 4a/8-style Pluto Sextile Uranus boundary tightness — deferred separate track (not Phase 9.3A scope).
+
+### Cross-references
+
+- Phase 9.3A validation memo: `project-overlays/astro/ARCHITECTURE/phase-9-3-a-outer-card-horizon-window-validation-2026-05-19.md` (687 lines).
+- Phase 9.3A TASK closure: `project-overlays/astro/TASKS/archive/2026-05-19-phase-9-3-a-outer-card-horizon-window-validation.md` § Closure.
+- Worker HANDOFF: `project-overlays/astro/HANDOFFS/archive/2026-05-19-worker-to-tl-phase-9-3-a-outer-card-horizon-window-validation.md` § 3.1 (PARTIAL-path erratum draft).
+- Phase 9.1 Erratum (precedent — downgrade): same memo, prior subsection.
+- Phase 9.4 Erratum (precedent — downgrade): same memo, prior subsection.
+- Phase 4b structured overrides (parallel pattern для future Phase 9.3B): `services/api-python/tests/test_natalya_transits_acceptance.py`.

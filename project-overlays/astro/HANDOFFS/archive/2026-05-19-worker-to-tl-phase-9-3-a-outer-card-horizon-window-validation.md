@@ -1,6 +1,6 @@
 # HANDOFF: worker → tl — phase-9-3-a-outer-card-horizon-window-validation
 
-- Status: open
+- Status: closed
 - Date: 2026-05-19 13:00
 - Project: astro
 - From: worker

@@ -1,6 +1,6 @@
 # TASK: phase-9-3-a-outer-card-horizon-window-validation
 
-- Status: review
+- Status: done
 - Ready: yes
 - Date: 2026-05-19
 - Project: astro
