@@ -43,6 +43,10 @@
 
 - ~~**Exchange buffer в калькуляторе.**~~ Закрыто PR #84 (`f048c9b`) — седьмое поле «Буфер курса, %» с дефолтом из `psExchangeBuffer`, эффективный курс = банковский × (1 + буфер/100), все USD→RUB конверсии через эффективный.
 
+## Tests / CI hygiene
+
+- ~~**Time-based regression в `ApiSpec.hs:1030` `dashboard reflects seeded spend + thread`**~~ — закрыто внутри PR #88 (commit `1f6f9df`, 2026-05-19): передан explicit period в URL endpoint'а, тест стал time-independent. Default-window coverage остаётся за остальными dashboard-тестами в этом describe block.
+
 ## Hygiene / code quality
 
 - `_dealId` unused в `client.ts:304` — pre-existing master lint error (hygiene). Не связано с DM-7-C; отдельный mini-TASK или drive-by в любом будущем PR трогающем `client.ts`.
