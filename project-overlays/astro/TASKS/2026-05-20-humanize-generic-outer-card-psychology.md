@@ -1,7 +1,7 @@
 # TASK: humanize-generic-outer-card-psychology
 
 - Status: open
-- Ready: no
+- Ready: yes
 - Date: 2026-05-20
 - Project: astro
 - Layer: services (Python presentation: `outer_cards.py` `_generic_psychology_text` rewrite + supporting phrase libraries)
@@ -120,31 +120,45 @@ _ASPECT_PSYCHOLOGY_RU = {
 }
 ```
 
-### Stage 3 — Composition algorithm (per § Ready clarification 1)
+### Stage 3 — Composition algorithm (per user clarification 1 = (c) hybrid)
 
-Worker implements deterministic composition of 2-3 sentences combining 3 dimensions:
+User direction 2026-05-20 verbatim: «Короткий opener от транзитной планеты, затем target-психика, затем aspect tone. Главное — чтобы читалось как цельный абзац, не как три склеенные карточки.»
 
-- (a) Template substitution: `«{transit_inner}. Эта тема касается {target_function} — {aspect_tone}»`.
-- (b) Sentence pool per dimension (3 sentences total, one per dimension).
-- (c) Hybrid: short opener (transit) + middle (target affected) + closer (aspect tone).
-- (d) Worker proposes alternative в HANDOFF.
+Worker implements **hybrid composition**:
+1. **Short opener** anchored к transit planet's archetypal inner-process (1 sentence).
+2. **Target-psyche middle** showing which psychic function is touched (1 sentence).
+3. **Aspect tone closer** showing tension/support/transformation character (1 sentence).
+
+Connectors между sentences MUST flow naturally («Внутри появляется...», «Эта тема касается...», «И это идёт через...», «Старое начинает...»). NOT три склеенные карточки.
+
+Worker may merge sentences 2+3 if natural — composition target is **single coherent paragraph**, not strict 3-sentence template.
 
 ### Stage 4 — Edge cases
 
-**Same-planet outer aspects** (Uranus-Uranus return, Neptune-Neptune square, Pluto-Pluto sextile — generational signatures):
-- Worker design choice: emit specialized phrasing acknowledging «возрастной / поколенческий» context, OR fall back to standard composition с note.
+**Same-planet outer aspects** — per user clarification 3 = (a) specialized phrasing:
+
+User direction 2026-05-20 verbatim: «Особенно важно для Уран–Уран, Нептун–Нептун, Плутон–Плутон: это возрастные/поколенческие этапы, а не обычный target.»
+
+Worker implements **specialized phrasing** acknowledging «возрастной / поколенческий» context для same-planet outer aspects:
+
+- **Uranus aspect Uranus** (especially Square ~21 years, Opposition ~42 years, Trine ~28 years, Return ~84 years): emit phrasing evoking age-stage of freedom/self-renewal («это возрастной перелом темы свободы и самостоятельности — что отжило, заменяется новым»).
+- **Neptune aspect Neptune** (especially Square ~42 years — midlife dream check): emit phrasing evoking dream-check-point («это возрастная проверка большой мечты — пересборка того, во что верится»).
+- **Pluto aspect Pluto** (especially Square ~36-40 years): emit phrasing evoking power-stage transformation («это возрастная инициация в собственную силу — старые источники власти теряют силу»).
+
+Dedicated `_SAME_PLANET_PSYCHOLOGY_RU` mini-dict keyed by `(planet, aspect)` tuples (e.g. `("Uranus", "Square")`, `("Neptune", "Square")`, etc.); composition routes к этому dict when `transit_planet == target`.
 
 **Outer-outer aspects** (Uranus-Neptune, Uranus-Pluto, Neptune-Pluto — generational social signatures):
 - Worker uses same composition algorithm; output naturally reflects «деятельно общественное» nature через outer-target psychology dict entries.
 
-**Fallback (unknown planet/aspect):**
-- If composition cannot produce text (missing key в any of 3 dicts), Worker decision per § Ready clarification 2:
-  - (a) Generic fallback phrase «Психологический уровень этого транзита раскрывается через интуитивное переживание контакта.»
-  - (b) Skip entirely — return empty string; event_level paragraph carries the card alone.
+**Fallback (unknown planet/aspect) — per user clarification 2 = (b) skip entirely:**
 
-### Stage 5 — Acceptance tests
+User direction 2026-05-20 verbatim: «Никаких generic-padding фраз. Лучше пусто, чем "интуитивное переживание контакта".»
 
-Extend existing `services/api-python/tests/test_transit_section_generic.py` (or new file if Worker prefers — per § Ready clarification 4).
+If composition cannot produce text (missing key в any of 3 dicts) → return **empty string**; event_level paragraph carries the card alone. Fabrication-guard-consistent: no generic-soup fallback. Empty rendering allowed; padding forbidden.
+
+### Stage 5 — Acceptance tests (per user clarification 4 = (a) extend existing)
+
+**Extend** `services/api-python/tests/test_transit_section_generic.py` (consistent с previous synthesis tests; no new file fragmentation).
 
 **Strict-string negative for psychology text (per user spec 2026-05-20):**
 
@@ -220,6 +234,13 @@ Generic psychology output для Olga / non-calibrated cases MUST NOT contain:
 - [ ] Generic event-level text still contains house language («Ситуация коснётся сфер X дома» etc.).
 - [ ] House content moved FROM psychology TO event level only; no loss of house information в overall card.
 
+### Layer-separation guard (per user direction 2026-05-20, verbatim)
+
+> «In generic cards, psychology must not mention houses, but event_level must mention houses. This split is mandatory and tested on at least 3 cards.»
+
+- [ ] **Layer-separation test parametrized on ≥3 distinct cards** (e.g. Olga's Uranus Square Venus / Neptune Trine Jupiter / Pluto Sextile Uranus): for each card, assert `psychology` contains NO house language AND `event_level` contains house language.
+- [ ] Test failure mode: ANY card violating split → STOP.
+
 ### Calibrated regression
 
 - [ ] All 6 calibrated cases render с unchanged Marina-curated psychology / event text.
@@ -245,7 +266,9 @@ Generic psychology output для Olga / non-calibrated cases MUST NOT contain:
 - [ ] NO change to event-level helper.
 - [ ] NO calibrated allowlist data modifications.
 - [ ] Composition deterministic — same input yields same output character-for-character.
-- [ ] Empty-input path produces fallback OR omits psychology paragraph per clarification 2 (not generic «красивая вода» padding).
+- [ ] Empty-input path produces EMPTY string per clarification 2 = (b) (not generic «красивая вода» padding; fabrication-guard-consistent).
+- [ ] **Layer-separation guard** (per user direction): psychology layer never mentions houses; event_level layer mentions houses. Tested on ≥3 distinct cards.
+- [ ] Same-planet outer aspects (Uranus-Uranus / Neptune-Neptune / Pluto-Pluto) route к dedicated `_SAME_PLANET_PSYCHOLOGY_RU` dict с generational phrasing (per clarification 3 = (a)).
 
 ## STOP triggers
 
@@ -257,18 +280,31 @@ Generic psychology output для Olga / non-calibrated cases MUST NOT contain:
 - Worker writes generic «универсальной красивой воды» applicable к any (planet, target, aspect) combination → STOP, each dimension dict entry must be specific к that planet/target/aspect archetype.
 - Worker finds calibrated case regression (psychology text changes for allowlist card) → STOP, refine.
 - Worker finds engine output / facts shape requires changes для new dimensions → STOP, use existing signature.
+- **Worker tempted to emit generic-padding fallback** («интуитивное переживание контакта» или подобное) when dimension dict entry missing → STOP, emit empty string per clarification 2 = (b).
+- **Worker writes psychology containing house language** («дом» / «натальный дом» / «в области» etc.) → STOP, layer-separation guard violated. Houses live in event_level only.
+- **Worker writes event_level WITHOUT house language** для generic card → STOP, layer-separation guard violated. Event-level must surface houses.
+- **Worker treats same-planet outer aspect (Uranus-Uranus / Neptune-Neptune / Pluto-Pluto) с standard 3-dimension composition** → STOP, route к `_SAME_PLANET_PSYCHOLOGY_RU` dedicated dict.
+- **Worker composition reads as three glued cards** (no natural connectors between sentences) → STOP, refine flow per clarification 1 = (c) hybrid «цельный абзац».
 
-## Reviewer subagent — per § Ready clarification 5
+## Reviewer subagent — REQUIRED (per user clarification 5 = (b))
 
-Tier B single-file rewrite + phrase library design. Per recent precedent:
-- Phase 9.2A / 9.3A / Tail Polish (Tier C): Reviewer optional + TL inline-verify.
-- Human-Readable / Specificity (Tier B+): Reviewer REQUIRED.
+User direction 2026-05-20 verbatim: «Тут нужен внешний взгляд: текст психологического уровня должен быть астрологически адекватным и человеческим.»
 
-This TASK Tier B borderline — Reviewer disposition per § Ready.
+External Reviewer pass REQUIRED после Worker self-submit. If Agent tool unavailable в Worker runtime (recurring Phase 8/9 precedent), Worker self-review + TL spawns external Reviewer post-submission.
+
+**Reviewer criteria:**
+- Composition follows hybrid algorithm (transit opener + target-psyche middle + aspect tone closer); reads as single coherent paragraph, NOT three glued cards.
+- 3 phrase library dicts (`_TRANSIT_PSYCHOLOGY_RU`, `_TARGET_PSYCHOLOGY_RU`, `_ASPECT_PSYCHOLOGY_RU`) + 4th `_SAME_PLANET_PSYCHOLOGY_RU` для generational signatures.
+- **Layer separation verified on ≥3 cards: psychology MUST NOT mention houses; event_level MUST mention houses.**
+- Psychological text reads astrologically adequate + humanly (Reviewer reads ≥5 generic-card outputs).
+- No Daragan verbatim copying detected (Reviewer spot-checks phrasings against Daragan-style archetypal logic — uses Daragan logic, не его words).
+- No fabricated psychology (empty string emitted if dimension dict entry absent; no «интуитивное переживание контакта» padding).
+- Calibrated allowlist cards bit-identical (no `_OUTER_CARD_FACTS` regression).
+- 0 STOP triggers fired.
 
 ## Context
 
-**Mode normal + Tier B (Reviewer disposition per § Ready).** Worker mode: normal.
+**Mode normal + Tier B (Reviewer REQUIRED per user clarification 5).** Worker mode: normal.
 
 **Baseline:**
 - Product main @ `8e59ea9` (specificity enrichment closed).
@@ -291,30 +327,23 @@ This TASK Tier B borderline — Reviewer disposition per § Ready.
 - Daragan book copy-paste.
 - LLM integration.
 
-**Ready: no** — pending 5 clarifications below.
+**Ready: yes** — 5 clarifications applied 2026-05-20 + layer-separation guard:
 
-## Ready clarifications (pending user direction 2026-05-20)
+1. **Composition = (c) hybrid.** Short transit opener + target-psyche middle + aspect tone closer; reads as single coherent paragraph («цельный абзац»), NOT three glued cards. Natural connectors required. Applied Stage 3.
 
-1. **Composition algorithm (Stage 3).**
-   - (a) Template substitution: `«{transit_inner}. Эта тема касается {target_function} — {aspect_tone}.»` (compact, 1-2 sentences).
-   - (b) Sentence pool per dimension — 3 sentences total, one per dimension (rich, 3 sentences).
-   - (c) Hybrid — short opener (transit) + middle (target affected) + closer (aspect tone), naturally flows.
-   - (d) Worker proposes alternative с justification.
+2. **Fallback = (b) skip entirely.** Empty string when dimension dict entry missing. No generic-padding phrases. Fabrication-guard-consistent. Applied Stage 4.
 
-2. **Fallback for missing-dimension dict entry (Stage 4).**
-   - (a) Generic fallback phrase «Психологический уровень этого транзита раскрывается через интуитивное переживание контакта.»
-   - (b) Skip entirely — return empty string; event_level paragraph carries card alone.
-   - (c) Worker proposes другое handling.
+3. **Same-planet outer aspects = (a) specialized phrasing.** Dedicated `_SAME_PLANET_PSYCHOLOGY_RU` dict с generational phrasings (Uranus-Uranus = «возрастной перелом темы свободы»; Neptune-Neptune square = «возрастная проверка большой мечты»; Pluto-Pluto = «возрастная инициация в собственную силу»). Applied Stage 4 + STOP trigger.
 
-3. **Same-planet outer aspects** (Uranus-Uranus return, Neptune-Neptune square, Pluto-Pluto sextile).
-   - (a) Specialized phrasing acknowledging «возрастной / поколенческий» context.
-   - (b) Standard composition (works generically через outer-target psychology dict).
-   - (c) Worker proposes.
+4. **Test file = (a) extend** `test_transit_section_generic.py`. NO new file. Applied Stage 5.
 
-4. **Test file location.**
-   - (a) Extend existing `test_transit_section_generic.py` (consistent с previous synthesis tests).
-   - (b) New file `test_generic_psychology_humanization.py`.
+5. **Reviewer = (b) REQUIRED.** External pass after Worker submit. Verifies astrological adequacy + human readability + layer separation + no Daragan-verbatim. Applied Reviewer section.
 
-5. **Reviewer disposition.**
-   - (a) Optional + TL inline-verify (consistent с 9.2A / 9.3A / Tail Polish Tier C precedent).
-   - (b) REQUIRED external Reviewer (Tier B substantive content rewrite; visible end-user impact).
+**Additional guard (verbatim user direction 2026-05-20):**
+
+> «In generic cards, psychology must not mention houses, but event_level must mention houses. This split is mandatory and tested on at least 3 cards.»
+
+**Layer-separation guard** applied across:
+- Stage 5 Acceptance tests: parametrized layer-separation test на ≥3 cards (e.g. Olga's Uranus Square Venus / Neptune Trine Jupiter / Pluto Sextile Uranus).
+- Discipline checklist: psychology never mentions houses; event_level mentions houses.
+- STOP triggers: layer-separation violation в либо direction → STOP.
