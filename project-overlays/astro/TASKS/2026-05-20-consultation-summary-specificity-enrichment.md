@@ -1,7 +1,7 @@
 # TASK: consultation-summary-specificity-enrichment
 
 - Status: open
-- Ready: no
+- Ready: yes
 - Date: 2026-05-20
 - Project: astro
 - Layer: services (Python presentation: `synthesis_themes.py` Layer 1 evidence enrichment + Layer 3 templates; new themed mini-block; tests)
@@ -64,10 +64,12 @@ User comparison 2026-05-20 (свежий software рендер `consultation-12.
 
 Audit existing `_collect_theme_evidence` channels; add granularity for content gaps:
 
-**1.1 — Dated event extraction:**
-- For each outer transit (Уран/Нептун/Плутон) aspecting personal planet (Sun/Moon/Mercury/Venus/Mars/Jupiter): pull window end date.
-- For each Jupiter/Saturn house-transit: pull window end date.
-- Surface to Layer 2/3 as `dated_events` evidence channel per theme.
+**1.1 — Dated event extraction (per user clarification 2 = (a) reuse existing computed data):**
+- For each outer transit (Уран/Нептун/Плутон) aspecting personal planet (Sun/Moon/Mercury/Venus/Mars/Jupiter): pull window end date FROM existing `outer_cards.display_windows` (already computed downstream).
+- For each Jupiter/Saturn house-transit: pull window end date FROM existing `annual_transit_table` (no new computation).
+- Surface dates inline в block helpers (no new Layer 1 channel; extend existing helpers).
+
+**Critical per user clarification 2 verbatim:** «Каждая дата в итогах должна trace'иться к computed fact, не к Марининому PDF.» Worker test: each date string в rendered output must be derivable from `facts_json` data via documented helper logic. NO Marina-PDF date lookup.
 
 **1.2 — Cross-house combinations:**
 - For each solar→natal row, identify cross-theme implications:
@@ -123,23 +125,57 @@ For each themed block, define which evidence types surface (per user direction):
 - IF outer transit aspect 11-house planets → emit «трансформация планов / переоценка коллектива до DATE».
 - IF Pluto в 11 доме → emit «глубокая перестройка круга единомышленников».
 
-### Stage 3 — «Полезные люди» mini-block (new section 13 OR within closer per § Ready clarification 4)
+### Stage 3 — «Полезные люди» mini-block (per user clarification 4 = (a) new section 13)
 
-Generic derivation from natal chart (per user clarification 1 strategy):
+**Placement:** New section 13 **«ПОЛЕЗНЫЕ ЛЮДИ»** после «Общий вывод» (extends structure 12 → 13). Separate practical block, как у Марины. NOT hidden в closer.
 
-- **Asc sign + opposing sign** → «вам в этом году помогают [Asc-sign-people] и [opposing-sign-people]» (e.g. Olga Libra Asc → Весы/Овны).
-- **1st-house planets** → «люди с [1st-house-planet]-доминантой» (e.g. Olga Mars в 1 → люди с Марсом-доминантой).
-- **Sun sign** → «солнечные [Sun-sign]» (e.g. Olga Sun в Раке → солнечные Раки).
-- **MC sign** → «люди со статусом в [MC-sign]» (e.g. Olga MC Cancer → люди семейного склада).
+**Derivation algorithm (per user clarification 1 = (a) multi-channel sign-emission):**
 
-Generic deterministic mapping. NO Marina-copy. NO LLM. Each item traces к specific natal evidence.
+Worker реализует 5 evidence channels с дедупликацией:
 
-### Stage 4 — Cross-house combinations layer
+- **Asc sign:** «вам в этом году поддерживают [Asc-sign-people]» (e.g. Olga Libra Asc → Весы).
+- **Asc opposing sign:** «и [opposing-sign-people]» (Olga Aries opposing → Овны).
+- **1st-house planets:** «люди с [planet] в [его archetype] (e.g. Olga Mars в 1 → люди с яркой инициативой / марсианским стилем)».
+- **Sun sign:** «солнечные [Sun-sign]» (Olga Sun в Раке → солнечные Раки).
+- **MC sign:** «и люди со статусом в [MC-sign-archetype]» (Olga MC Cancer → люди семейного склада / привязанные к дому-теме).
 
-Per user clarification 3 mechanism, implement either:
-- (a) Generic rule: «if solar→natal row connects theme_X house to theme_Y house, emit cross-phrasing in block_X referring к block_Y».
-- (b) Curated cross-house mapping (e.g. 2→5 = «дети-расходы»; 5→2 = «дети-доход»; 4→7 = «дом-партнёрство»).
-- (c) Worker proposes.
+**Critical formatting rules (per user clarification 1 verbatim):**
+
+- **Дедупликация:** если Asc opposing sign == Sun sign OR Asc sign == any other channel, эмитим один раз.
+- **Короткий человеческий текст:** finalize прозаически, NOT list of «сигнатур» («ваши люди: Asc=Libra, opp=Aries, ...»).
+- Target output: ~2-4 sentences, читается как practical advisory.
+
+**Example target output для Olga** (Worker designs final phrasing):
+
+> «В этом году вам особенно помогают Весы и Овны — люди, которые ясно говорят, что хотят, и держат баланс в общении. Люди с яркой марсианской инициативой (Марс в 1-м доме у вас даёт настройку на действие). Солнечные Раки — те, у кого тема дома и семьи звучит как опора. И люди со статусом, который держится через семейное/домашнее (MC в Раке).»
+
+NO Marina-copy. NO LLM. Each channel traces к specific natal facts (`facts["natal_chart"]["positions"]` + `facts["natal_chart"]["asc_sign"]` etc.).
+
+### Stage 4 — Cross-house combinations layer (per user clarification 3 = (b) curated mapping)
+
+User direction 2026-05-20 verbatim: «Нужен контролируемый словарь связок: (2,5), (4,10), (5,11), (7,11), (11,3), (10,1), (9,3) и т.п. Без попытки автоматически "поэзить" любую комбинацию домов.»
+
+Worker implements **curated cross-house catalog** (~10-15 entries, controlled vocabulary):
+
+| Solar→Natal pair | Cross-theme phrasing |
+|---|---|
+| (2, 5) | «возможные траты на детей / творческие проекты» |
+| (5, 2) | «возможный доход через детей / творчество / удовольствие» |
+| (4, 10) | «дом и карьера переплетаются: статус через семейные решения» |
+| (10, 4) | «карьерные решения опираются на дом и семью» |
+| (5, 11) | «дети / творчество связаны с коллективом и планами» |
+| (11, 5) | «планы и коллектив подкреплены творческой включённостью» |
+| (7, 11) | «партнёрство влияет на планы и круг общения» |
+| (11, 7) | «круг общения формируется через партнёрские связи» |
+| (11, 3) | «планы трансформируются через 3-й дом — учёбу, переговоры, ближний круг» |
+| (10, 1) | «статус напрямую зависит от личной активности» (already implemented в СТАТУС block — preserve) |
+| (1, 10) | «личное проявление становится социально видимым» |
+| (9, 3) | «дальние горизонты замыкаются через 3-й дом — обучение, контакты» |
+| (3, 9) | «учёба и контакты ведут к расширению — заграница / экспертиза» |
+
+Worker может добавить 2-3 entries если pattern surfaces в calibrated cases. **NO auto-poetry** на произвольные combinations — strict catalog lookup.
+
+**Emission rule:** Для каждого themed block X с известными houses, проверять есть ли `(block_X_house → other_house)` в `analysis.house_axis.rows`; если matches catalog entry → emit cross-phrasing в block X.
 
 ### Stage 5 — Acceptance tests
 
@@ -227,7 +263,8 @@ Extend existing `services/api-python/tests/test_consultation_summary_evidence.py
 - [ ] NO engine modifications.
 - [ ] All emitted facts trace к existing `facts_json` data.
 - [ ] Each block-specific specificity rule applies universally (Worker tests на 6 calibrated cases что rules не Olga-specific).
-- [ ] Length-non-increase guard relaxed per § Ready clarification 5 (specificity expansion expected to grow content; Worker shows growth attributable к factual references, не canclerite re-introduction).
+- [ ] **Soft length guard (per user clarification 5 = (b)):** length growth allowed BUT Worker shows breakdown per case: «+X chars dated events / +Y chars cross-house combos / +Z chars Полезные люди / +W chars other». Canclerite re-introduction count must be 0.
+- [ ] **Fabrication guard (per user direction 2026-05-20, verbatim):** «Если Worker не может достать конкретный факт из computed data, он не имеет права писать соответствующий вывод "по смыслу". Лучше пропустить фразу, чем придумать её.» Every emitted phrase must trace к specific `facts_json` field; if evidence absent → phrase omitted, NOT invented.
 
 ## STOP triggers
 
@@ -239,14 +276,32 @@ Extend existing `services/api-python/tests/test_consultation_summary_evidence.py
 - Worker finds existing acceptance test breaks (Natalya phrasings appear, canclerite returns) → STOP.
 - «Полезные люди» mini-block requires evidence Worker doesn't have в facts_json → STOP, escalate (NO engine new fields).
 - Worker finds factual claim emitted (e.g. «Уран 90 Венера до 15.04.2027») что НЕ matches engine output для этого case → STOP, fix evidence-extraction logic.
+- **Fabrication trigger (per user direction 2026-05-20, verbatim):** Worker tempted to emit phrase «по смыслу» when concrete fact не extractable from `facts_json` → STOP, omit phrase. «Лучше пропустить фразу, чем придумать её.»
+- Worker tempted to add auto-poetic cross-house combinations beyond curated catalog (per clarification 3 strict catalog) → STOP, stay within curated list (Stage 4 ~13 entries + ≤3 worker-added with explicit justification).
+- Worker tempted to add cancelerite regression (e.g. «тема прорабатывается медленно и глубоко» comes back) → STOP, predecessor tail-polish guards preserved.
+- Length grows BUT breakdown shows ≥20% canclerite/padding → STOP, refactor (soft length guard violated).
 
-## Reviewer subagent — per § Ready clarification 6
+## Reviewer subagent — REQUIRED (per user clarification 6 = (a))
 
-Tier B+ multi-block content uplift. Previous similar TASK (`human-readable-consultation-summary`) used REQUIRED. This TASK has comparable scope.
+User direction 2026-05-20 verbatim: «Это уже не косметика, а содержательное усиление. Reviewer должен сверить: текст действительно из computed facts, а не "похоже на Марину".»
+
+External Reviewer pass REQUIRED after Worker self-submit. If Agent tool unavailable в Worker runtime (recurring Phase 8/9 precedent), Worker self-review + TL spawns external Reviewer post-submission.
+
+**Reviewer criteria:**
+- Architecture follows existing 3-layer skeleton (Layer 1 extended, не replaced; Layer 2 untouched; Layer 3 enriched).
+- Per-(theme, evidence-shape) variant selection preserved from predecessor.
+- **EVERY emitted factual claim (dates, planets, houses, signs) traces к specific `facts_json` field** — Reviewer spot-checks ≥5 specific claims per case (Olga + 2-3 calibrated). NO «похоже на Марину», NO fabricated facts.
+- «Полезные люди» mini-block per Stage 3 algorithm; multi-channel + dedup + human text.
+- Cross-house catalog applied strictly per Stage 4 curated list.
+- Length growth breakdown reported per case (clarification 5 soft guard).
+- No canclerite regression.
+- No client text leakage.
+- 0 STOP triggers fired.
+- **Fabrication guard:** if Worker emitted phrase whose factual basis can't be traced к `facts_json` → REJECT.
 
 ## Context
 
-**Mode normal + Tier B+ (Reviewer disposition per § Ready).** Worker mode: normal.
+**Mode normal + Tier B+ (Reviewer REQUIRED per user clarification 6).** Worker mode: normal.
 
 **Baseline:**
 - Product main @ `1074cf8` (tail polish closed).
@@ -270,35 +325,26 @@ Tier B+ multi-block content uplift. Previous similar TASK (`human-readable-consu
 - Engine output modifications.
 - Marina-text copying.
 
-**Ready: no** — pending 6 clarifications below.
+**Ready: yes** — 6 clarifications applied 2026-05-20 + fabrication guard:
 
-## Ready clarifications (pending user direction 2026-05-20)
+1. **«Полезные люди» derivation = (a) multi-channel sign-emission.** Asc sign + opposing sign + 1st-house planets + Sun sign + MC sign — 5 evidence channels с дедупликацией и коротким человеческим текстом (NOT list of «сигнатур»). Applied Stage 3.
 
-1. **«Полезные люди» derivation algorithm (Stage 3).**
-   - (a) Asc sign + opposing + 1st-house planets + Sun sign + MC sign — 5 evidence channels.
-   - (b) Personal-significator inference (Asc-ruler, MC-ruler, Sun-sign — emit those sign-people).
-   - (c) Worker proposes algorithm.
+2. **Date extraction = (a) reuse existing computed data.** No new Layer 1 channel; pull from `outer_cards.display_windows` + `annual_transit_table` существующих. Каждая дата traces к computed fact, NOT к Marina PDF. Applied Stage 1.1.
 
-2. **Date extraction strategy (Stage 1.1):**
-   - (a) Reuse already-computed `outer_cards.display_windows` + extract Jupiter/Saturn house-window dates from `annual_transit_table`.
-   - (b) Add new Layer 1 evidence channel `dated_events` with structured `(planet, aspect, target, start_date, end_date)` per theme.
-   - (c) Worker proposes.
+3. **Cross-house combinations = (b) curated mapping.** Controlled vocabulary `(2,5)`, `(4,10)`, `(5,11)`, `(7,11)`, `(11,3)`, `(10,1)`, `(9,3)` + similar. ~13 catalog entries; Worker может добавить ≤3 с justification. NO auto-poetry. Applied Stage 4.
 
-3. **Cross-house combinations (Stage 4):**
-   - (a) Generic rule: «if solar→natal row connects theme_X house to theme_Y house, emit cross-phrasing in block_X».
-   - (b) Curated cross-house mapping (e.g. 2↔5 = «дети-расходы»/«дети-доход»; 4↔7 = «дом-партнёрство»; etc.).
-   - (c) Worker proposes.
+4. **«Полезные люди» placement = (a) new section 13** «ПОЛЕЗНЫЕ ЛЮДИ» после «Общий вывод» (structure 12 → 13). Separate practical block, как у Marina. Applied Stage 3 + section structure.
 
-4. **«Полезные люди» mini-block placement.**
-   - (a) New section 13 after «Общий вывод» (extends structure 12 → 13 sections).
-   - (b) Paragraph inside «Общий вывод» closer (preserves 12 sections).
-   - (c) Separate «Полезные люди / окружение» section before closer (12-th moved to «Общий вывод» becomes 13-th).
+5. **Length guard = (b) soft with breakdown.** Growth allowed BUT Worker shows per-case breakdown: «+X dated events / +Y cross-house / +Z Полезные люди / +W other». Canclerite re-introduction count = 0. Applied Acceptance Discipline.
 
-5. **Length-non-increase guard disposition.** Previous TASK had strict «length ≤ pre-polish». This TASK expects specificity expansion — content grows from factual references.
-   - (a) Drop length guard для этого TASK; specificity > brevity.
-   - (b) Soft guard — length may grow, но Worker shows growth attributable к factual references (≥80% of new chars are dated events / cross-house combos / Полезные люди), не canclerite re-introduction.
-   - (c) Strict guard — must stay within ±10% of current.
+6. **Reviewer = (a) REQUIRED external Reviewer.** Не косметика, а содержательное усиление. Reviewer проверяет: text действительно из computed facts, а не «похоже на Марину». Applied Reviewer section.
 
-6. **Reviewer subagent.**
-   - (a) REQUIRED external Reviewer (parallel к `human-readable-consultation-summary` predecessor).
-   - (b) Optional + TL inline-verify (lower discipline; Tier B+ borderline).
+**Additional guard (per user direction 2026-05-20, verbatim):**
+
+> «Если Worker не может достать конкретный факт из computed data, он не имеет права писать соответствующий вывод "по смыслу". Лучше пропустить фразу, чем придумать её.»
+
+**Fabrication guard** applied across:
+- Stage 1.1 + Stage 2 (block-specific rules) — emission gates on evidence presence.
+- Acceptance Discipline («every emitted phrase traces к specific facts_json field; if evidence absent → omit, NOT invent»).
+- STOP triggers («Fabrication trigger: Worker tempted to emit phrase «по смыслу» when fact не extractable → STOP, omit»).
+- Reviewer criteria («Every emitted factual claim traces к facts_json; ≥5 spot-checks per case; fabrication → REJECT»).
