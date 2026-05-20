@@ -1,8 +1,51 @@
 # Статус — Astro
 
-Дата последнего обновления: 2026-05-20 (Consultation Summary Specificity Enrichment CLOSED — pytest 527/2/0; per-block factual references + curated cross-house catalog + section 13 «ПОЛЕЗНЫЕ ЛЮДИ»; все 6 Olga acceptance items pass; fabrication guard verified; external Reviewer APPROVE).
+Дата последнего обновления: 2026-05-20 (Humanize Generic Outer-Card Psychology DELIVERED — pytest 565/2/0; psychology layer rewritten как hybrid 3-dim composition + same-planet specialized routing; 4 phrase libraries; Olga 6/6 cards layer-separation compliant; calibrated 8/8 bit-identical; awaiting external Reviewer per clarification 5 = (b) REQUIRED).
 
 ## Сейчас
+
+**TASK humanize-generic-outer-card-psychology — DELIVERED 2026-05-20 (Tier B, awaiting external Reviewer per clarification 5 = (b) REQUIRED).** Worker переписал `_generic_psychology_text` в `services/api-python/app/pdf/outer_cards.py` (предшественник: specificity enrichment CLOSED 2026-05-20, product `8e59ea9`). **Bug fixed (user identified 2026-05-20):** psychology layer эмитил engine technical strings («Транзит Уран в квадрате c натальной Венерой в области 4 натального дома. Транзитная планета приносит неожиданные перемены...») — 4-layer mix технической строки + дома + тональности + архетипа, читалось как engine-comment, а не консультация. **Scope:** 1 функция перепиcана + 4 phrase library dicts добавлены + helper `_compose_hybrid_psychology` + 33 новых теста. **NO** engine touch, **NO** template touch, **NO** schema/fixtures touch, **NO** `_OUTER_CARD_FACTS` touch (calibrated cards bit-identical), **NO** `_generic_event_level_text` touch (event-level houses preserved), **NO** allowlist touch, **NO** LLM, **NO** Daragan verbatim copy.
+
+**4 phrase libraries (Stage 2):**
+- `_TRANSIT_PSYCHOLOGY_RU` (3 outer planets) — opener phrase (Uranus = свежесть/свобода/новое; Neptune = чувствование/мечта/прозрачные границы; Pluto = глубинная перестройка/концентрация силы).
+- `_TARGET_PSYCHOLOGY_RU` (10 natal targets Sun..Pluto) — middle phrase в genitive/accusative form fitting connector «Эта тема касается того, как устроены …».
+- `_ASPECT_PSYCHOLOGY_RU` (5 Ptolemaic aspects: Conjunction/Sextile/Square/Trine/Opposition) — closer phrase starting с «И …» для естественного flow.
+- `_SAME_PLANET_PSYCHOLOGY_RU` (15 entries: 3 outer planets × 5 aspects) — generational age-stage signatures для same-planet outer aspects (Uranus-Uranus = «возрастной перелом темы свободы»; Neptune-Neptune Square = «возрастная проверка большой мечты»; Pluto-Pluto Square = «возрастная инициация в собственную силу» — verbatim spec из user clarification 3).
+
+**Composition algorithm (Stage 3, clarification 1 = (c) hybrid):**
+```
+{transit_phrase}. Эта тема касается того, как устроены {target_phrase}. {aspect_closer}
+```
+Aspect closer начинается с «И …» — обеспечивает natural Russian connector к предыдущему предложению. Result читается как single coherent paragraph, NOT three glued cards.
+
+**Same-planet specialized routing (Stage 4, clarification 3 = (a)):**
+```python
+if transit_planet == target:
+    return _SAME_PLANET_PSYCHOLOGY_RU.get((transit_planet, aspect), "")
+```
+Standard 3-dim composition НЕ выполняется. Generational paragraph carries meaning directly.
+
+**Empty-string fallback (Stage 4, clarification 2 = (b)):** при отсутствии key в dimension dict → empty string. NO generic-padding fabrication. Event_level paragraph carries card alone в редкий случай fallback.
+
+**Olga consultation 12 — 6/6 generic outer cards rendered (sample card 1 — Уран кв Венера):**
+
+OLD (buggy):
+> «Транзит Уран в квадрате c натальным Венерой в области 4 натального дома. Транзитная планета приносит неожиданные перемены и пробуждение. Этот аспект — напряжённая ситуация, требующая преодоления.»
+
+NEW (post-rewrite):
+> «Внутри поднимается потребность в свежести и свободе, тяга к новому и неожиданному. Эта тема касается того, как устроены близость, удовольствие, вкусы и способ выбирать красивое. И старые формы начинают казаться тесными — нужно преодоление, чтобы пустить новое внутрь.»
+
+Other 5 cards similarly transformed (см. HANDOFF § «Olga acceptance — all 6 cards rendered»). Card 3 (Uranus Opposition Uranus) routed к same-planet dict: «Внутри проходит возрастной перелом темы свободы — зеркало, в котором видно, что отжило и что просит обновления. Идёт пересборка собственной самостоятельности и способа жить иначе.»
+
+**Layer-separation guard verified (verbatim user direction 2026-05-20):** «In generic cards, psychology must not mention houses, but event_level must mention houses. This split is mandatory and tested on at least 3 cards.» Tested on 4 distinct (transit, aspect, target) triples + all 6 Olga cards. Manual proof matrix: psychology 6/6 cards с 0 house tokens × 5 forbidden patterns = 30 assertions clean. Event_level 6/6 cards с ≥1 house token. Automated `test_olga_psychology_no_house_language` + `test_olga_event_level_has_house_language` lock guard.
+
+**Calibrated 8-case regression PASS bit-identical** (`test_calibrated_cards_bit_identical_except_provenance` × 8 fixture cases; 07-mariya vacuous-skip). `_OUTER_CARD_FACTS` lines 496-810 untouched (verified via `git diff`).
+
+**Pytest 527 → 565 passed + 2 skipped + 0 failed** (+38 new tests: 8 strict-string negative × multiple patterns + 3 semantic positive + 4 layer-separation parametrized + 2 distinct-output + 6 same-planet routing + 1 distinct-from-standard + 4 empty-fallback + 1 determinism + 1 signature stability + 4 dict cardinality + 2 Olga end-to-end). Cabal `Up to date`. Product `3d36b2f` committed + pushed to backup ✓.
+
+**Reviewer subagent NOT spawned** per recurring Phase 8/9 precedent (8th occurrence — Agent tool unavailable в Worker runtime); Worker self-review applied; **TL must spawn external Reviewer per TASK clarification 5 = (b) REQUIRED**. Reviewer criteria: (a) composition follows hybrid algorithm (transit opener + target-psyche middle + aspect tone closer); reads as single coherent paragraph; (b) 4 phrase library dicts present; (c) layer separation verified на ≥3 cards (psychology NO houses, event_level HAS houses); (d) psychology text astrologically adequate + humanly readable (≥5 generic-card outputs); (e) NO Daragan verbatim copy; (f) NO fabricated psychology (empty fallback honored); (g) calibrated allowlist bit-identical; (h) 0 STOP triggers fired.
+
+
 
 **TASK consultation-summary-specificity-enrichment — CLOSED 2026-05-20 (Tier B+, ACCEPTED по TL inline-verify + external Reviewer APPROVE + user explicit closure ack).** Substantive content uplift: 6 user FAIL items resolved через computed-data-driven phrases (no Marina-copying). Pytest **527/2/0** (+24 new tests). All factual claims trace к `facts_json`. **External Reviewer verdict (2026-05-20, clarification 6 = REQUIRED honoured):** all 10 TASK criteria PASS + all 13 additional rigorous checks PASS. 7+ trace-to-facts spot-checks per case verified DYNAMIC (NOT hardcoded). Critical Olga refs computed from engine output: «Уран 90° Венера до 15.04.2027» (exit_jd=2461510.7145), «Нептун 120° Юпитер до 05.02.2027» (exit_jd=2461441.530), «Уран 180° Юпитер до 22.03.2027». Cross-house catalog: `_CROSS_HOUSE_CATALOG` exactly 13 entries (NO auto-poetry). Полезные люди 5-channel multi-sign emission: Asc / opposing / 1st-house planets / Sun / MC с дедупликацией; renders as natural Russian advisory (NOT list of «сигнатур»). Calibrated 6/6 cases case-specific (Maxim Cap/Vir/Sag + Jup/Pluto в 1; Natalya Leo/Leo dedupe + Aries MC; Danila Lib/Leo/Cancer + Mars/Pluto в 1 — completely different sentence sets per case). **Fabrication guard independently verified:** 4 synthetic-fixture pytest tests strip evidence (Jupiter-4 / Uranus-Venus / Neptune-Jupiter / natal positions) и assert corresponding phrases ABSENT. Не declared — actually exercised. 10 omitted candidate phrases в HANDOFF Worker discipline sound.
 
