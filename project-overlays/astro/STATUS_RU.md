@@ -1,8 +1,59 @@
 # Статус — Astro
 
-Дата последнего обновления: 2026-05-20 (Current-Year Filter + Psychology Upgrade CLOSED — pytest 619/3/0; Olga generic-fallback 6/6 convergence с Marina selection без allowlist; horizon/filter bug resolved; external Reviewer APPROVE).
+Дата последнего обновления: 2026-05-20 (Solar Meeting Place per Consultation — DELIVERED awaiting external Reviewer; Stage 0 invariants PASS; pytest 633/3/0; schema-change-gate atomic; Olga consultation 12 facts_json bit-identical, PDF +17 chars annotation per Stage 5.2 intent).
 
 ## Сейчас
+
+**TASK solar-meeting-place-per-consultation — DELIVERED 2026-05-20 (Tier B+, awaiting external Reviewer per clarification 6 = (a) REQUIRED).** Consultation-level `meeting_place` plumbed end-to-end (DB migration + API + Pydantic + storage + compute + UI form + PDF template + schema-change-gate atomic commit). Engine UNTOUCHED — Stage 0 PASS confirmed at code (`bridge.py:559-563`, `Solar.hs:746-757`) + empirical levels (test_meeting_place_invariants_olga + end-to-end через Haskell core CLI).
+
+**Operational heart — invariant proof (Olga consultation 12 fixture, solar 2026):**
+
+| Поле | Москва (birth) | Питер (override) | Verdict |
+|---|---|---|---|
+| `solar_chart.return_jd` | `2461234.87657547` | `2461234.87657547` | identical (Sun-longitude only) |
+| `solar_chart.positions[*].longitude` (×10 planets) | byte-identical | byte-identical | identical (planets in sky) |
+| `natal_chart` | unchanged | unchanged | identical (birth-only) |
+| Placidus cusps | `[189.48, 213.65, 244.78, ..., 167.87]` | `[184.45, 206.82, 236.89, ..., 163.42]` | ~5° shift per cusp |
+| Uranus `house_placidus` | house 8 | house 9 | DIFFERS |
+
+«Тут вся суть» (user 2026-05-20 verbatim) — три инварианта HOLD, solar cusps + planet-in-house DIFFER. End-to-end через Haskell core CLI.
+
+**Schema-change-gate (Bright Line #8) — atomic single commit:** `consultation.schema.json` IS API-UI contract (consumed by `test_api.py` jsonschema.validate + Pydantic + TS types), so single product commit delivers schema + TS-types + Pydantic + Python contract tests + migration + storage + compute + UI + template + 14 new tests. Worker investigated и documented decision per clarification 5 = (c).
+
+**Backward compatibility:**
+- Olga consultation 12 facts_json: bit-identical (DB row untouched; SR_jd, longitudes, natal — identical).
+- PDF text: +17 chars exactly (annotation «(место рождения)» в строке «Место встречи» per Stage 5.2 explicit fix).
+- Не bit-identical PDF, но Stage 5.2 + 7.5 acceptance явно требуют annotation чтобы исключить silent-birth-as-meeting bug. Worker interprets backward compat = facts/structure identity + 17-char fix; TL/Reviewer decides if strict bit-identical PDF preferred (trivial revert).
+
+**Pytest 619 → 633 passed + 3 skipped + 0 failed** (+14 new tests: 6 в `tests/test_meeting_place_snapshot.py`, 8 в `tests/test_api_meeting_place.py`). Cabal: clean. Frontend `npm run build`: clean (110 modules, dist 248 KB).
+
+**Files (product, single atomic commit):**
+- new: `services/api-python/app/migrations/004_consultation_meeting_place.sql` (4 ALTER TABLE).
+- new: `services/api-python/tests/test_meeting_place_snapshot.py` (6 tests).
+- new: `services/api-python/tests/test_api_meeting_place.py` (8 tests).
+- mod: `packages/contracts/consultation.schema.json` (+4 optional fields).
+- mod: `apps/web-react/src/types.ts` (`Consultation` + `ConsultationCreate` — +4 fields each).
+- mod: `apps/web-react/src/pages/ConsultationForm.tsx` (optional fieldset + manual prefill + coherence guard).
+- mod: `apps/web-react/src/pages/ConsultationView.tsx` (header display + fallback annotation).
+- mod: `services/api-python/app/models.py` (Pydantic `ConsultationCreate`/`Response` + tz validator).
+- mod: `services/api-python/app/consultations.py` (`ConsultationRow` TypedDict + `create_consultation` atomic coherence).
+- mod: `services/api-python/app/main.py` (`_consultation_to_response`, `create_consultation_endpoint`, `compute_consultation` plumbing).
+- mod: `services/api-python/app/pdf/templates/solar.html.j2` (lines 195-247: meta-corner + cover-caption display logic).
+
+**Discipline guards (TASK § Strict prohibitions):**
+- NO engine touch (Stage 0 PASS preserves Haskell + Python bridge engine paths).
+- NO Person model change (meeting_place stays consultation-level per user direction).
+- NO change к natal / solar_return_jd / planet longitudes (invariants empirically verified).
+- NO LLM.
+- NO fixture regeneration (golden cases bit-identical).
+- NO `solar_meeting_utc_offset` column (per clarification 3 = (b) — IANA timezone_id sufficient).
+- NO `solar-resolved-input.schema.json` touch (already has meeting_place).
+
+**Reviewer policy: REQUIRED per clarification 6 = (a)** — Agent tool unavailable в Worker runtime (10th occurrence Phase 8/9 precedent); Worker self-review applied; TL to spawn external Reviewer. Reviewer focus: (1) Stage 0 invariant proof, (2) schema-change-gate atomic compliance, (3) backward compat interpretation, (4) meeting fields atomic tuple guards.
+
+## История
+
+**TASK current-year-generic-cards-and-psychology-upgrade — CLOSED 2026-05-20 (предшественник).** См. ниже.
 
 **TASK current-year-generic-cards-and-psychology-upgrade — CLOSED 2026-05-20 (Tier B+, ACCEPTED по TL inline-verify + external Reviewer APPROVE + user explicit closure ack).** Bug 1 (solar-year overlap filter в generic-fallback path) + Bug 2 (`_SPECIFIC_PSYCHOLOGY_RU` 10-entry override dict с natural aspect-tone embedding). Pytest **619/3/0** (+54 new tests; +1 legitimate skipped — Mariya editorial-empty fixture parametrize). **External Reviewer verdict (2026-05-20, clarification 5 = REQUIRED honoured):** APPROVE. All Bug 1 (4) + Bug 2 (7) criteria PASS + cross-cutting (4) + 9 additional rigorous checks PASS. Live PDF inspection confirms все 6 Olga cards с правильным routing (5 specific + 1 same-planet `Uranus opp Uranus` — priority sequence wins). Filter location verified в `outer_cards.py:2204` AFTER `aggregate_display_windows`; calibrated branch (`outer_cards_for_case` allowlist path) NOT invokes filter (Guard #1 honoured at code level). Daragan verbatim spot-check (3 entries) — 0 verbatim 3+ word matches.
 
