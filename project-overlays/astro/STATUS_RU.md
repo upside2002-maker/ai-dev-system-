@@ -1,8 +1,29 @@
 # Статус — Astro
 
-Дата последнего обновления: 2026-05-20 (Current-Year Generic Cards + Psychology Upgrade DELIVERED — pytest 619/3/0; Bug 1 solar-year overlap filter в generic-fallback path; Bug 2 `_SPECIFIC_PSYCHOLOGY_RU` 10-entry override dict; Olga consultation 12 5 cards dropped + 6 kept; calibrated 8/8 bit-identical; awaiting external Reviewer per clarification 5 REQUIRED).
+Дата последнего обновления: 2026-05-20 (Current-Year Filter + Psychology Upgrade CLOSED — pytest 619/3/0; Olga generic-fallback 6/6 convergence с Marina selection без allowlist; horizon/filter bug resolved; external Reviewer APPROVE).
 
 ## Сейчас
+
+**TASK current-year-generic-cards-and-psychology-upgrade — CLOSED 2026-05-20 (Tier B+, ACCEPTED по TL inline-verify + external Reviewer APPROVE + user explicit closure ack).** Bug 1 (solar-year overlap filter в generic-fallback path) + Bug 2 (`_SPECIFIC_PSYCHOLOGY_RU` 10-entry override dict с natural aspect-tone embedding). Pytest **619/3/0** (+54 new tests; +1 legitimate skipped — Mariya editorial-empty fixture parametrize). **External Reviewer verdict (2026-05-20, clarification 5 = REQUIRED honoured):** APPROVE. All Bug 1 (4) + Bug 2 (7) criteria PASS + cross-cutting (4) + 9 additional rigorous checks PASS. Live PDF inspection confirms все 6 Olga cards с правильным routing (5 specific + 1 same-planet `Uranus opp Uranus` — priority sequence wins). Filter location verified в `outer_cards.py:2204` AFTER `aggregate_display_windows`; calibrated branch (`outer_cards_for_case` allowlist path) NOT invokes filter (Guard #1 honoured at code level). Daragan verbatim spot-check (3 entries) — 0 verbatim 3+ word matches.
+
+**User feedback 2026-05-20 verbatim:** «Это важный фикс: теперь стало понятно, что "лишние карточки" у Ольги были не чисто editorial, а в значительной части horizon/filter bug. Хорошо, что generic fallback теперь сам сошёлся с Мариной на 6/6 без allowlist.»
+
+**Phase 9.3A convergence milestone:** Phase 9.3A Stage 0 PARTIAL verdict 2026-05-19 («engine baseline best generalisable, но Olga over-include 11 vs Marina 6») now **resolved natural через solar-year overlap rule** combined с Phase 9.2B angle-filter:
+- Phase 9.2B angle-filter 2026-05-18: dropped 2 angle-target cards (Уран кв МС + Нептун кв Асц).
+- Current-year filter 2026-05-20: dropped 5 over-include planet-target cards (all-windows out-of-year).
+- Result: Olga generic-fallback **6 cards == Marina-selected 6 cards exact match**, без allowlist curation.
+- Phase 9.3A memo § 5.3 erratum «editorial single-window narrowing per-case; default engine show-all generalisable» still holds for **calibrated** path; generic-fallback now empirically converges с Marina через filter rules.
+
+**User explicit accepted decisions (2026-05-20):**
+- Generic-fallback ↔ Marina selection convergence noted as significant milestone — first time non-calibrated path matches Marina without allowlist.
+- In-place mutation в `_filter_windows_to_current_year` (Reviewer non-blocking suggestion #3) accepted as future hardening, not blocker.
+
+**Reviewer non-blocking suggestions logged (NOT scheduled):**
+- HANDOFF diff-count methodology discrepancy (+285/-8 vs measured +278/-9) — cosmetic; no action.
+- `test_uranus_sextile_mercury_psychology_specific_keywords` could fold into parametrized list для symmetry — future cleanup candidate.
+- `_filter_windows_to_current_year` mutates input dicts in-place when re-numbering `touch_index`; defensive copy future-proofing if upstream re-use surfaces — accepted as **future hardening**, not blocker.
+
+Lifecycle: TASK `review → done`; HANDOFF `ready_for_review → closed`; both archived.
 
 **TASK current-year-generic-cards-and-psychology-upgrade — DELIVERED 2026-05-20 (Tier B+, awaiting external Reviewer per clarification 5 = (a) REQUIRED).** Worker fixed 2 bugs в `services/api-python/app/pdf/outer_cards.py` (предшественник: humanize-generic-outer-card-psychology CLOSED 2026-05-20, product `3d36b2f`).
 

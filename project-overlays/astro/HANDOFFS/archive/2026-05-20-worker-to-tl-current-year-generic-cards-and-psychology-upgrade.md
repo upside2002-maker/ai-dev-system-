@@ -1,6 +1,6 @@
 # HANDOFF: worker → tl — current-year-generic-cards-and-psychology-upgrade
 
-- Status: ready_for_review
+- Status: closed
 - Date: 2026-05-20
 - Project: astro
 - From: worker
