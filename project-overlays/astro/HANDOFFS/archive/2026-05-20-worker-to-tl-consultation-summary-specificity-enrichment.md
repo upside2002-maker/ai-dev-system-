@@ -1,6 +1,6 @@
 # HANDOFF: worker → tl — consultation-summary-specificity-enrichment
 
-- Status: ready_for_review
+- Status: closed
 - Date: 2026-05-20
 - Project: astro
 - From: worker

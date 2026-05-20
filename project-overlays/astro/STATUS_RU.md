@@ -1,8 +1,27 @@
 # Статус — Astro
 
-Дата последнего обновления: 2026-05-20 (Consultation Summary Specificity Enrichment DELIVERED — pytest 527/2/0; per-block specificity rules (Stage 2.1–2.5) + curated cross-house catalog (Stage 4) + new section 13 «ПОЛЕЗНЫЕ ЛЮДИ» (Stage 3); все 6 Olga acceptance items pass; calibrated 6-case regression case-specific; fabrication guard verified (10 omitted candidate phrases); Reviewer policy REQUIRED — Agent tool unavailable, ожидает external Reviewer от TL).
+Дата последнего обновления: 2026-05-20 (Consultation Summary Specificity Enrichment CLOSED — pytest 527/2/0; per-block factual references + curated cross-house catalog + section 13 «ПОЛЕЗНЫЕ ЛЮДИ»; все 6 Olga acceptance items pass; fabrication guard verified; external Reviewer APPROVE).
 
 ## Сейчас
+
+**TASK consultation-summary-specificity-enrichment — CLOSED 2026-05-20 (Tier B+, ACCEPTED по TL inline-verify + external Reviewer APPROVE + user explicit closure ack).** Substantive content uplift: 6 user FAIL items resolved через computed-data-driven phrases (no Marina-copying). Pytest **527/2/0** (+24 new tests). All factual claims trace к `facts_json`. **External Reviewer verdict (2026-05-20, clarification 6 = REQUIRED honoured):** all 10 TASK criteria PASS + all 13 additional rigorous checks PASS. 7+ trace-to-facts spot-checks per case verified DYNAMIC (NOT hardcoded). Critical Olga refs computed from engine output: «Уран 90° Венера до 15.04.2027» (exit_jd=2461510.7145), «Нептун 120° Юпитер до 05.02.2027» (exit_jd=2461441.530), «Уран 180° Юпитер до 22.03.2027». Cross-house catalog: `_CROSS_HOUSE_CATALOG` exactly 13 entries (NO auto-poetry). Полезные люди 5-channel multi-sign emission: Asc / opposing / 1st-house planets / Sun / MC с дедупликацией; renders as natural Russian advisory (NOT list of «сигнатур»). Calibrated 6/6 cases case-specific (Maxim Cap/Vir/Sag + Jup/Pluto в 1; Natalya Leo/Leo dedupe + Aries MC; Danila Lib/Leo/Cancer + Mars/Pluto в 1 — completely different sentence sets per case). **Fabrication guard independently verified:** 4 synthetic-fixture pytest tests strip evidence (Jupiter-4 / Uranus-Venus / Neptune-Jupiter / natal positions) и assert corresponding phrases ABSENT. Не declared — actually exercised. 10 omitted candidate phrases в HANDOFF Worker discipline sound.
+
+**User feedback 2026-05-20 verbatim:** «Это именно тот слой, который был нужен: не копирование Марины, а фактическое насыщение из computed data. Особенно хорошо, что Reviewer проверил fabrication guard на синтетических фикстурах: если факта нет, фраза не появляется. Это ключевое.»
+
+**User explicit accepted decisions (2026-05-20):**
+- **Engine month-boundary rounding accepted:** software emits «октябрь 2026 — февраль 2027» (Jupiter-в-4 entry/exit JD) vs Marina's «ноябрь – январь» (tighter narrative rounding). Engine output is the **only fabrication-safe choice**. If future user захочет Marina's tighter rounding — separate **date-rounding / display policy TASK** (NOT in current scope; engine-derived borders honored as-is for now).
+- **MC dedup при совпадении с Sun sign accepted:** Olga's MC Cancer == Sun Cancer → Sun-channel claims sign; MC «И люди со статусом» sentence suppressed. Лучше не раздваивать один знак искусственно.
+
+**Reviewer non-blocking suggestions logged (NOT scheduled, future polish):**
+- MC dedup nuance — could reconsider если user захочет MC framing surfaced even when overlapping. **Accepted as-is per user direction above.**
+- Engine month-rounding vs Marina rounding — **separate future date-rounding TASK candidate.**
+- HANDOFF length breakdown shows +specs=0 для Maxim (engine не emits Jupiter windows для его дома 2/4/5/10; fabrication guard works per-case).
+- `_legacy_compose_theme_prose` orphan still present line 3015 — Worker correctly resisted cleanup (out of scope); future cleanup TASK candidate.
+- «1-12» substring в upper «Соляр» table line 158 — different surface, engine emission level, separate scope.
+
+**User direction post-closure 2026-05-20:** свежий render Olga + финальная сверка `Итоги` + `Полезные люди` как candidate для показа Marina.
+
+Lifecycle: TASK `review → done`; HANDOFF `ready_for_review → closed`; both archived.
 
 **TASK consultation-summary-specificity-enrichment — DELIVERED 2026-05-20 (Tier B+, awaiting external Reviewer per clarification 6 = (a) REQUIRED).** Worker применил specificity enrichment поверх предшественника `synthesis-tail-template-polish` (CLOSED 2026-05-19, product `1074cf8`). **Scope:** `services/api-python/app/pdf/synthesis_themes.py` (+818 lines: Layer 1 specificity helpers — date extraction, social-planet house windows, outer-aspect-to-personal hits, cross-house catalog phrase emission, sign-from-longitude derivation, 1st-house planets derivation; Layer 3 block-specific rules — 5 helpers `_money_specific_facts` / `_home_specific_facts` / `_children_specific_facts` / `_status_specific_facts` / `_plans_specific_facts`; new `_useful_people_block` function + public `useful_people_paragraphs`; `summary_table` returns extra `"useful_people"` key). **Template** `templates/solar.html.j2` (+14 lines: Section 13 «Полезные люди» block после «Общий вывод», gated by `{% if sumtab.useful_people %}`). **Tests** `tests/test_consultation_summary_evidence.py` (+24 new acceptance + `_olga_facts_extended` fixture + length-test soft-budget refactor per clarification 5(b)).
 
