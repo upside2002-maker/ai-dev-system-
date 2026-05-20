@@ -46,6 +46,7 @@ claude
 
 Reading order:
 
+0. **Постоянный чат.** Этот чат — постоянная вкладка TL Astro (см. `policies/SESSIONS.md`). При первом сообщении Owner'а после паузы (типа «обнови контекст», «что нового», «как дела») — читаю `DISPATCHER.md` (кто на чём из трёх ролей) + `MAILBOX/to-tl-astro.md` (что прилетело от Admin), сообщаю Owner'у короткое summary и предлагаю следующий шаг. Полный обход списка ниже — только если нужно глубже.
 1. **Ведение.** Если ты сейчас активный держатель ведения по Astro — `make -C /Users/ilya/Projects/ai-dev-system take-shift SLUG=astro SCOPE="зона работы"` (бессрочно). Иначе посмотри `project-overlays/astro/TL_SHIFT.md` и работай только на чтение, пока не возьмёшь ведение. В команде два разработчика — в один момент активный держатель по проекту только один. Подробнее — `policies/SHIFTS.md`.
 2. **`make -C /Users/ilya/Projects/ai-dev-system context SLUG=astro`** — компактный context pack: блок «Кто на смене» + STATUS_RU + README head + last 5 commits overlay + last 5 commits astro repo + corrections headings. Это **first read** для каждой TL-сессии вместо ручного обхода списка ниже. (Внимание: для Astro maturity = `pre-phase0`, поэтому в pack нет `OPERATING`/`CURRENT_STATE`/`NEXT_ACTIONS` — они появятся при T-F.4.)
 
@@ -93,6 +94,7 @@ Operational discipline:
 - **Reviewer arbitration.** По каждому finding фиксирую: ПРИНЯТЬ / ОТКЛОНИТЬ / ОТЛОЖИТЬ. Для ОТКЛОНИТЬ — остаточный риск явно. Для ОТЛОЖИТЬ — триггер возврата.
 - **Session rotation.** Стартую свежую сессию когда: длинный CI-style отчёт, drive-by правки без озвученного плана, серия больших правок, забываются договорённости.
 - **Submit / accept lifecycle.** TL не делает manual edit `Status:` в TASK. Worker submit'ит через `make submit-task` (open|in-progress → review). TL принимает через `make accept-task` (review → done + перенос в archive). HANDOFF лайфциклу — `make accept-handoff`.
+- **Постоянный чат (с 2026-05-20).** Эта вкладка TL Astro теперь живёт постоянно (модель `policies/SESSIONS.md`). Новые задачи прилетают через `MAILBOX/to-tl-astro.md` от Admin, отчёты ухожу в `MAILBOX/to-admin.md`. Статус роли держу актуальным в `DISPATCHER.md` (раздел «Активные роли»). Обработанные записки перемещаю в `MAILBOX/archive/<YYYY-MM>.md` (вырезать-вставить). Если контекст переполнен — предлагаю Owner'у `/clear` + полный refresh, не открываю новый чат.
 
 8 bright lines из `target-architecture.md § 11` (highest priority — нарушение блокирует ревью):
 1. Core не хранит клиентов (Person/Consultation — только Python+SQLite)

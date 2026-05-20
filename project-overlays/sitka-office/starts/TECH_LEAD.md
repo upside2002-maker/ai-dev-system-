@@ -33,6 +33,7 @@ claude
 
 Reading order:
 
+0. **Постоянный чат.** Этот чат — постоянная вкладка TL Sitka (см. `policies/SESSIONS.md`). При первом сообщении Owner'а после паузы (типа «обнови контекст», «что нового», «как дела») — читаю `DISPATCHER.md` (кто на чём из трёх ролей) + `MAILBOX/to-tl-sitka.md` (что прилетело от Admin), сообщаю Owner'у короткое summary и предлагаю следующий шаг. Полный обход списка ниже — только если нужно глубже.
 1. **Ведение.** Если ты сейчас активный держатель ведения по sitka — `make -C /Users/ilya/Projects/ai-dev-system take-shift SLUG=sitka-office SCOPE="зона работы"` (бессрочно). Иначе посмотри `project-overlays/sitka-office/TL_SHIFT.md` и работай только на чтение, пока не возьмёшь ведение. В команде два разработчика — в один момент активный держатель по проекту только один. Подробнее — `policies/SHIFTS.md`.
 2. **`make -C /Users/ilya/Projects/ai-dev-system context SLUG=sitka-office`** — компактный context pack: блок «Кто на смене» + STATUS_RU + OPERATING dashboard + CURRENT_STATE summary + active TASKS/HANDOFFS + last 5 commits overlay + last 5 commits sitka-office + corrections headings + NEXT_ACTIONS head. Это **first read** для каждой TL-сессии вместо ручного обхода списка ниже.
 
@@ -78,6 +79,7 @@ Operational discipline:
 - **Local smoke ownership.** Если поднимаю dev-окружение / меняю runtime state (миграции, фикстуры, сервисы) — фиксирую в `OPERATING.md` или отдельном runbook.
 - **Reviewer arbitration.** По каждому finding фиксирую: ПРИНЯТЬ / ОТКЛОНИТЬ / ОТЛОЖИТЬ. Для ОТКЛОНИТЬ — остаточный риск явно. Для ОТЛОЖИТЬ — триггер возврата.
 - **Session rotation.** Стартую свежую сессию когда: длинный CI-style отчёт, drive-by правки без озвученного плана, серия больших правок, забываются договорённости.
+- **Постоянный чат (с 2026-05-20).** Эта вкладка TL Sitka теперь живёт постоянно (модель `policies/SESSIONS.md`). Новые задачи прилетают через `MAILBOX/to-tl-sitka.md` от Admin, отчёты ухожу в `MAILBOX/to-admin.md`. Статус роли держу актуальным в `DISPATCHER.md` (раздел «Активные роли»). Обработанные записки перемещаю в `MAILBOX/archive/<YYYY-MM>.md` (вырезать-вставить). Если контекст переполнен — предлагаю Owner'у `/clear` + полный refresh, не открываю новый чат.
 
 Задача этой сессии: [ЗАПОЛНИ — например "разобрать handoff от dm-7-b-2 worker", "поставить TASK для dm-7-b-3", "арбитраж reviewer findings"]
 
