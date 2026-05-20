@@ -1,6 +1,6 @@
 # HANDOFF: worker → tl — synthesis-tail-template-polish
 
-- Status: ready_for_review
+- Status: closed
 - Date: 2026-05-19
 - Project: astro
 - From: worker
