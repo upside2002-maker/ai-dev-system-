@@ -1,6 +1,6 @@
 # HANDOFF: worker → tl — humanize-generic-outer-card-psychology
 
-- Status: ready_for_review
+- Status: closed
 - Date: 2026-05-20
 - Project: astro
 - From: worker

@@ -1,6 +1,6 @@
 # TASK: humanize-generic-outer-card-psychology
 
-- Status: review
+- Status: done
 - Ready: yes
 - Date: 2026-05-20
 - Project: astro
