@@ -1,8 +1,26 @@
 # Статус — Astro
 
-Дата последнего обновления: 2026-05-20 (Humanize Generic Outer-Card Psychology CLOSED — pytest 565/2/0; psychology layer ↔ event_level layer separation enforced; 4 phrase libraries; same-planet generational routing; Olga 11/11 cards layer-separation verified; external Reviewer APPROVE).
+Дата последнего обновления: 2026-05-20 (Current-Year Generic Cards + Psychology Upgrade DELIVERED — pytest 619/3/0; Bug 1 solar-year overlap filter в generic-fallback path; Bug 2 `_SPECIFIC_PSYCHOLOGY_RU` 10-entry override dict; Olga consultation 12 5 cards dropped + 6 kept; calibrated 8/8 bit-identical; awaiting external Reviewer per clarification 5 REQUIRED).
 
 ## Сейчас
+
+**TASK current-year-generic-cards-and-psychology-upgrade — DELIVERED 2026-05-20 (Tier B+, awaiting external Reviewer per clarification 5 = (a) REQUIRED).** Worker fixed 2 bugs в `services/api-python/app/pdf/outer_cards.py` (предшественник: humanize-generic-outer-card-psychology CLOSED 2026-05-20, product `3d36b2f`).
+
+**Bug 1 — current-year overlap filter (generic-fallback path только):** `generic_outer_cards` теперь применяет solar-year overlap filter после `aggregate_display_windows` — окна полностью вне `[SR, SR+365.25]` отбрасываются (Guard #2 strict, no «context» retention); карты без in-year окон дропаются (card-level). **Olga consultation 12 PDF post-Phase-8E ±730d buffer**: 11 → 6 generic cards. Dropped 5 cards: `тр Уран в секстиле c нат Меркурием` (windows 2024-2025 ALL out), `тр Уран в квадрате c нат Луной` (3 out / 0 in), `тр Нептун в квадрате c нат Марсом`, `тр Нептун в квадрате c нат Нептуном`, `тр Плутон в секстиле c нат Юпитером`. **Filter scope strict — generic-fallback only (Guard #1):** calibrated allowlist branch bit-identical (case 01-kseniya Уран опп Солнце multi-year 2024-2026 sweep preserved with all 3 windows intact).
+
+**Bug 2 — `_SPECIFIC_PSYCHOLOGY_RU` 10-entry override dict:** Route added в `_generic_psychology_text` между same-planet (priority 1) и hybrid fallback (priority 3). Mandatory minimum 4 entries (Uranus-Sextile-Mercury / Uranus-Square-Venus / Neptune-Trine-Jupiter / Pluto-Sextile-Uranus) + 6 archetypally-important additions (Uranus-Trine-Sun, Uranus-Opposition-Jupiter, Neptune-Square-Venus, Neptune-Trine-Uranus, Pluto-Trine-Sun, Pluto-Square-Saturn). Aspect tone descriptor («Гармоничный / Напряжённый / Глубинный») вплетён natural в opening clause каждой entry (NOT mechanical prefix assembly). 0 Daragan verbatim 3+ word matches (spot-checked).
+
+**Uranus-Sextile-Mercury target style achieved (user 2026-05-20):**
+> «Гармоничный транзит ментального обновления: ум становится быстрее, гибче, оригинальнее. Хорошее время для обучения, новых тем, технологий, генерации идей и нестандартных решений. Могут приходить внезапные инсайты; легче общаться, выражать необычные мысли и смотреть на привычные вещи свежо.»
+
+Все 7 semantic keywords TASK acceptance: `ментал` (ментального) ✓, `нов` (новых, новые) ✓, `иде` (идей) ✓, `обуч` (обучения) ✓, `инсайт` ✓, `общ` (общаться) ✓, `гибк` (гибче) / `оригиналь` (оригинальнее) ✓.
+
+**Scope:** filter helpers `_window_overlaps_year` + `_filter_windows_to_current_year` + boundary parsing в `generic_outer_cards` + `_SPECIFIC_PSYCHOLOGY_RU` dict (10 entries) + routing priority в `_generic_psychology_text` + 54 new tests в `test_transit_section_generic.py`. **NO** engine touch, **NO** template touch, **NO** schema/fixtures touch, **NO** `_OUTER_CARD_FACTS` touch (calibrated cards bit-identical), **NO** `_generic_event_level_text` touch (event-level houses preserved), **NO** allowlist touch, **NO** LLM, **NO** Daragan verbatim copy, **NO** Olga-only hardcoded behavior.
+
+**Pytest 565 → 619 passed + 3 skipped + 0 failed (+54 new tests).** Cabal `Up to date`. Product `9c800e7`. Overlay pending (this commit). Awaiting external Reviewer per clarification 5 = REQUIRED.
+
+---
+
 
 **TASK humanize-generic-outer-card-psychology — CLOSED 2026-05-20 (Tier B, ACCEPTED по TL inline-verify + external Reviewer APPROVE + user explicit closure ack).** Psychology layer rewrite: «Транзит Уран в квадрате c натальной Венерой в области 4 натального дома. Транзитная планета приносит...» (engine-dump bug) → «Внутри поднимается потребность в свежести и свободе, тяга к новому и неожиданному. Эта тема касается того, как устроены близость, удовольствие, вкусы и способ выбирать красивое. И старые формы начинают казаться тесными — нужно преодоление, чтобы пустить новое внутрь.» (hybrid 3-dim composition). Pytest **565/2/0** (+38 new tests). **External Reviewer verdict (2026-05-20, clarification 5 = REQUIRED honoured):** all 8 TASK criteria PASS + all 10 additional rigorous checks PASS. Layer separation verified не только на required ≥3 cards, а на **всех 11 Olga generic-картах** (over-delivered: 0 forbidden_in_psych tokens × 11 cards = 0 violations; all event_level содержат house tokens). 2/2 same-planet cards (Card 5 Уран опп Уран → «возрастной перелом темы свободы»; Card 7 Нептун кв Нептун → «возрастная проверка большой мечты») route к dedicated `_SAME_PLANET_PSYCHOLOGY_RU` dict с generational phrasing, минуя hybrid composition. Calibrated 8/8 bit-identical (`_OUTER_CARD_FACTS` empty diff). Daragan-style spot-check (3 entries): archetype evoked, 0 verbatim matches. 0 STOP triggers fired.
 
