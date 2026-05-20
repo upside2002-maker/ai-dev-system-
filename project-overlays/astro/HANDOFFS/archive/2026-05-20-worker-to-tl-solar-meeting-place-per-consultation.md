@@ -1,6 +1,6 @@
 # HANDOFF: worker → tl — solar-meeting-place-per-consultation
 
-- Status: ready_for_review
+- Status: closed
 - Date: 2026-05-20
 - Project: astro
 - From: worker

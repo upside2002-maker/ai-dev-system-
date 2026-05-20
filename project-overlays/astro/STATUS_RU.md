@@ -1,8 +1,37 @@
 # Статус — Astro
 
-Дата последнего обновления: 2026-05-20 (Solar Meeting Place per Consultation — DELIVERED awaiting external Reviewer; Stage 0 invariants PASS; pytest 633/3/0; schema-change-gate atomic; Olga consultation 12 facts_json bit-identical, PDF +17 chars annotation per Stage 5.2 intent).
+Дата последнего обновления: 2026-05-20 (Solar Meeting Place CLOSED — pytest 633/3/0; consultation-level meeting_place plumbed end-to-end; engine UNTOUCHED; critical invariant proven; external Reviewer APPROVE).
 
 ## Сейчас
+
+**TASK solar-meeting-place-per-consultation — CLOSED 2026-05-20 (Tier B+, ACCEPTED по TL inline-verify + external Reviewer APPROVE + user explicit closure ack).** Consultation-level `meeting_place` plumbed end-to-end (DB migration + API + Pydantic + storage + compute + UI form + PDF template + schema-change-gate atomic commit). **Engine UNTOUCHED** — core support already existed (`bridge.py:559-563`, `Solar.hs:746-757`); product layer plumbed без Haskell modification. **External Reviewer verdict (2026-05-20, clarification 6 = REQUIRED honoured):** APPROVE. All 11 Reviewer criteria + 11 additional rigorous checks + 5 live verifications PASS. 0 STOP triggers fired. 0 concerns/blockers.
+
+**Critical invariant proven (operational heart, «Тут вся суть» per user direction):**
+
+| Field | meeting_place=Москва (birth) | meeting_place=Санкт-Петербург | Verdict |
+|---|---|---|---|
+| `natal_chart.positions` | reference | identical | ✅ unchanged |
+| `solar_chart.return_jd` | `2461234.87657547` | `2461234.87657547` | ✅ unchanged |
+| `solar_chart.positions[*].longitude` (×10 planets) | reference | byte-identical | ✅ unchanged |
+| `solar_chart.house_systems.Placidus.cusps` | reference | shifted ~5°/cusp | ✅ CHANGED (expected) |
+| `solar_chart.positions[*].house_placidus` | Uranus в house 8 | Uranus в house 9 | ✅ CHANGED (expected) |
+
+Static reading + empirical test (через Haskell core CLI end-to-end) both confirm: natal chart + solar return moment + planet longitudes IDENTICAL для любого meeting_place; ASC/MC/cusps/planet-in-house следуют meeting_place observer position. **Operational heart**: место рождения определяет НАТАЛ; место встречи определяет ДОМА соляра при том же SR moment + planet positions.
+
+**User feedback 2026-05-20 verbatim:** «Это хороший фикс именно потому, что он не трогал core-астрологию, а довёл до продукта уже заложенный meeting_place. Ключевой invariant доказан: натал и момент соляра не меняются, меняются только углы/дома соляра. Это то, что нужно.»
+
+**Schema-change-gate atomic compliance (Bright Line #8):** single product commit `5070ea0` covers all 11 dependent files (`packages/contracts/consultation.schema.json` + `apps/web-react/src/types.ts` + Pydantic models + migration SQL + storage + compute + template + UI form + 2 new test files + view component). No Haskell roundtrip test required (`consultation.schema.json` is API-UI contract; не crosses в Haskell — Haskell uses `solar-resolved-input.schema.json` which is untouched).
+
+**Backward compat (Olga consultation 12):** `facts_json` **bit-identical** (NULL meeting fields → engine fallback to birth coords); PDF text **+17 chars** annotation «(место рождения)» в строке «Место встречи соляра» — explicit acceptance per TASK Stage 5.2 («never silently print birth as meeting»). Это intentional fix, не regression.
+
+**Reviewer non-blocking suggestions logged (NOT scheduled):**
+- Migration comment refinement (cosmetic phrasing — «API/UI contract, не inter-process Haskell contract»).
+- `ConsultationView.tsx` visual readability check после merge при NULL fields.
+- Empirical end-to-end test skip condition (CI без cabal-built CLI gracefully skips); snapshot side covered без CLI dependency.
+
+Pytest **619 → 633 passed + 3 skipped + 0 failed** (+14 new tests). Cabal Up to date (no Haskell change). Frontend `npm run build` clean (TS sync).
+
+Lifecycle: TASK `review → done`; HANDOFF `ready_for_review → closed`; both archived.
 
 **TASK solar-meeting-place-per-consultation — DELIVERED 2026-05-20 (Tier B+, awaiting external Reviewer per clarification 6 = (a) REQUIRED).** Consultation-level `meeting_place` plumbed end-to-end (DB migration + API + Pydantic + storage + compute + UI form + PDF template + schema-change-gate atomic commit). Engine UNTOUCHED — Stage 0 PASS confirmed at code (`bridge.py:559-563`, `Solar.hs:746-757`) + empirical levels (test_meeting_place_invariants_olga + end-to-end через Haskell core CLI).
 

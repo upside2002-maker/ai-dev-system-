@@ -1,6 +1,6 @@
 # TASK: solar-meeting-place-per-consultation
 
-- Status: review
+- Status: done
 - Ready: yes
 - Date: 2026-05-20
 - Project: astro
