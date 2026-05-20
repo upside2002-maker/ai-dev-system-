@@ -1,6 +1,6 @@
 # TASK: synthesis-tail-template-polish
 
-- Status: open
+- Status: review
 - Ready: yes
 - Date: 2026-05-19
 - Project: astro
