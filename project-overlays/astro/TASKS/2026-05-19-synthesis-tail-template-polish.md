@@ -1,7 +1,7 @@
 # TASK: synthesis-tail-template-polish
 
 - Status: open
-- Ready: no
+- Ready: yes
 - Date: 2026-05-19
 - Project: astro
 - Layer: services (Python presentation: `synthesis_themes.py` Layer 3 phrase helpers — style polish only)
@@ -91,26 +91,53 @@ Worker creates **small living variant pools** для каждого tail type:
 - **Axis tail**: ≥3 distinct phrasings (drop «соляр выстраивается вокруг оси X-Y» monolith — vary phrasings per theme: для дома-семьи одно, для творчества другое).
 - **Angle (Asc/MC) tail**: ≥3 distinct phrasings — drop «Год партнёрства и договорённостей» repeat; phrase appears once (in Выводы) unless block content naturally connects.
 
-### Stage 4 — Variant selection algorithm (per user clarification — see § Ready)
+### Stage 4 — Variant selection algorithm (per user clarification 1 = (b) per-(theme, evidence-shape))
 
-User direction: «по теме, а не случайно». Worker implements deterministic theme-aware selection. Options for clarification:
-- (a) Per-theme assignment (each themed block has preferred variant per tail type).
-- (b) Per-(theme, evidence-shape) selection (e.g. outer-transit tail varies by which planet — Pluto-led financial gets one phrasing, Neptune-led creative gets another).
-- (c) Worker proposes selection algorithm.
+User direction 2026-05-19 verbatim: «Хвост должен зависеть не только от раздела, но и от того, что именно его усиливает: Уран, Нептун, Плутон, Сатурн/Юпитер, дирекции, ось. Это даст ощущение живого текста, а не ротации синонимов.»
 
-### Stage 5 — Cross-block dedup (per user direction)
+Worker implements deterministic **per-(theme, evidence-shape)** selection:
+- Outer transit tail selection depends на which planet drives evidence (Uranus / Neptune / Pluto produce **different** phrasings, each evoking that planet's archetypal mode).
+- Directions tail selection depends на direction count + which natal point (Asc/MC/personal planet) involved.
+- Axis tail selection depends на whether axis is primary/secondary AND which axis pair (1-7 vs 5-11 vs 6-12 etc. produce theme-specific phrasings).
+- Social transit tail (Jupiter/Saturn) selection depends на which planet (Jupiter = expansion / opportunity; Saturn = structure / responsibility).
 
-User direction: «Цель — найти опору / дом / семья звучит максимум в opener/status/closing, не размазывается по нескольким блокам». Implementation per § Ready clarification:
-- (a) Global state tracker — phrase emitted once, blocked for subsequent blocks.
-- (b) Per-block whitelist — «Цель» (MC-Cancer phrase) allowed only в opener / СТАТУС / closer; «Год партнёрства» (Asc-Libra phrase) allowed only в opener / ПАРТНЁРСТВО / closer.
-- (c) Worker proposes mechanism.
+Result: каждый tail content-anchored к specific evidence cause; tails не звучат как rotated synonyms.
 
-### Stage 6 — Logical-connectivity gate для angle phrases
+### Stage 5 — Cross-block dedup (per user clarification 2 = (b) per-block whitelist)
 
-User direction: «Asc Libra / партнёрство не вставляется в блок `ЛИЧНОСТЬ`, если там нет логической связки.» Implementation per § Ready clarification:
-- (a) Hard restriction: Asc/MC angle phrases emit only в blocks where their content overlaps (Asc Libra ∈ {opener / ПАРТНЁРСТВО / closer}; MC Cancer ∈ {opener / СТАТУС / НЕДВИЖИМОСТЬ-СЕМЬЯ / closer}).
-- (b) Theme-overlap gate: emit angle phrase if its sphere keyword overlaps with block's theme keyword set (more nuanced, requires keyword classification).
-- (c) Worker proposes.
+User direction 2026-05-19 verbatim: «Без stateful render. Фразы типа "Цель года…" и "Год партнёрства…" должны иметь разрешённые места, а не гулять по всем блокам.»
+
+Worker implements **declarative per-block whitelist** (no stateful render):
+- «Цель —» MC-Cancer-derived phrase ∈ {opener / СТАТУС / closer}; всех остальных блоков gate blocks эту phrase.
+- «Год партнёрства» Asc-Libra-derived phrase ∈ {opener / ПАРТНЁРСТВО / closer} per Stage 6 hard restriction (overlaps с angle gate).
+- Cross-block dedup механизм: each phrase emitted iff block_title ∈ allowed_blocks; render order не matters.
+
+### Stage 6 — Logical-connectivity gate для angle phrases (per user clarification 3 = (a) hard restriction с nuance)
+
+User direction 2026-05-19 verbatim:
+
+> «Asc phrases: opener / партнёрство / личность только если есть явная связка / closer.
+> MC phrases: opener / статус / работа / недвижимость-семья / closer.
+> В `ЛИЧНОСТЬ` Asc Libra можно оставить только если фраза реально про личный стиль проявления, а не просто "год партнёрства".»
+
+Worker implements **declarative hard restriction** с personality-style nuance:
+
+- **Asc phrases (Asc-sign-derived):**
+  - Opener: always allowed.
+  - ПАРТНЁРСТВО (block 8): always allowed (direct angle-theme match).
+  - **ЛИЧНОСТЬ (block 2): allowed ONLY if phrase variant is про personal-style/manifestation (e.g. «личный стиль через партнёрский акцент» OR «вы проявляетесь через "договариваться, балансировать"»). NOT plain «Год партнёрства и договорённостей» (это не про personality content).** Worker creates dedicated personal-style-variant phrase для Asc-в-ЛИЧНОСТЬ slot.
+  - Closer: always allowed.
+  - All other blocks: gate blocks.
+
+- **MC phrases (MC-sign-derived):**
+  - Opener: always allowed.
+  - СТАТУС (block 10): always allowed (direct angle-theme match).
+  - РАБОТА\ЗДОРОВЬЕ (block 7): allowed (МС affects career → work-life balance natural connection).
+  - НЕДВИЖИМОСТЬ\СЕМЬЯ (block 5): allowed (MC Cancer / IC = home foundation; MC sign in cardinal-earth/water houses naturally evokes family-status link).
+  - Closer: always allowed.
+  - All other blocks: gate blocks.
+
+Empty-block guard preserved: angle gate failure → angle phrase omitted, NOT empty paragraph emitted.
 
 ### Stage 7 — Acceptance verification
 
@@ -191,7 +218,15 @@ For calibrated 6 cases (02/03/05/07/08/10):
 - [ ] One product commit (tail polish + tests).
 - [ ] One overlay commit (STATUS_RU + HANDOFF).
 - [ ] Push backup, parity verified.
-- [ ] Reviewer pass per § Ready clarification 7.
+- [ ] Reviewer optional (per clarification 4 = (a)); TL inline-verify is the closure path.
+
+### Length-non-increase guard (per user direction 2026-05-19, verbatim)
+
+> «После polish текст должен стать короче или равен по длине текущему варианту. Нельзя лечить канцелярит добавлением ещё большего количества текста.»
+
+- [ ] **Olga «Итоги консультации» post-polish character count ≤ pre-polish character count.** Worker measures both pre-polish (current `7644d7f` render) и post-polish renders, reports delta в HANDOFF.
+- [ ] **Calibrated cases post-polish character count ≤ pre-polish для всех 6 cases** (02 / 03 / 05 / 07 / 08-Natalya / 10).
+- [ ] If length grew → STOP, polish architecture (replace elaborate phrasings с shorter, не добавлять).
 
 ### Discipline
 
@@ -206,19 +241,19 @@ For calibrated 6 cases (02/03/05/07/08/10):
 
 - Worker tempted to refactor Layer 1 или Layer 2 → STOP, Tier C scope is Layer 3 tails only.
 - Worker tempted to add LLM → STOP, deterministic templates only.
-- Worker tempted to write generic «red-water» phrases applicable к any client → STOP, anchor each variant к specific evidence-shape.
+- Worker tempted to write generic «red-water» phrases applicable к any client → STOP, anchor each variant к specific evidence-shape (per clarification 1).
 - Worker finds calibrated case regression (lost meaningful content) → STOP, escalate.
 - Worker tempted to introduce randomness в variant selection → STOP, must be deterministic.
 - Tail polish breaks predecessor's case-specificity test → STOP, refine (case-specific lead-ins MUST remain case-specific; tails MUST add variety без removing specificity).
 - Worker tempted to touch `_legacy_compose_theme_prose` (orphan) → STOP, separate follow-up scope.
+- **Post-polish character count grows vs pre-polish for any case** → STOP, polish architecture (replace, not append). Per length-non-increase guard 2026-05-19.
+- **Worker tempted to add «Год партнёрства» в ЛИЧНОСТЬ block без personal-style variant** → STOP per clarification 3 nuance — ЛИЧНОСТЬ Asc slot needs dedicated personal-style phrasing, not plain partnership tail.
 
-## Reviewer subagent — per § Ready clarification 7
+## Reviewer subagent — OPTIONAL (per user clarification 4 = (a))
 
-Tier C style polish. Per recent precedent:
-- Phase 9.2A / 9.3A (Tier C validation): Reviewer optional + TL inline-verify.
-- Predecessor `human-readable-consultation-summary` (Tier B+): Reviewer REQUIRED.
+Tier C style polish; concrete acceptance criteria (canclerite phrase absence + no-repeat smoke + Olga readability + length-non-increase guard). TL inline-verify sufficient per 9.2A / 9.3A precedent.
 
-This TASK Tier C — Reviewer disposition per § Ready.
+If Worker prefers Reviewer pass — может spawn, не блокер.
 
 ## Context
 
@@ -246,25 +281,18 @@ This TASK Tier C — Reviewer disposition per § Ready.
 - `_legacy_compose_theme_prose` cleanup (separate follow-up).
 - Calibrated cases beyond regression check.
 
-**Ready: no** — pending 4 clarifications below.
+**Ready: yes** — 4 clarifications applied 2026-05-19 + length-non-increase guard:
 
-## Ready clarifications (pending user direction 2026-05-19)
+1. **Variant selection = (b) per-(theme, evidence-shape).** Хвост depends not just on section, но on which planet/aspect drives evidence (Уран / Нептун / Плутон / Сатурн-Юпитер / дирекции / ось — each evokes its archetypal mode). Применено Stage 4.
 
-1. **Variant selection algorithm (Stage 4).**
-   - (a) Per-theme assignment — each themed block has 1 preferred variant per tail type, deterministic mapping.
-   - (b) Per-(theme, evidence-shape) — variant depends on which planet/aspect drives the evidence (Pluto-led financial → one phrasing; Neptune-led creative → another).
-   - (c) Worker proposes algorithm в HANDOFF.
+2. **Cross-block dedup = (b) per-block whitelist.** Declarative; no stateful render. «Цель —» ∈ {opener / СТАТУС / closer}; «Год партнёрства» ∈ {opener / ПАРТНЁРСТВО / closer}. Применено Stage 5.
 
-2. **Cross-block dedup mechanism (Stage 5).**
-   - (a) Global state tracker — emit phrase first time, block subsequent (stateful).
-   - (b) Per-block whitelist — explicit mapping which phrase allowed in which blocks (declarative).
-   - (c) Worker proposes.
+3. **Angle gate = (a) hard restriction с nuance.** Asc phrases ∈ {opener / ПАРТНЁРСТВО / ЛИЧНОСТЬ (только если personal-style variant) / closer}. MC phrases ∈ {opener / СТАТУС / РАБОТА / НЕДВИЖИМОСТЬ-СЕМЬЯ / closer}. Asc-в-ЛИЧНОСТЬ требует dedicated personal-style variant — NOT plain «Год партнёрства». Применено Stage 6.
 
-3. **Logical-connectivity gate для angle phrases (Stage 6).**
-   - (a) Hard restriction — Asc/MC phrases emit only в pre-defined blocks (Asc Libra ∈ {opener / ПАРТНЁРСТВО / closer}; MC Cancer ∈ {opener / СТАТУС / НЕДВИЖИМОСТЬ-СЕМЬЯ / closer}).
-   - (b) Theme-overlap keyword gate — emit if angle's sphere keyword overlaps with block's theme keyword set.
-   - (c) Worker proposes.
+4. **Reviewer = (a) optional.** TL inline-verify sufficient per 9.2A / 9.3A Tier C precedent. Применено Reviewer section.
 
-4. **Reviewer subagent.**
-   - (a) Optional + TL inline-verify (consistent с 9.2A / 9.3A Tier C precedent).
-   - (b) REQUIRED external Reviewer (Tier C polish but visible end-user impact).
+**Additional guard (per user direction 2026-05-19, verbatim):**
+
+> «После polish текст должен стать короче или равен по длине текущему варианту. Нельзя лечить канцелярит добавлением ещё большего количества текста.»
+
+Применено Common acceptance + STOP triggers: Olga + 6 calibrated cases post-polish character count ≤ pre-polish; growth → STOP, polish architecture (replace, не append).
