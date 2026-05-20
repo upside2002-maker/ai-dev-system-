@@ -1,7 +1,7 @@
 # TASK: solar-meeting-place-per-consultation
 
 - Status: open
-- Ready: no
+- Ready: yes
 - Date: 2026-05-20
 - Project: astro
 - Layer: services + frontend integration (DB migration + Python models/API + UI form + PDF template; engine UNTOUCHED if Stage 0 PASS)
@@ -62,19 +62,24 @@ Worker verifies (per user direction):
   
 - **`bscPlacements` (planet-in-house mapping for solar) DOES change** (because Placidus cusps shift), but planet longitudes themselves remain identical.
 
-**0.4 — Stage 0 gate criterion:**
+**0.4 — Stage 0 gate criterion (per user clarification 1 = (c) both static + empirical):**
 
-Worker must complete **both**:
+Worker must complete **both** (Phase 9.x meta-lesson strict Stage 0 pattern):
+
 - (a) **Static code reading** verifying all 3 invariants above (natal unchanged, SR_jd unchanged, planet longitudes unchanged).
-- (b) **Empirical test** (Stage 0 strict per Phase 9.x meta-lesson): construct synthetic facts с meeting_place=Питер vs meeting_place=None для same Olga input; verify:
-  - `natalCusps`, `solarReturnJd`, `solarPos.longitudes` bit-identical.
-  - `solarCusps`, `solarPos.house_placidus` (planet-in-house) DIFFER.
+- (b) **Empirical test:** construct synthetic facts с meeting_place=Санкт-Петербург vs meeting_place=None для same Olga input; verify:
+  - `natalCusps`, `solarReturnJd`, `solarPos.longitudes` bit-identical (3 invariants HOLD).
+  - `solarCusps`, `solarPos.house_placidus` (planet-in-house) DIFFER (expected change).
+
+**Critical (per user emphasis 2026-05-20): «Acceptance должен обязательно доказать инвариант: `solar_return_jd` + solar planet longitudes unchanged, а solar cusps/Asc/MC changed. Тут вся суть.»**
+
+Empirical test становится permanent acceptance test (Stage 7.4) — not just Stage 0 gate.
 
 **If any invariant violated → STOP, escalate Tier A.** Engine changes only allowed после user authorization.
 
 ### Stage 1 — DB migration
 
-**1.1 — New migration `004_consultation_meeting_place.sql`:**
+**1.1 — New migration `004_consultation_meeting_place.sql` (per user clarification 2 = (a) single atomic):**
 
 ```sql
 -- Add solar meeting place fields to consultations table.
@@ -83,8 +88,11 @@ ALTER TABLE consultations ADD COLUMN solar_meeting_place TEXT;
 ALTER TABLE consultations ADD COLUMN solar_meeting_latitude REAL;
 ALTER TABLE consultations ADD COLUMN solar_meeting_longitude REAL;
 ALTER TABLE consultations ADD COLUMN solar_meeting_timezone TEXT;
--- solar_meeting_utc_offset optional per § Ready clarification 3
 ```
+
+**Per user clarification 3 = (b):** `solar_meeting_utc_offset` field NOT included. `timezone_id` (IANA) sufficient — engine resolves UTC offset через pytz/zoneinfo. Avoid duplication.
+
+4 columns atomic — all logically belong vmeste (one meeting place tuple). Standard ALTER TABLE pattern (precedent: `003_persons_case_label.sql`).
 
 **1.2 — Migration runner:** update `app/db.py` migration list if explicit registry; OR ensure auto-discovery picks up new file.
 
@@ -157,10 +165,11 @@ Optional block «Место встречи соляра» с fields:
 
 Default empty → engine uses birth place fallback.
 
-**4.2 — Geocoding (per § Ready clarification 4):**
-- (a) Reuse existing person birth-place geocode utility (Nominatim + timezonefinder pipeline).
-- (b) Manual entry only.
-- (c) Worker proposes.
+**4.2 — Geocoding (per user clarification 4 = (a) reuse existing + manual fallback allowed):**
+
+Reuse existing person birth-place geocode flow (Nominatim + timezonefinder pipeline). UI calls same геокод endpoint that birth_place uses; result fills lat/long/timezone fields.
+
+**Manual override fallback** (per user direction 2026-05-20): if geocode fails OR user prefers manual entry, allow direct typing of lat/long/timezone_id. UX detail: geocode button → on success populate fields; on failure show error + allow manual entry.
 
 **4.3 — Consultation page display:** show saved meeting place + indicator «(место рождения)» если не задан.
 
@@ -187,15 +196,23 @@ Fixed:
 - «Место встречи соляра» shows `consultation.solar_meeting_place` if set; else falls back с annotation «(место рождения)».
 - Never silently print birth place as meeting place.
 
-### Stage 6 — Schema-change-gate compliance (Bright Line #8)
+### Stage 6 — Schema-change-gate compliance (Bright Line #8, per user clarification 5 = (c) Worker verifies)
 
 Per CLAUDE.md Bright Line #8: «Any change of `packages/contracts/*.schema.json` — one commit with all related changes (fixtures + Haskell roundtrip-test + Python contract-test + TS-types).»
 
-Worker verifies (per § Ready clarification 5):
-- `packages/contracts/consultation.schema.json` — does it need new fields? If yes, update + atomic.
-- `apps/web-react/src/types.ts` — `Consultation` interface update.
-- Pydantic models update (Stage 2).
-- All в one commit per Bright Line #8.
+User direction 2026-05-20 verbatim: «Если `consultation.schema.json` является API/UI contract, обновлять атомарно.»
+
+Worker investigates first:
+1. Read `packages/contracts/consultation.schema.json` — is it API-UI contract (Consultation entity for frontend type-safety) OR engine I/O (no, only `solar-resolved-input` is engine I/O).
+2. If `consultation.schema.json` is API-UI contract → meeting fields MUST be added + atomic commit across:
+   - `packages/contracts/consultation.schema.json` (add 4 fields).
+   - `apps/web-react/src/types.ts` (`Consultation` interface).
+   - Pydantic models в `app/models.py`.
+   - Python contract-test if exists.
+   - Atomic single commit per Bright Line #8.
+3. If `consultation.schema.json` is NOT API-UI contract (e.g. only internal Python schema) → document в HANDOFF why no contract update needed.
+
+Worker reports schema-change-gate decision + rationale в HANDOFF.
 
 ### Stage 7 — Tests
 
@@ -366,13 +383,38 @@ def test_pdf_falls_back_to_birth_when_no_meeting_place():
 - Worker tempted to modify `solar-resolved-input.schema.json` — STOP, already has meeting_place; out of scope.
 - Worker tempted to modify Haskell — STOP unless Stage 0 FAIL.
 
-## Reviewer subagent — per § Ready clarification 6
+## Reviewer subagent — REQUIRED (per user clarification 6 = (a))
 
-Tier B+ multi-layer integration. Per recent precedent (similar Tier B+ TASKs used REQUIRED Reviewer).
+External Reviewer pass REQUIRED после Worker self-submit. Parallel к Tier B+ predecessor pattern (Human-Readable / Specificity / Generic Psychology / Current-Year all used REQUIRED). If Agent tool unavailable в Worker runtime (recurring Phase 8/9 precedent), Worker self-review + TL spawns external Reviewer post-submission.
+
+**Reviewer criteria:**
+- **Stage 0 invariants verified:** static code reading + empirical test pass (Phase 9.x meta-lesson strict).
+- **Critical invariant proof:** acceptance test demonstrates `solar_return_jd` + solar planet longitudes IDENTICAL для meeting_place=Питер vs None; solar cusps/Asc/MC DIFFER. **«Тут вся суть»** per user direction 2026-05-20.
+- DB migration applies cleanly (idempotent).
+- API contract: `ConsultationCreate/Response` accept/return meeting fields.
+- Compute path correctly passes meeting_place through `build_solar_snapshot`.
+- UI form has optional block + reuses geocode flow + manual fallback.
+- PDF template correctly shows meeting place (set / fallback annotation); NEVER prints birth as meeting silently.
+- Schema-change-gate compliance verified per user clarification 5 = (c): Worker investigated `consultation.schema.json` role; если API-UI contract → atomic commit; если не — documented why.
+- Backward compat: legacy consultations (NULL meeting fields) produce bit-identical output к pre-TASK baseline.
+- Meeting_place stored ONLY on consultation, NEVER on Person.
+- 0 STOP triggers fired.
 
 ## Context
 
-**Mode normal + Tier B+ (Reviewer disposition per § Ready).** Worker mode: normal.
+**Mode normal + Tier B+ (Reviewer REQUIRED per user clarification 6).** Worker mode: normal.
+
+## Critical invariant emphasis (per user direction 2026-05-20, verbatim)
+
+> «Главное уточнение к Worker: место встречи **consultation-level**, не person-level. И acceptance должен обязательно доказать инвариант: `solar_return_jd` + solar planet longitudes unchanged, а solar cusps/Asc/MC changed. **Тут вся суть.**»
+
+This is the **operational heart** of the TASK. Acceptance test (Stage 7.4 `test_meeting_place_changes_solar_cusps_only`) must explicitly assert:
+- `natal_chart` deep-equal between two renders (meeting_place set vs not).
+- `solar_chart.return_jd` byte-identical.
+- `solar_chart.positions[*].longitude` byte-identical для all planets.
+- AT LEAST ONE of: `solar_chart.asc_sign` differs OR `solar_chart.mc_sign` differs OR any planet's `house_placidus` differs.
+
+If invariants don't hold → STOP, escalate. Engine path broken либо product path broken; investigate.
 
 **Baseline:**
 - Product main @ `9c800e7` (current-year filter + specific psychology closed).
@@ -396,35 +438,24 @@ Tier B+ multi-layer integration. Per recent precedent (similar Tier B+ TASKs use
 - Synthesis pipeline (synthesis_themes.py).
 - Other outer_cards.py logic.
 
-**Ready: no** — pending 6 clarifications below.
+**Ready: yes** — 6 clarifications applied 2026-05-20 + invariant emphasis reinforced:
 
-## Ready clarifications (pending user direction 2026-05-20)
+1. **Stage 0 = (c) static + empirical.** Phase 9.x meta-lesson strict pattern. Empirical test becomes permanent acceptance test 7.4. Applied Stage 0.4.
 
-1. **Stage 0 verification scope.**
-   - (a) Static code reading only.
-   - (b) Empirical integration test ONLY (constructs synthetic facts, verifies invariants).
-   - (c) **Both — static code reading + empirical test (Stage 0 strict per Phase 9.x meta-lesson).**
+2. **DB migration = (a) single** `004_consultation_meeting_place.sql` — 4 columns atomic. Standard ALTER pattern. Applied Stage 1.1.
 
-2. **DB migration approach.**
-   - (a) Single migration `004_consultation_meeting_place.sql` (atomic — 4 columns + optional utc_offset).
-   - (b) Split migrations (more granular).
-   - (c) Worker proposes.
+3. **`utc_offset` = (b) omit.** IANA `timezone_id` sufficient. Engine resolves UTC через pytz/zoneinfo. Avoid duplication. Applied Stage 1.1.
 
-3. **`solar_meeting_utc_offset` optional field — needed?**
-   - (a) Include (covers historical-timezone edge cases).
-   - (b) Omit (rely on `timezone_id` resolution via engine).
-   - (c) Worker decides based on engine signature.
+4. **UI geocoding = (a) reuse** existing birth-place flow (Nominatim + timezonefinder) + manual override fallback allowed. Applied Stage 4.2.
 
-4. **UI geocoding for meeting place.**
-   - (a) Reuse existing person birth-place geocode flow (Nominatim + timezonefinder).
-   - (b) Manual entry only (no geocode for meeting place; user types lat/long/tz directly).
-   - (c) Worker proposes.
+5. **Schema gate = (c) Worker verifies.** If `consultation.schema.json` is API-UI contract → atomic commit per Bright Line #8 (Pydantic + TS-types + schema + Python contract test). If not API-UI contract → document why в HANDOFF. Applied Stage 6.
 
-5. **Schema-change-gate scope.**
-   - (a) `packages/contracts/consultation.schema.json` MUST be updated → full atomic schema-change-gate commit (TS-types + Pydantic + Python contract test + fixtures).
-   - (b) `consultation.schema.json` is NOT a contract input/output for engine (only `solar-resolved-input` is) → consultation-level meeting fields stay в Python+TS only; no contract update needed.
-   - (c) Worker verifies + documents в HANDOFF.
+6. **Reviewer = (a) REQUIRED.** External pass after Worker submit. Applied Reviewer section.
 
-6. **Reviewer disposition.**
-   - (a) REQUIRED external Reviewer (parallel к Tier B+ predecessor pattern).
-   - (b) Optional + TL inline-verify.
+**Critical invariant emphasis (per user direction 2026-05-20, verbatim):**
+
+> «Acceptance должен обязательно доказать инвариант: `solar_return_jd` + solar planet longitudes unchanged, а solar cusps/Asc/MC changed. Тут вся суть.»
+
+This is the operational heart. Empirical Stage 0 test becomes permanent acceptance test 7.4 — must assert 3 invariants HOLD + ≥1 cusp/Asc/MC/house DIFFERS. Applied across Stage 0.4 + Stage 7.4 + Reviewer criteria + Critical invariant emphasis section + STOP triggers.
+
+**Consultation-level storage (per user direction reinforced):** meeting_place lives on consultation row ONLY, never on Person. Different solar years can be met в different cities.
