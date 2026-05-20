@@ -1,7 +1,7 @@
 # TASK: current-year-generic-cards-and-psychology-upgrade
 
 - Status: open
-- Ready: no
+- Ready: yes
 - Date: 2026-05-20
 - Project: astro
 - Layer: services (Python presentation: `outer_cards.py` — solar-year overlap filter в `generic_outer_cards` + specific psychology dict + tests)
@@ -91,27 +91,31 @@ Per user verbatim: «display intervals generic карточки должны б�
 
 After `aggregate_display_windows(raw)` call, apply window-level filter; if remaining windows empty → continue (drop card).
 
-**1.4 — Boundary precision** (per § Ready clarification 1):
-- (a) Approximate: `solar_end = solar_start + 365.25` (tropical year).
-- (b) Exact: pull next-year SR JD from facts if available; else fallback (a).
-- (c) Worker proposes algorithm.
+**1.4 — Boundary precision (per user clarification 1 = (a) approximate):**
+
+`solar_end = solar_start + 365.25` (tropical year approximation). Достаточно — для Marina-показа precision ±1 day vs exact next-SR не существенна. Simple, generic, не требует engine field check.
 
 ### Stage 2 — Specific psychology override dict (Bug 2)
 
-**2.1 — New phrase library `_SPECIFIC_PSYCHOLOGY_RU`:**
+**2.1 — New phrase library `_SPECIFIC_PSYCHOLOGY_RU` (per user clarification 2 = (c) Worker proposes 6-12 with mandatory minimum):**
 
-Curated dict keyed by `(transit_planet, aspect, target)` для key combinations:
+Curated dict keyed by `(transit_planet, aspect, target)` для key combinations.
+
+**Mandatory minimum 4 entries (per user direction verbatim 2026-05-20):**
 
 ```python
 _SPECIFIC_PSYCHOLOGY_RU: dict[tuple[str, str, str], str] = {
     ("Uranus", "Sextile", "Mercury"): "...",  # ментальное обновление
-    ("Uranus", "Square", "Venus"):    "...",  # романтика свободы
-    ("Neptune", "Trine", "Jupiter"):  "...",  # мечта расширения
-    # + Worker proposes 6-12 more per § Ready clarification 2
+    ("Uranus", "Square", "Venus"):    "...",  # романтика свободы / обновление вкусов
+    ("Neptune", "Trine", "Jupiter"):  "...",  # мечта расширения / вдохновение
+    ("Pluto", "Sextile", "Uranus"):   "...",  # глубинная перестройка свободы
+    # + Worker proposes 2-8 more entries по частотности / важности (per user direction).
 }
 ```
 
-Coverage scope per § Ready clarification 2.
+**Worker scope:** 6-12 total entries. NOT Olga-only (filter logic dimension), NOT 90-entry prose dump. Worker prioritizes по frequency / archetypal importance для personal targets (Sun/Moon/Mercury/Venus/Mars/Jupiter typically) или high-significance outer-outer (e.g. Neptune-Pluto).
+
+Each entry must include explicit aspect-tone descriptor («гармоничный транзит» / «напряжённый транзит» / «глубинный транзит» / etc.) per Stage 2.3 (clarification 3 = (a) embedded).
 
 **2.2 — Composition routing:**
 
@@ -130,13 +134,21 @@ def _generic_psychology_text(transit_planet, aspect, target, ...):
     # ... existing logic ...
 ```
 
-**2.3 — Tone-descriptor preservation:**
+**2.3 — Tone-descriptor strategy (per user clarification 3 = (a) embedded directly):**
 
-Specific phrasings must include explicit aspect-tone descriptor («гармоничный транзит» / «напряжённый транзит» / «глубинный транзит» / etc.) per user spec. NOT just hybrid composition output.
+User direction 2026-05-20 verbatim: «Aspect tone embedded directly в specific entries. Пусть конкретные entries звучат цельно: "Гармоничный транзит ментального обновления…", а не собираются механически из prefix'ов.»
 
-### Stage 3 — Test extension
+Worker weaves aspect-tone descriptor **naturally в prose** каждой `_SPECIFIC_PSYCHOLOGY_RU` entry. NOT mechanical assembly via separate `_ASPECT_TONE_PREFIX_RU` dict. Each curated entry — целостный paragraph с tone inline:
 
-Extend `services/api-python/tests/test_transit_section_generic.py` per § Ready clarification 4.
+✅ Good: «Гармоничный транзит ментального обновления: ум становится быстрее, гибче, оригинальнее. ...»
+
+❌ Bad (mechanical assembly): «Гармоничный транзит. Внутри... Эта тема... И идёт через...»
+
+Hybrid fallback path: `_ASPECT_PSYCHOLOGY_RU` closer уже encodes tone implicitly («идёт через мягкое окно» = sextile tone). No separate prefix dict needed.
+
+### Stage 3 — Test extension (per user clarification 4 = (a) extend existing)
+
+Extend `services/api-python/tests/test_transit_section_generic.py`. NO new file. Consistent с предшественниками (Generic Psychology landed +38 tests там).
 
 **3.1 — Current-year filter tests:**
 
@@ -226,7 +238,7 @@ Worker verifies via existing calibrated tests (`test_calibrated_cards_bit_identi
 - **Engine buffer** (Phase 8E `_TRANSIT_SAMPLE_BUFFER_DAYS_BEFORE/AFTER`) — preserved для calibrated cases с multi-year touch windows.
 - `OUTER_CARD_ALLOWLIST` — calibrated allowlist data.
 - `_OUTER_CARD_FACTS` — Marina-curated calibrated cards.
-- Calibrated branch в `outer_cards_for_case` — only generic-fallback path affected.
+- Calibrated branch в `outer_cards_for_case` — **only generic-fallback path affected per Guard #1 (see § Additional guards below).**
 - `_generic_event_level_text` — event-level houses preserved.
 - `_TRANSIT_PSYCHOLOGY_RU` / `_TARGET_PSYCHOLOGY_RU` / `_ASPECT_PSYCHOLOGY_RU` / `_SAME_PLANET_PSYCHOLOGY_RU` — existing libraries used as fallback; entries preserved.
 - Engine: Haskell core, schema, fixtures.
@@ -301,17 +313,60 @@ Worker verifies via existing calibrated tests (`test_calibrated_cards_bit_identi
 - Worker cannot trace displayed card windows к `facts["solar_chart"]["return_jd"]` → STOP, escalate.
 - Worker tempted to add LLM → STOP, deterministic only.
 - Worker tempted to add generic-padding fallback when `_SPECIFIC_PSYCHOLOGY_RU` entry missing → STOP, fabrication-guard-consistent empty.
+- **Worker tempted to apply current-year filter к calibrated cards** → STOP per Guard #1, scope is generic-fallback only.
+- **Worker tempted to keep out-of-year windows «для контекста» в generic output** → STOP per Guard #2, strict window-level filter.
+- Worker writes `_SPECIFIC_PSYCHOLOGY_RU` entry без embedded aspect-tone descriptor → STOP, tone должен быть woven naturally per clarification 3.
+- Worker writes <4 mandatory entries (Uranus-Sextile-Mercury, Uranus-Square-Venus, Neptune-Trine-Jupiter, Pluto-Sextile-Uranus) → STOP, mandatory minimum violation.
+- Worker writes >12 entries «for completeness» → STOP, scope creep beyond 6-12 user direction.
 
-## Reviewer subagent — per § Ready clarification 5
+## Reviewer subagent — REQUIRED (per user clarification 5 = (a))
 
-Tier B+ two-concern change. Per recent precedent:
-- Human-Readable / Specificity / Generic Psychology (Tier B / B+ substantive content rewrites): Reviewer REQUIRED.
+External Reviewer pass REQUIRED после Worker self-submit. Parallel к Tier B+ predecessor pattern. If Agent tool unavailable в Worker runtime (recurring Phase 8/9 precedent), Worker self-review + TL spawns external Reviewer post-submission.
 
-This TASK has comparable scope — filter logic + content phrasing.
+**Reviewer criteria:**
+- **Bug 1 verification (current-year filter):**
+  - Olga `тр Уран в секстиле c нат Меркурием` NOT в generic cards (all windows 2024-2025).
+  - Every displayed generic card has ≥1 window overlapping `[SR, SR+365.25]`.
+  - Within each card, NO out-of-year display intervals (strict per Guard #2).
+  - Calibrated allowlist cards bit-identical (filter NOT applied to calibrated path per Guard #1).
+- **Bug 2 verification (specific psychology):**
+  - 4 mandatory minimum entries present (Uranus-Sextile-Mercury, Uranus-Square-Venus, Neptune-Trine-Jupiter, Pluto-Sextile-Uranus).
+  - 6-12 total entries (Worker propose remainder с justification).
+  - Each entry embeds aspect-tone descriptor naturally (NOT mechanical assembly).
+  - Specific entries pass user-listed semantic keywords (Uranus-Sextile-Mercury: ментал/ум, нов/обновлен, иде, обуч, инсайт, общ, гибк/оригиналь).
+  - Hybrid fallback preserved для non-curated combos.
+  - Empty-string fallback preserved (NO generic-padding when no entry в any dict).
+  - No Daragan verbatim copy (Reviewer spot-checks 3+ specific entries).
+- **Layer-separation preserved** (psychology no houses; event_level has houses).
+- **No Olga-only hardcoded behavior** в either Bug 1 или Bug 2 fix.
+- **0 STOP triggers fired.**
 
 ## Context
 
-**Mode normal + Tier B+ (Reviewer disposition per § Ready).** Worker mode: normal.
+**Mode normal + Tier B+ (Reviewer REQUIRED per user clarification 5).** Worker mode: normal.
+
+## Additional guards (per user direction 2026-05-20)
+
+### Guard #1 — Filter scope (calibrated cards preserved)
+
+> «Current-year filtering applies only to generic fallback cards. Calibrated allowlist cards keep their existing display-window behavior.»
+
+Filter logic применяется **только в `generic_outer_cards` path** (non-calibrated dispatch). Calibrated cases (01/02/03/04/05/07/08/09/10) routed через `outer_cards_for_case` allowlist branch — sets display windows из curated `_OUTER_CARD_FACTS` data, не from `annual_transit_table`. Filter NOT applied к этим cards.
+
+Worker test: `test_calibrated_cards_bit_identical_except_provenance` passes без изменений. Worker manually verifies multi-year windows (e.g. 01-kseniya Uranus Opposition Sun multi-touch 2024-2026) preserved в calibrated render.
+
+### Guard #2 — Window-level strict filtering (no «context» retention)
+
+> «If a card has multiple windows, keep only windows overlapping the current solar year. Do not keep old windows "for context" in generic output.»
+
+Window-level filter strict: каждое окно tested независимо.
+- Окно «целиком до solar_start» (window_end < solar_start) → drop.
+- Окно «целиком после solar_end» (window_start > solar_end) → drop.
+- Окно overlapping (window_end ≥ solar_start AND window_start ≤ solar_end) → keep.
+
+Если after window filtering все окна dropped → drop card entirely.
+
+**No «context» retention:** не оставляем pre-SR / post-SR windows «для понимания контекста». Текущий solar year only.
 
 **Baseline:**
 - Product main @ `3d36b2f` (Generic Psychology closed).
@@ -335,29 +390,29 @@ This TASK has comparable scope — filter logic + content phrasing.
 - Daragan verbatim copying.
 - Other PDF sections (Натальная карта / Соляр tables / монт-аспект calendar / Дирекции).
 
-**Ready: no** — pending 5 clarifications below.
+**Ready: yes** — 5 clarifications applied 2026-05-20 + 2 additional guards:
 
-## Ready clarifications (pending user direction 2026-05-20)
+1. **Solar-year boundary = (a) approximate.** `solar_end = solar_start + 365.25`. Достаточно; не усложняем next-SR field для marginal precision. Applied Stage 1.4.
 
-1. **Solar-year boundary precision (Stage 1.4).**
-   - (a) Approximate `solar_end = solar_start + 365.25` (tropical year, simple).
-   - (b) Exact: pull next-year SR JD if available в facts (e.g. `facts["solar_chart"]["next_return_jd"]`); else fallback (a).
-   - (c) Worker proposes algorithm в HANDOFF.
+2. **`_SPECIFIC_PSYCHOLOGY_RU` coverage = (c) Worker proposes 6-12** с mandatory minimum 4 entries:
+   - `("Uranus", "Sextile", "Mercury")`
+   - `("Uranus", "Square", "Venus")`
+   - `("Neptune", "Trine", "Jupiter")`
+   - `("Pluto", "Sextile", "Uranus")`
+   Worker proposes 2-8 more по frequency / importance. Not Olga-only, not 90-entry prose dump. Applied Stage 2.1.
 
-2. **`_SPECIFIC_PSYCHOLOGY_RU` coverage scope.**
-   - (a) Seed с Olga's actual cards (6 Marina-selected + 5 over-include planet-targets = 11 entries — Olga-focused initial coverage).
-   - (b) Curated personal-target priority combinations (Uranus / Neptune / Pluto × 5 aspects × personal targets Sun/Moon/Mercury/Venus/Mars/Jupiter = up to 90 entries; Worker prioritizes 12-20).
-   - (c) Worker proposes 6-12 high-priority combinations с justification.
+3. **Aspect tone = (a) embedded directly.** Tone descriptor («Гармоничный транзит ментального обновления…») woven naturally в каждой specific entry. NOT mechanical prefix assembly. Applied Stage 2.3.
 
-3. **Aspect-tone descriptor strategy (Stage 2.3).**
-   - (a) Tone descriptor («гармоничный транзит» / «напряжённый транзит») embedded в `_SPECIFIC_PSYCHOLOGY_RU` entries directly.
-   - (b) Tone descriptor added via separate `_ASPECT_TONE_PREFIX_RU` dict used by both specific and hybrid paths.
-   - (c) Worker proposes.
+4. **Test file = (a) extend** `test_transit_section_generic.py`. NO new file. Applied Stage 3.
 
-4. **Test file location.**
-   - (a) Extend existing `test_transit_section_generic.py` (consistent с предшественниками).
-   - (b) Split: filter tests в `test_transit_section_generic.py` (existing module concern); psychology specific tests в separate `test_generic_psychology_specific.py`.
+5. **Reviewer = (a) REQUIRED.** External pass after Worker submit. Applied Reviewer section.
 
-5. **Reviewer disposition.**
-   - (a) REQUIRED external Reviewer (parallel к predecessor Tier B+ tasks).
-   - (b) Optional + TL inline-verify (lower discipline).
+**Additional guards (per user direction 2026-05-20, verbatim):**
+
+### Guard #1 — Filter scope:
+> «Current-year filtering applies only to generic fallback cards. Calibrated allowlist cards keep their existing display-window behavior.»
+
+### Guard #2 — Window-level strict filtering:
+> «If a card has multiple windows, keep only windows overlapping the current solar year. Do not keep old windows "for context" in generic output.»
+
+Both applied across Stage 1 implementation + Do not touch + STOP triggers + Reviewer criteria + Acceptance.
