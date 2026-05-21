@@ -7,7 +7,7 @@
 - Model: Claude Opus 4.7 (1M context)
 - Role mode: Worker
 - TASK: `project-overlays/astro/TASKS/2026-05-20-geocode-place-autocomplete.md`
-- Status: ready_for_review (Reviewer optional per clarification 5 = (a) — TL inline-verify + manual UI smoke)
+- Status: closed
 - Product repo status: committed (`948cbdc` on `main`, backup pushed)
 
 ## Что сделано

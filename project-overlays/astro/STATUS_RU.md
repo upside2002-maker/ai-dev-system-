@@ -1,8 +1,34 @@
 # Статус — Astro
 
-Дата последнего обновления: 2026-05-20 (Geocode Place Autocomplete DELIVERED — pytest 653/3/0; backend endpoint + frontend integration; LRU cache 100; UA `astro-internal-tool/1.0`; manual override + Nominatim-down failover preserved; engine UNTOUCHED; awaiting TL inline-verify per clarification 5 = (a) optional).
+Дата последнего обновления: 2026-05-20 (Geocode Place Autocomplete CLOSED — pytest 653/3/0; live smoke Москва + Питер verified; backend self-resolves координаты + IANA timezone; manual override + Nominatim-down failover preserved; engine UNTOUCHED).
 
 ## Сейчас
+
+**TASK geocode-place-autocomplete — CLOSED 2026-05-20 (Tier B UX feature; ACCEPTED по TL inline-verify + live smoke + user explicit closure ack; Reviewer optional per clarification 5 = (a) honoured).** Pytest **653/3/0** (+10 new tests). **TL live smoke (2026-05-20):** Москва → lat 55.625578 / 37.6063916 + lat 55.7505412 / 37.6174782 (multi-result Nominatim, both Europe/Moscow); Санкт-Петербург → lat 59.9606739 / 30.1586551 + lat 59.938732 / 30.316229 (both Europe/Moscow); empty query → HTTP 422 controlled validation. API endpoint reachable, multi-result UX surfaces administrative variants для operator choice. Backend test inventory 10/10 PASS: 6 strict (Moscow happy / empty 422 / Nominatim empty / timezonefinder None / Nominatim timeout 503 / multi-result cap 5) + 4 adjacent (cache hit / malformed response / special chars / User-Agent header verification). LRU cache `functools.lru_cache(maxsize=100)` keyed by normalised query — single upstream call across identical queries verified empirically. User-Agent `astro-internal-tool/1.0` constant + test #10 assertion. Frontend `npm run build` clean (Vite bundle 253.58 kB / gzip 82.85 kB).
+
+**User feedback 2026-05-20 verbatim:** «Это именно то, что нужно: backend сам тянет координаты и timezone, UI даёт выбрать вариант, ручной ввод остаётся живым, Nominatim-down не ломает работу. Хороший UX-фикс.»
+
+**Critical guards verified ✅:**
+- **Nominatim-down failover:** backend 503 envelope (test #5) + frontend `formatGeocodeError` controlled message; lat/lon/tz fields НЕ disabled (no readOnly/disabled attributes); save Person + compute + PDF render не depend on geocode.
+- **Manual override preserved:** geocode results write к same React state slots as manual entry; existing «Подставить координаты места рождения» preserved.
+- **No silent wrong-city:** multi-result renders inline radio-list (default first selected); single-result auto-fills immediately.
+- **LRU cache in-memory only:** no disk persistence; failures bypass cache.
+- **User-Agent compliance:** Nominatim ToS honoured.
+
+**Что landed (product `948cbdc`):**
+- `services/api-python/app/api/__init__.py` NEW (+8) — package init.
+- `services/api-python/app/api/geocode.py` NEW (+307) — FastAPI router + LRU cache + Nominatim + timezonefinder pipeline.
+- `services/api-python/app/main.py` +7 — router registration.
+- `apps/web-react/src/api.ts` +26 — `GeocodeResult` interface + `geocodePlace` function.
+- `apps/web-react/src/pages/PersonForm.tsx` +195 — «Найти координаты» button + multi-result radio-list + error handling + remove Phase 0.1 comment.
+- `apps/web-react/src/pages/ConsultationForm.tsx` +216 — same для meeting place block + remove Phase 0.1 comments.
+- `services/api-python/tests/test_geocode_endpoint.py` NEW (+405) — 10 backend tests.
+
+Net product: +1140 / -24.
+
+**Программная значимость:** UX blocker «оператор вручную ищет координаты» закрыт. Phase 0.1 comments removed from both forms. New consultations через UI теперь не требуют GIS-знаний от оператора.
+
+Lifecycle: TASK `review → done`; HANDOFF `ready_for_review → closed`; both archived.
 
 **TASK geocode-place-autocomplete — DELIVERED 2026-05-20 (Tier B UX feature; Reviewer optional per clarification 5 = (a)).** Автоподтягивание `latitude` / `longitude` / IANA `timezone` по названию места в PersonForm (место рождения) и ConsultationForm (место встречи соляра). Helper, не gate: ручной ввод editable; Nominatim-down failover guaranteed (backend 503 + frontend controlled error message; lat/lon/tz fields stay editable; save Person + compute + PDF продолжают работать без geocode).
 
