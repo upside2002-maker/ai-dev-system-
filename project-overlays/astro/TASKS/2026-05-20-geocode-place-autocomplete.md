@@ -1,7 +1,7 @@
 # TASK: geocode-place-autocomplete
 
 - Status: open
-- Ready: no
+- Ready: yes
 - Date: 2026-05-20
 - Project: astro
 - Layer: services + frontend (new backend API endpoint + frontend API client + UI integration в PersonForm + ConsultationForm)
@@ -79,19 +79,20 @@ Backend geocode endpoint реализуется без новых dependencies.
 5. Timeout 5 seconds.
 6. User-Agent строка нормальная (per Nominatim ToS — identify app), e.g. `astro-internal-tool/1.0` per § Ready clarification 2.
 
-**1.4 — Endpoint location (per § Ready clarification 1):**
+**1.4 — Endpoint location (per user clarification 1 = (a) new file + router):**
 
-- (a) New file `services/api-python/app/api/geocode.py` + register router в `main.py`.
-- (b) Extend `services/api-python/app/main.py` inline (simpler).
-- (c) Worker proposes.
+Worker creates `services/api-python/app/api/geocode.py` с FastAPI router (`APIRouter()`). Регистрация router в `services/api-python/app/main.py` через `app.include_router(geocode_router, prefix="/api/v1")`. Cleaner architecture: `main.py` уже довольно крупный; geocode logic — отдельная concern.
 
-**1.5 — Rate limiting / caching (per § Ready clarification 2):**
+**1.5 — Rate limiting / caching (per user clarification 2 = (b) UA + LRU cache):**
 
-Nominatim ToS: max 1 req/sec absolute rate limit для public instance.
-- (a) **Strict:** in-process sliding-window rate limiter (max 1 req/sec); no cache.
-- (b) **Hybrid:** User-Agent compliant + in-process LRU cache (~100 entries, no persistence) — каждый identical query hits cache, не Nominatim.
-- (c) **Minimal:** только User-Agent compliance (acceptable для low-volume internal tool с одним оператором).
-- (d) Worker proposes.
+Nominatim ToS: User-Agent compliance mandatory. For low-volume internal tool (single operator) rate-limiter complexity не оправдана.
+
+Worker implements:
+- **User-Agent header:** `astro-internal-tool/1.0` (или similar identifying string per Nominatim policy https://operations.osmfoundation.org/policies/nominatim/).
+- **In-process LRU cache:** `functools.lru_cache(maxsize=100)` или `cachetools.LRUCache(100)` — identical queries (e.g. оператор перепечатывает «Москва, Россия») hit cache, не Nominatim. No persistence (in-memory только).
+- **No rate limiter** — повторные запросы дешёвые через cache; new queries единичные.
+
+User direction 2026-05-20 verbatim: «User-Agent + in-process LRU cache. Без тяжёлого rate limiter, но повторные запросы не должны долбить Nominatim.»
 
 ### Stage 2 — Frontend API client
 
@@ -154,17 +155,33 @@ Frontend должен показывать понятные ошибки:
 
 Не падать молча. Worker designs UX (toast / inline message / etc).
 
-### Stage 6 — Multi-result UX (per § Ready clarification 3)
+### Stage 6 — Multi-result UX (per user clarification 3 = (c) inline radio-list)
 
-Когда Nominatim возвращает несколько results:
-- (a) **Inline dropdown** — simple `<select>` под полем места; выбор → заполнение.
-- (b) **Modal с card-list** — каждый result как card (display_name + small map preview optional).
-- (c) **Radio button list** — inline под полем; выбор → заполнение.
-- (d) Worker proposes UX.
+User direction 2026-05-20 verbatim: «Inline radio-list. Это лучше, чем dropdown: оператор видит, какой именно город выбрал.»
+
+Worker implements inline radio button list под полем места:
+
+```tsx
+{results.length > 1 && (
+  <fieldset>
+    <legend>Найдено несколько вариантов — выберите нужный:</legend>
+    {results.map((r, idx) => (
+      <label key={idx}>
+        <input type="radio" name="geocode-choice"
+          checked={selected === idx}
+          onChange={() => handleSelect(r)} />
+        {r.display_name}
+      </label>
+    ))}
+  </fieldset>
+)}
+```
+
+После клика на radio → заполняются `latitude` / `longitude` / `timezone` соответствующего result. Default selected = first result (one-result happy path). Single-result case: радио список не показывается, fields auto-fill immediately.
 
 ### Stage 7 — Tests
 
-**7.1 — Backend tests** в `services/api-python/tests/test_geocode_endpoint.py`:
+**7.1 — Backend tests** в `services/api-python/tests/test_geocode_endpoint.py` (per user clarification 4 = (b) adjacents allowed):
 
 С mocked `httpx` / monkeypatch:
 
@@ -174,6 +191,12 @@ Frontend должен показывать понятные ошибки:
 4. `timezonefinder` returns `None` → timezone null в result.
 5. Nominatim timeout/error → controlled HTTP error (e.g. 503 / 504), не traceback.
 6. Multi-result Nominatim → response с ≤5 results.
+7. **(adjacent) Cache hit:** identical query within session не вызывает Nominatim повторно (mock counter assertion).
+8. **(adjacent) Malformed Nominatim response:** missing `lat` / `lon` fields → controlled error.
+9. **(adjacent) Special characters в query:** URL-encoding/escaping (e.g. quotes, apostrophes, non-Latin).
+10. **(adjacent) User-Agent header verification:** mock asserts httpx request includes `User-Agent` matching expected pattern.
+
+8-10 worker-added adjacents reinforce contract; не bloat.
 
 **7.2 — Frontend tests:**
 
@@ -310,14 +333,52 @@ Frontend infrastructure verified absent (no vitest/jest в package.json) → **N
 - Worker violates Nominatim ToS (missing User-Agent, excessive rate, scraping) → STOP.
 - Worker modifies Person или Consultation schemas → STOP, schemas not in scope.
 - Worker breaks Phase Solar Meeting Place invariant → STOP, regression.
+- **Worker breaks Nominatim-down failover** (manual entry blocked when Nominatim unreachable) → STOP per critical guard 2026-05-20. Autogeocoder помощник, не единственный путь.
+- LRU cache implementation persists на disk OR leaks beyond process lifetime → STOP, in-memory only.
 
-## Reviewer subagent — per § Ready clarification 5
+## Reviewer subagent — OPTIONAL (per user clarification 5 = (a))
 
-User direction 2026-05-20 verbatim: «Reviewer optional, но желательно TL inline-verify + ручной UI smoke.»
+User direction 2026-05-20 verbatim: «Optional; TL inline-verify + manual UI smoke достаточно.»
+
+Tier B feature; backend mocked-httpx tests strong; manual smoke на Москва + Питер catches integration issues. Worker self-review applied. TL spawns external Reviewer post-submission только если manual smoke surfaces concerns.
+
+**TL inline-verify focus areas:**
+- SHAs match + parity.
+- Pytest >= 643 + N (new tests pass).
+- Backend endpoint reachable.
+- Manual smoke: Москва + Питер happy paths.
+- Manual override preserved.
+- Nominatim-down failover (per critical guard ниже) — manual entry still works.
 
 ## Context
 
-**Mode normal + Tier B (Reviewer disposition per § Ready).** Worker mode: normal.
+**Mode normal + Tier B (Reviewer optional per user clarification 5).** Worker mode: normal.
+
+## Critical Nominatim-down failover guard (per user direction 2026-05-20, verbatim)
+
+> «Если Nominatim недоступен, ручной ввод должен остаться полностью рабочим. Автогеокодер — помощник, не единственный путь.»
+
+**Operational requirement:**
+
+Когда Nominatim unreachable / timeout / 5xx — UI MUST behave:
+- Geocode button показывает понятную ошибку («Сервис геокодинга временно недоступен»).
+- Поля `latitude` / `longitude` / `timezone` остаются **fully editable** для ручного ввода.
+- Saving Person OR Consultation работает **без geocode** — оператор вводит координаты руками.
+- Compute consultation работает **без geocode** — соляр строится по manually-entered coords.
+
+**Verification (manual smoke):**
+
+1. Mock Nominatim как unreachable (e.g. shut down service, или mock httpx to raise).
+2. Open PersonForm.
+3. Click «Найти координаты».
+4. Verify error message shown (не traceback, не crash).
+5. Manually enter latitude / longitude / timezone.
+6. Save person — SUCCESS.
+7. Create consultation, compute, render PDF — все работает.
+
+**Backend test #5 (Nominatim timeout/error) covers this at API layer.** Manual smoke covers UI layer.
+
+**STOP trigger:** если manual entry blocked when Nominatim down → STOP, fix.
 
 **Baseline:**
 - Product main @ `22dc672` (Unified House Meanings closed).
@@ -342,32 +403,24 @@ User direction 2026-05-20 verbatim: «Reviewer optional, но желательн
 - Frontend test framework (no infra exists).
 - PDF template changes.
 
-**Ready: no** — pending 5 clarifications below.
+**Ready: yes** — 5 clarifications applied 2026-05-20 + Nominatim-down failover guard:
 
-## Ready clarifications (pending user direction 2026-05-20)
+1. **Endpoint = (a) new file** `services/api-python/app/api/geocode.py` + register router в `main.py`. Cleaner architecture; main.py уже крупный. Applied Stage 1.4.
 
-1. **Backend endpoint file organization.**
-   - (a) New file `services/api-python/app/api/geocode.py` + register router в `main.py`.
-   - (b) Extend `services/api-python/app/main.py` inline (simpler, fewer files).
-   - (c) Worker proposes.
+2. **Rate/cache = (b) UA + LRU cache.** User-Agent compliant + `functools.lru_cache(maxsize=100)` или `cachetools.LRUCache(100)` in-process. No rate limiter (low-volume). Applied Stage 1.5.
 
-2. **Rate limiting / caching strategy.**
-   - (a) **Strict:** in-process sliding-window rate limiter (max 1 req/sec); no cache.
-   - (b) **Hybrid:** User-Agent compliant + in-process LRU cache (~100 entries); identical query hits cache, не Nominatim.
-   - (c) **Minimal:** только User-Agent compliance (acceptable для low-volume internal tool с одним оператором).
-   - (d) Worker proposes.
+3. **Multi-result UX = (c) inline radio-list.** Operator видит все варианты с display_name; выбирает кликом radio. Default selected = first result. Single-result case: no radio list, immediate auto-fill. Applied Stage 6.
 
-3. **Multi-result UX format.**
-   - (a) **Inline dropdown** — `<select>` под полем; simple, low ceremony.
-   - (b) **Modal с card-list** — каждый result как card; richer.
-   - (c) **Radio button list** — inline под полем; balance.
-   - (d) Worker proposes.
+4. **Tests = (b) adjacents allowed.** 6 strict + 4 adjacents (cache-hit / malformed response / special chars / User-Agent header verification). Applied Stage 7.1.
 
-4. **Backend tests count.**
-   - (a) Strict 6 listed tests (Москва happy path + empty query + empty result + tz null + timeout + multi-result).
-   - (b) Worker may add adjacent tests (cache hit if (2b) chosen, malformed Nominatim response, query escape characters, etc).
-   - (c) Worker proposes.
+5. **Reviewer = (a) optional.** TL inline-verify + manual UI smoke достаточно. Applied Reviewer section.
 
-5. **Reviewer disposition.**
-   - (a) **Optional + TL inline-verify + manual smoke** (per user verbatim).
-   - (b) REQUIRED external Reviewer.
+**Critical Nominatim-down failover guard (verbatim user direction 2026-05-20):**
+
+> «Если Nominatim недоступен, ручной ввод должен остаться полностью рабочим. Автогеокодер — помощник, не единственный путь.»
+
+Applied across:
+- Critical Nominatim-down failover guard dedicated section (UI requirements + manual smoke verification path).
+- STOP triggers («Worker breaks Nominatim-down failover → STOP»).
+- Manual smoke Stage 8 + Nominatim-down smoke variant.
+- Backend test #5 (Nominatim timeout/error) covers API layer; manual smoke covers UI layer.
