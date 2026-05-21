@@ -1,68 +1,71 @@
 # HANDOFF: Worker → TL — unified-house-meanings-dictionary
 
-- **Date:** 2026-05-20
-- **TASK:** `project-overlays/astro/TASKS/2026-05-20-unified-house-meanings-dictionary.md`
-- **Tier:** C (consolidation refactor)
-- **Status:** Worker DELIVERED → review (Reviewer optional per clarification 4)
-- **Product SHA:** `22dc672` on `main` (backup pushed)
-- **Overlay SHA:** (set in overlay commit that includes this HANDOFF)
-- **Pytest:** 643 passed + 3 skipped + 0 failed (was 633 + 3 + 0 baseline; +10 new tests)
-- **Cabal:** Up to date (no Haskell change)
+- Date: 2026-05-20 20:05
+- From: Worker (astro)
+- To: Tech Lead (astro)
+- Agent runtime: Claude Code
+- Model: Claude Opus 4.7 (1M context)
+- Role mode: Worker
+- TASK: `project-overlays/astro/TASKS/2026-05-20-unified-house-meanings-dictionary.md`
+- Status: open
+- Product repo status: committed (`22dc672` on `main`, backup pushed)
 
-## Scope delivered
+## Что сделано
 
-Single source of truth for the twelve astrological houses in the PDF
-layer. Four previously local dicts now derive from one canonical
-module via soft-transition aliases. No PDF surface change.
+Tier C consolidation refactor — единый источник правды для значений
+12 домов в PDF слое. Четыре ранее локальных dict'а теперь derived
+aliases поверх одного канонического модуля.
 
-### Files
+### Артефакты
 
-- **new:** `services/api-python/app/pdf/house_meanings.py`
-  (canonical dict + thin helper API)
-- **new:** `services/api-python/tests/test_house_meanings.py`
-  (9 test categories + helper-API smoke = 10 tests total)
-- **modify:** `services/api-python/app/pdf/synthesis_themes.py`
-  (`_HOUSE_TOPICS_RU` + `_HOUSE_SHORT_RU` → derived aliases over `HOUSE_MEANINGS`)
-- **modify:** `services/api-python/app/pdf/house_pair_themes.py`
+- new product: `services/api-python/app/pdf/house_meanings.py`
+  (canonical dict 12 × 7 fields + helper API).
+- new product: `services/api-python/tests/test_house_meanings.py`
+  (9 категорий + helper API smoke = 10 тестов).
+- modify product: `services/api-python/app/pdf/synthesis_themes.py`
+  (`_HOUSE_TOPICS_RU` + `_HOUSE_SHORT_RU` → derived aliases over
+  `HOUSE_MEANINGS`).
+- modify product: `services/api-python/app/pdf/house_pair_themes.py`
   (`SOLAR_HOUSE_FRAMING` + `NATAL_HOUSE_DOMAIN` → derived aliases;
-  `HOUSE_PAIR_THEMES` 144 cells **NOT touched**)
+  `HOUSE_PAIR_THEMES` 144 cells НЕ тронуты).
+- Product commit SHA: `22dc672` on `main` (backup push:
+  `5070ea0..22dc672  main -> main`).
+- Overlay commit SHA: this commit (HANDOFF + STATUS_RU update).
 
-## Canonical dict structure
+## Канонический dict structure
 
-`HOUSE_MEANINGS: dict[int, dict[str, Any]]` — 12 houses × 7 fields each.
+`HOUSE_MEANINGS: dict[int, dict[str, Any]]` — 12 домов × 7 полей.
 
-Fields per house: `title` (uppercase RU heading) / `main` (primary
-keyword tuple) / `additional` (secondary keyword tuple) / `compact`
-(short factual descriptor for «Итоги») / `solar_framing` (year-as-
-solar-house framing) / `natal_domain` (natal life domain) / `short`
+Поля: `title` (uppercase RU heading) / `main` (primary keyword
+tuple) / `additional` (secondary keyword tuple) / `compact` (short
+factual descriptor для «Итоги») / `solar_framing` (year-as-solar-
+house framing) / `natal_domain` (natal life domain) / `short`
 (inline insertion).
 
 ### Keyword counts per house
 
-| House | `main` count | `additional` count | total |
+| House | `main` | `additional` | total |
 |---|---|---|---|
-| 1  ЛИЧНОСТЬ              | 7 | 6 | 13 |
-| 2  ДЕНЬГИ                 | 7 | 6 | 13 |
-| 3  ДОКУМЕНТЫ              | 7 | 7 | 14 |
-| 4  ДОМ                    | 7 | 7 | 14 |
-| 5  ДЕТИ                   | 7 | 7 | 14 |
-| 6  РАБОТА                 | 7 | 7 | 14 |
-| 7  БРАК                   | 7 | 7 | 14 |
-| 8  ЧУЖИЕ ДЕНЬГИ           | 7 | 7 | 14 |
-| 9  ЗАГРАНИЦА              | 7 | 7 | 14 |
-| 10 КАРЬЕРА                | 7 | 7 | 14 |
-| 11 ДРУЗЬЯ                 | 7 | 7 | 14 |
-| 12 ИЗОЛЯЦИЯ               | 7 | 7 | 14 |
+| 1  ЛИЧНОСТЬ      | 7 | 6 | 13 |
+| 2  ДЕНЬГИ         | 7 | 6 | 13 |
+| 3  ДОКУМЕНТЫ      | 7 | 7 | 14 |
+| 4  ДОМ            | 7 | 7 | 14 |
+| 5  ДЕТИ           | 7 | 7 | 14 |
+| 6  РАБОТА         | 7 | 7 | 14 |
+| 7  БРАК           | 7 | 7 | 14 |
+| 8  ЧУЖИЕ ДЕНЬГИ   | 7 | 7 | 14 |
+| 9  ЗАГРАНИЦА      | 7 | 7 | 14 |
+| 10 КАРЬЕРА        | 7 | 7 | 14 |
+| 11 ДРУЗЬЯ         | 7 | 7 | 14 |
+| 12 ИЗОЛЯЦИЯ       | 7 | 7 | 14 |
 
-All within the user-specified `~6-12` range (per TASK § 1.4). Worker
-discretion applied for adjacent keywords (Daragan + traditional
-Russian astrology archetypes; author's own short Russian phrasings;
-no verbatim copy).
+Все в диапазоне `~6-12` из TASK § 1.4. Author's own short Russian
+phrasings (Daragan + traditional archetypes; no verbatim copy).
 
 ## Migration trace (soft transition, derived-alias pattern)
 
-Per clarification 2 = (b) soft transition. Old names preserved as
-derived aliases; existing callsites unchanged.
+Per clarification 2 = (b) soft transition. Старые имена preserved
+as derived aliases; существующие callsites unchanged.
 
 ```python
 # synthesis_themes.py
@@ -88,21 +91,21 @@ NATAL_HOUSE_DOMAIN: dict[int, str] = {
 }
 ```
 
-Existing callsites continue to work:
-- `synthesis_themes._house_topic_phrase` (synthesis_themes.py:710 — single + multi-house path).
+Existing callsites продолжают работать:
+- `synthesis_themes._house_topic_phrase` (line 710 — single + multi).
 - `synthesis_themes._phrase_personality_partner` (line 2519).
 - `_phrase_resources_partner` (line 2564).
 - Houses inline insertion (line 2858).
 - `house_pair_themes.house_pair_text` fallback (lines 261-262).
 
-**HOUSE_PAIR_THEMES (144 curated cells) NOT touched.** Verified bit-
-identical via `git diff --stat` (only `SOLAR_HOUSE_FRAMING` +
-`NATAL_HOUSE_DOMAIN` regions modified; cells region unchanged).
+**HOUSE_PAIR_THEMES (144 curated cells) НЕ тронуты.** Verified via
+`git diff --stat`: only `SOLAR_HOUSE_FRAMING` + `NATAL_HOUSE_DOMAIN`
+regions modified; cells region unchanged.
 
 ## 48 required keywords verification
 
-Per TASK § Stage 4.2 — case-insensitive substring match in
-`main` OR `additional`. All 48 keywords confirmed present.
+Per TASK § Stage 4.2 — case-insensitive substring match в `main`
+OR `additional`. Все 48 подтверждены present.
 
 | House | Required keywords | Location |
 |---|---|---|
@@ -119,16 +122,16 @@ Per TASK § Stage 4.2 — case-insensitive substring match in
 | 11 | друзья, коллективы, планы, социальные связи | all in `main` |
 | 12 | изоляция, тайны, закрытые учреждения, завершение жизненного этапа | all in `main` |
 
-Verification script run pre-submit: `errors=0`. Test
+Pre-submit script: `errors=0`. Тест
 `test_required_keywords_present_in_main_or_additional` enforces
 ongoing presence.
 
 ## PDF text-extract diff proof (Critical preservation guard)
 
 Pre-refactor renders captured at product SHA `5070ea0` (baseline);
-post-refactor renders at SHA `22dc672` (after migration).
+post-refactor renders at SHA `22dc672` (post migration).
 
-Diff command: `diff <case>-pre.txt <case>-post.txt | wc -l`.
+Diff: `diff <case>-pre.txt <case>-post.txt | wc -l`.
 
 | Case | Pre bytes | Post bytes | Diff lines |
 |---|---|---|---|
@@ -136,18 +139,17 @@ Diff command: `diff <case>-pre.txt <case>-post.txt | wc -l`.
 | 05-ekaterina-2025-2026 | 55966 | 55966 | **0** |
 | 08-natalya-2025-2026  | 56785 | 56785 | **0** |
 
-PDF surface = unchanged. Critical preservation guard satisfied:
-all four legacy dicts now derive verbatim from canonical, so any
-template rendering path that read those dicts emits the same text.
+PDF surface = unchanged. Critical preservation guard satisfied: все
+четыре legacy dict'а теперь derive verbatim из canonical, любой
+template rendering path который читал эти dicts эмитит тот же текст.
 
-Olga consultation 12 (DB-based, no golden-case fixture) was not
-rendered live in this Worker run; the regression coverage relies on
-calibrated cases sharing the same code paths
+Olga consultation 12 (DB-based, нет golden-case fixture) не
+рендерилась live в этом Worker запуске; regression coverage
+опирается на calibrated cases sharing same code paths
 (`_house_topic_phrase`, `house_pair_text` fallback, inline `short`
-insertions). Test `test_derived_aliases_match_canonical_projection`
-enforces the four dicts equal their canonical projection — any
-future drift would fail the test rather than silently change Olga's
-PDF.
+insertions). Тест `test_derived_aliases_match_canonical_projection`
+enforces четыре dict'а = их canonical projection — любой future
+drift fails test rather than silently change Olga's PDF.
 
 ## Test coverage (9 categories + 1 bonus)
 
@@ -162,47 +164,53 @@ PDF.
 | 7 | `test_no_duplicates_within_house` | No duplicates (adjacent 7) |
 | 8 | `test_no_circular_imports_in_house_meanings_module` | AST import scan (adjacent 8) |
 | 9 | `test_derived_aliases_match_canonical_projection` | Alias correctness (adjacent 9) |
-| 10 | `test_helper_api_returns_canonical_values` | Bonus smoke for `house_topic` / `house_short` / `solar_framing` / `natal_domain` |
+| 10 | `test_helper_api_returns_canonical_values` | Bonus smoke (`house_topic`/`house_short`/`solar_framing`/`natal_domain`) |
 
-All 10 PASS in 0.34s.
+Все 10 PASS в 0.34s.
 
 ## Discipline checklist
 
 - [x] NO `HOUSE_PAIR_THEMES` 144 cells modification.
-- [x] NO PDF surface change (0-char diff on 3 calibrated cases).
+- [x] NO PDF surface change (0-char diff на 3 calibrated cases).
 - [x] NO LLM.
 - [x] NO engine touch (cabal Up to date).
-- [x] NO `main` / `additional` keyword list output in PDF (internal semantic source only).
+- [x] NO `main` / `additional` keyword list output в PDF (internal semantic source).
 - [x] NO Daragan verbatim copy (author's own short Russian phrasings).
-- [x] NO improving/rewriting existing `compact`/`solar_framing`/`natal_domain`/`short` (char-for-char copy from existing locals).
+- [x] NO improving/rewriting existing `compact`/`solar_framing`/`natal_domain`/`short` (char-for-char copy).
 - [x] NO refactor beyond derived-alias substitution.
-- [x] Single source of truth: 4 legacy dicts derive from `HOUSE_MEANINGS`.
-- [x] `house_meanings.py` imports only stdlib (`typing`); no circular dependency.
+- [x] Single source of truth: 4 legacy dicts derive из `HOUSE_MEANINGS`.
+- [x] `house_meanings.py` импортирует только stdlib (`typing`) — нет circular dependency.
 
 ## Verification before submit
 
 - [x] `cabal build` clean from `core/astrology-hs` (Up to date).
 - [x] Pytest 643 passed + 3 skipped + 0 failed (was 633 + 3 + 0 baseline; +10 new).
-- [x] PDF text-extract diff = 0 chars for 02-maksim + 05-ekaterina + 08-natalya.
+- [x] PDF text-extract diff = 0 chars для 02-maksim + 05-ekaterina + 08-natalya.
 - [x] Product `git status --short` clean for intended files (4 files: 1 new module + 2 modified + 1 new test).
-- [x] Backup parity: product backup push successful (`5070ea0..22dc672  main -> main`).
+- [x] Backup parity: `5070ea0..22dc672  main -> main` (product backup), overlay backup pending в commit, который содержит этот HANDOFF.
+
+## Что осталось
+
+Закрытие cycle: TL inline-verify per clarification 4 = (a) optional
+Reviewer. Worker self-review applied. Если TL satisfied, TASK
+`review → done` + HANDOFF `open → closed` + archive.
+
+## Конфликты / открытые вопросы
+
+Нет. Future deprecation-lifecycle TASK (per TASK § Stage 2.3 «оставлен
+для future cleanup TASK») может удалить четыре legacy alias names
+entirely. Out of scope здесь.
 
 ## Reviewer status
 
 Per clarification 4 = (a) optional. Worker self-review applied.
-Critical PDF preservation guard satisfied by 0-char diff on 3
+Critical PDF preservation guard satisfied 0-char diff на 3
 calibrated cases + `test_derived_aliases_match_canonical_projection`
-locking the four legacy dicts to canonical values.
+locking четыре legacy dicts к canonical values.
 
 TL inline-verify focus areas (per TASK § Reviewer subagent):
-- [x] Canonical dict completeness (12 × 7 fields) — `test_field_coverage_...`.
-- [x] All 48 required keywords present — `test_required_keywords_...`.
+- [x] Canonical dict completeness (12 × 7 fields) — `test_field_coverage_seven_fields_non_empty_per_house`.
+- [x] All 48 required keywords present — `test_required_keywords_present_in_main_or_additional`.
 - [x] Soft-alias derivation works (old names importable + return correct values) — `test_derived_aliases_match_canonical_projection`.
-- [x] PDF text bit-identical for ≥2 calibrated cases (delivered 3: 02 / 05 / 08).
+- [x] PDF text bit-identical для ≥2 calibrated cases (delivered 3: 02 / 05 / 08).
 - [x] Existing acceptance tests all pass (643 PASS; full suite).
-
-## Open items / follow-ups
-
-None for this TASK. Future deprecation-lifecycle TASK could remove
-the four legacy alias names entirely (per TASK § Stage 2.3 «оставлен
-для future cleanup TASK»). Out of scope here.
