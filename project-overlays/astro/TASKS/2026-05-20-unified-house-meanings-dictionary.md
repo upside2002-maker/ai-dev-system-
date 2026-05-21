@@ -1,7 +1,7 @@
 # TASK: unified-house-meanings-dictionary
 
 - Status: open
-- Ready: no
+- Ready: yes
 - Date: 2026-05-20
 - Project: astro
 - Layer: services (Python presentation: new `app/pdf/house_meanings.py` canonical dict + refactor existing local dicts в synthesis_themes.py + house_pair_themes.py)
@@ -71,9 +71,22 @@ HOUSE_MEANINGS: dict[int, dict[str, Any]] = {
 | `natal_domain` | Как этот дом звучит как сфера натала (replaces current `NATAL_HOUSE_DOMAIN` value) |
 | `short` | Короткая вставка для inline-фраз (replaces current `_HOUSE_SHORT_RU` value) |
 
-**1.4 — Content authoring (per § Ready clarification 1):**
+**1.4 — Content authoring (per user clarification 1 = (a) full):**
 
-Worker fills `main` + `additional` based on user-listed required keywords (см. § Acceptance Stage 3 ниже). Worker discretion для adjacent keywords + ordering. Worker channels Daragan + traditional Russian astrology archetypes для каждого дома; exact wording author's own.
+User direction 2026-05-20 verbatim: «Нужен полноценный справочник домов, не минимальный набор из 48 слов.»
+
+Worker fills `main` + `additional` как **comprehensive canonical reference** — 4 required keywords per house — это floor, не ceiling. Worker channels Daragan + traditional Russian astrology archetypes для каждого дома, расширяя required keywords adjacent keywords:
+
+- `main` ~6-12 keywords (primary meanings).
+- `additional` ~6-12 keywords (secondary / nuanced meanings).
+- Worker discretion для adjacent keywords и ordering.
+- Author's own short Russian phrasings; NO Daragan verbatim copy.
+
+Example для 1 дома (illustrative, NOT prescriptive — Worker designs final lists):
+- `main`: `("личность", "тело", "внешний вид", "инициативы", "характер", "имидж", "начало нового цикла")`
+- `additional`: `("физическая активность", "самопредъявление", "личная воля", "первое впечатление")`
+
+48 user-listed required keywords (4 per house × 12) MUST be present в `main` OR `additional`.
 
 **1.5 — Helper API (optional, Worker discretion):**
 
@@ -107,11 +120,32 @@ OR Worker может keep dict-only API (callers use `HOUSE_MEANINGS[h]["compact
 **2.2 — Заменить `_HOUSE_SHORT_RU`** (line 2459+):
 - Same pattern as 2.1 для `short` field.
 
-**2.3 — Migration approach (per § Ready clarification 2):**
+**2.3 — Migration approach (per user clarification 2 = (b) soft transition):**
 
-- (a) **Hard replacement:** remove old local dicts entirely; all callsites use `house_meanings` module.
-- (b) **Soft transition:** keep old names as aliases for one release («`_HOUSE_TOPICS_RU = {h: HOUSE_MEANINGS[h]["compact"] for h in HOUSE_MEANINGS}`»); deprecation note inline.
-- (c) Worker proposes.
+User direction 2026-05-20 verbatim: «Старые имена можно оставить как derived aliases, но source of truth должен быть `house_meanings.py`.»
+
+Worker implements **soft transition** с derived aliases:
+
+```python
+# synthesis_themes.py — старые локальные dicts сохранены как backward-compat aliases.
+# Source of truth: house_meanings.HOUSE_MEANINGS.
+
+from app.pdf.house_meanings import HOUSE_MEANINGS
+
+# DEPRECATED ALIAS: derived from canonical dict. Existing callsites
+# continue to work. New code should use HOUSE_MEANINGS[h]["compact"] directly.
+_HOUSE_TOPICS_RU: dict[int, str] = {
+    h: HOUSE_MEANINGS[h]["compact"] for h in HOUSE_MEANINGS
+}
+
+_HOUSE_SHORT_RU: dict[int, str] = {
+    h: HOUSE_MEANINGS[h]["short"] for h in HOUSE_MEANINGS
+}
+```
+
+Existing callsites (`synthesis_themes.py:710`, `house_pair_themes.py:261-262`, etc.) продолжают работать без изменений. Deprecation lifecycle оставлен для future cleanup TASK.
+
+Same pattern для `SOLAR_HOUSE_FRAMING` + `NATAL_HOUSE_DOMAIN` в `house_pair_themes.py`.
 
 ### Stage 3 — Migration: `house_pair_themes.py`
 
@@ -152,11 +186,19 @@ OR Worker может keep dict-only API (callers use `HOUSE_MEANINGS[h]["compact
 
 5. **house_pair_themes `house_pair_text` fallback regression:** uses `solar_framing` + `natal_domain` из canonical dict (when pair NOT в curated `HOUSE_PAIR_THEMES`).
 
-**4.3 — Test scope expansion (per § Ready clarification 3):**
+**4.3 — Test scope expansion (per user clarification 3 = (b) adjacent tests allowed):**
 
-- (a) Strict 5 user-listed categories.
-- (b) Worker may add adjacent regression tests if discovers consolidation edge cases (e.g. import order, circular deps, missing field validation).
-- (c) Worker proposes.
+User direction 2026-05-20 verbatim: «Можно добавить adjacent tests: типы полей, отсутствие дублей, импорт без циклов.»
+
+Worker adds (in addition to 5 user-listed categories):
+
+6. **Field type validation:** `main` / `additional` — tuples (не lists, immutability); `title` / `compact` / `solar_framing` / `natal_domain` / `short` — non-empty strings.
+
+7. **No duplicates within house:** `main` keywords unique; `additional` keywords unique; `main` ∩ `additional` = ∅ (no overlap within same house).
+
+8. **No circular imports:** `house_meanings` imports only stdlib (`typing` etc.); does NOT import from `synthesis_themes` / `house_pair_themes` / `outer_cards` / etc. Reverse direction only.
+
+9. **Derived alias correctness:** verify `synthesis_themes._HOUSE_TOPICS_RU == {h: HOUSE_MEANINGS[h]["compact"] for h in HOUSE_MEANINGS}` (and similar для `_HOUSE_SHORT_RU`, `SOLAR_HOUSE_FRAMING`, `NATAL_HOUSE_DOMAIN`).
 
 ### Stage 5 — Regression check (no behavior change)
 
@@ -248,16 +290,43 @@ Worker verifies через existing acceptance tests (`test_calibrated_cards_bit
 - Worker tempted to output `main` / `additional` keyword lists в PDF → STOP, canonical dict is semantic source only.
 - Worker finds existing PDF output changes substantively post-refactor → STOP, canonical dict value mismatch OR migration broke callsite; investigate.
 - Worker copies Daragan book verbatim → STOP, archetypes в author's own short phrasings.
+- **Worker tempted to улучшить / переписать `compact` / `solar_framing` / `natal_domain` / `short` values** → STOP per critical PDF preservation guard 2026-05-20. Эта TASK НЕ про rewriting; existing rendered phrasings copied character-for-character.
+- **PDF text-extract diff pre/post > 0 chars** для Olga или any calibrated case → STOP, value mismatch; restore canonical dict к existing rendered values.
+- Worker tempted to refactor generator code (synthesis pipeline, house_pair_text fallback, etc.) beyond derived-alias substitution → STOP, scope strict consolidation only.
 
-## Reviewer subagent — per § Ready clarification 4
+## Reviewer subagent — OPTIONAL (per user clarification 4 = (a))
 
-Tier C consolidation refactor. Per recent precedent:
-- Tier C TASKs (Phase 9.2A / 9.3A / Tail Polish): Reviewer optional + TL inline-verify.
-- Refactor TASKs с no behavior change typically lower Reviewer priority.
+User direction 2026-05-20 verbatim: «Это Tier C refactor, если Worker не полезет менять генератор текста.»
+
+Tier C consolidation refactor. TL inline-verify sufficient — read canonical dict + run regression tests + verify Olga + calibrated PDF text bit-identical. Если Worker prefers Reviewer pass — может spawn, не блокер.
+
+**TL inline-verify focus areas (after Worker submit):**
+- Canonical dict completeness (12 × 7 fields).
+- All 48 required keywords present.
+- Soft-alias derivation works (old dict names still importable + return correct values).
+- PDF text bit-identical для Olga + ≥2 calibrated cases.
+- Existing acceptance tests all pass (no regression).
 
 ## Context
 
-**Mode normal + Tier C (Reviewer disposition per § Ready).** Worker mode: normal.
+**Mode normal + Tier C (Reviewer optional per user clarification 4).** Worker mode: normal.
+
+## Critical PDF preservation guard (per user direction 2026-05-20, verbatim)
+
+> «Главный guard: **PDF surface должен остаться практически без изменений**. Эта задача про единый словарь и предотвращение будущего дрейфа, а не про переписывание всех трактовок домов прямо сейчас.»
+
+**Operational implication:** consolidation refactor должен produce PDF text **bit-identical** к pre-refactor baseline для:
+- Olga consultation 12 (post current-year + meeting place + generic psychology fixes).
+- All 6 calibrated cases (02-Maxim / 03-Artem / 05-Ekaterina / 07-Mariya / 08-Natalya / 10-Danila).
+
+**Worker discipline:** values в new `HOUSE_MEANINGS["compact" | "solar_framing" | "natal_domain" | "short"]` MUST match existing values в `_HOUSE_TOPICS_RU` / `SOLAR_HOUSE_FRAMING` / `NATAL_HOUSE_DOMAIN` / `_HOUSE_SHORT_RU` exactly character-for-character. Worker reads existing values и copies them; не authors new compact phrasings (только `main` / `additional` keyword lists — NEW canonical content, NOT rendered к PDF).
+
+**Если PDF text differs post-refactor:**
+- Investigate value mismatch в canonical dict (Worker may have introduced new phrasing).
+- Fix canonical dict to match existing rendered value.
+- Re-verify PDF bit-identity.
+
+Acceptance test: PDF text-extract diff pre/post = 0 chars для Olga + 6 calibrated.
 
 **Baseline:**
 - Product main @ `5070ea0` (solar meeting place closed).
@@ -283,25 +352,22 @@ Tier C consolidation refactor. Per recent precedent:
 - Outer cards filter / psychology / specificity logic.
 - PDF surface changes.
 
-**Ready: no** — pending 4 clarifications below.
+**Ready: yes** — 4 clarifications applied 2026-05-20 + critical PDF preservation guard:
 
-## Ready clarifications (pending user direction 2026-05-20)
+1. **Content scope = (a) full.** Полноценный канонический справочник домов. Worker fills `main` + `additional` ~6-12 keywords each, channeling Daragan + traditional Russian astrology archetypes. 48 required keywords — floor, не ceiling. Applied Stage 1.4.
 
-1. **`main` / `additional` content scope.**
-   - (a) Worker fills based on user-listed required keywords (4 per house from § Acceptance Stage 3) + Worker discretion for adjacent keywords (~6-12 keywords per `main`, ~6-12 per `additional`).
-   - (b) Worker fills strict-minimal (only user-listed required keywords + 1-2 adjacents per house).
-   - (c) Worker proposes scope.
+2. **Migration = (b) soft transition.** Старые имена сохранены as derived aliases (`_HOUSE_TOPICS_RU = {h: HOUSE_MEANINGS[h]["compact"] for h in HOUSE_MEANINGS}`); source of truth — `house_meanings.py`. Deprecation lifecycle отдельный future TASK. Applied Stage 2.3.
 
-2. **Migration approach (Stage 2.3).**
-   - (a) **Hard replacement:** remove old local dicts entirely; callsites use `house_meanings` module directly.
-   - (b) **Soft transition:** keep old names as derived aliases for backward compat («`_HOUSE_TOPICS_RU = {h: HOUSE_MEANINGS[h]["compact"] for h in HOUSE_MEANINGS}`») + deprecation note inline.
-   - (c) Worker proposes.
+3. **Tests = (b) Worker adjacents allowed.** Дополнительно к 5 user-listed: (6) field type validation, (7) no duplicates within house, (8) no circular imports, (9) derived alias correctness. Applied Stage 4.3.
 
-3. **Test scope expansion (Stage 4.3).**
-   - (a) Strict 5 user-listed categories.
-   - (b) Worker may add adjacent regression tests (import order, circular deps, missing field validation, helper API surface).
-   - (c) Worker proposes.
+4. **Reviewer = (a) optional.** TL inline-verify sufficient. Tier C refactor, если Worker не полезет менять генератор текста. Applied Reviewer section.
 
-4. **Reviewer subagent.**
-   - (a) Optional + TL inline-verify (consistent с Tier C refactor precedent).
-   - (b) REQUIRED external Reviewer (canonical dict authoring + migration touchpoints).
+**Critical PDF preservation guard (per user direction 2026-05-20, verbatim):**
+
+> «PDF surface должен остаться практически без изменений. Эта задача про единый словарь и предотвращение будущего дрейфа, а не про переписывание всех трактовок домов прямо сейчас.»
+
+Applied across Critical PDF preservation guard section + STOP triggers + Acceptance:
+- `compact` / `solar_framing` / `natal_domain` / `short` values **copied character-for-character** из existing local dicts.
+- Only `main` / `additional` keyword lists — NEW canonical content (NOT rendered к PDF).
+- PDF text-extract diff pre/post = 0 chars для Olga + 6 calibrated cases.
+- Worker NOT улучшает / переписывает существующие phrasings.
