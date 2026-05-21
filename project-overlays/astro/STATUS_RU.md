@@ -1,8 +1,22 @@
 # Статус — Astro
 
-Дата последнего обновления: 2026-05-20 (Unified House Meanings Dictionary DELIVERED — pytest 643/3/0 (+10 new); canonical 12×7 dict + 4 derived aliases; PDF surface unchanged 0-char diff на 3 calibrated cases; engine UNTOUCHED; awaiting TL inline-verify per clarification 4 = optional Reviewer).
+Дата последнего обновления: 2026-05-20 (Unified House Meanings Dictionary CLOSED — pytest 643/3/0; canonical 12×7 dict; 4 derived aliases; PDF surface bit-identical Olga + 3 calibrated; engine UNTOUCHED; TL inline-verify APPROVE + user closure ack).
 
 ## Сейчас
+
+**TASK unified-house-meanings-dictionary — CLOSED 2026-05-20 (Tier C consolidation refactor; ACCEPTED по TL inline-verify + user explicit closure ack; Reviewer optional per clarification 4 = (a) honoured).** Single source of truth для значений 12 домов установлен в `services/api-python/app/pdf/house_meanings.py` (canonical `HOUSE_MEANINGS` dict 12×7 fields). 4 ранее локальных dict'а теперь derived aliases (soft transition). Pytest **643/3/0** (+10 new tests). **TL independent verification (2026-05-20):** все 48 user-listed required keywords present (0 missing); derived aliases все 4 correctness-verified (`_HOUSE_TOPICS_RU` == canonical['compact'], etc); HOUSE_PAIR_THEMES 144 cells untouched; Olga consultation 12 PDF text-extract diff vs `5070ea0` baseline = **0 lines, 0 chars** (bit-identical, file sizes 156473 bytes both, text 70828 chars both). Combined с Worker's diff на 3 calibrated cases (02-Maxim / 05-Ekaterina / 08-Natalya all 0 chars), **4 cases verified bit-identical** post-refactor. Engine / template / schema / migrations untouched. Critical PDF preservation guard («PDF surface должен остаться практически без изменений») fully satisfied empirically.
+
+**User feedback 2026-05-20 verbatim:** «Это ровно правильный результат для этой задачи: единый справочник появился, 48 обязательных значений покрыты, старые словари стали derived aliases, а PDF surface не поехал. Поведение не меняли, фундамент под будущие трактовки заложили.»
+
+**Что landed (product `22dc672`):**
+- `house_meanings.py` NEW +387 lines (canonical dict 12 × 7 + 4 helper functions `house_topic` / `house_short` / `solar_framing` / `natal_domain`).
+- `synthesis_themes.py` ±36 (`_HOUSE_TOPICS_RU` + `_HOUSE_SHORT_RU` → derived aliases).
+- `house_pair_themes.py` ±37 (`SOLAR_HOUSE_FRAMING` + `NATAL_HOUSE_DOMAIN` → derived aliases; `HOUSE_PAIR_THEMES` 144 cells untouched).
+- `test_house_meanings.py` NEW +300 (10 tests: completeness / field coverage / 48 keywords / synthesis regression / house_pair regression / field types / no duplicates / no circular imports / derived alias correctness / helper API smoke).
+
+**Программная значимость:** consolidation refactor с zero behavior change. Future drift prevented — любое будущее изменение значений 12 домов теперь обновляется в **одном месте**, а не дрейфует через 4 разрозненные local dict'а. Фундамент под будущие расширения трактовок (если когда-нибудь decide добавить `main`/`additional` к PDF — entry point единый).
+
+Lifecycle: TASK `review → done`; HANDOFF `open → closed`; both archived.
 
 **TASK unified-house-meanings-dictionary — DELIVERED 2026-05-20 (Tier C consolidation refactor; Reviewer optional per clarification 4).** Single source of truth для значений 12 домов в PDF слое. Создан `services/api-python/app/pdf/house_meanings.py` с `HOUSE_MEANINGS: dict[int, dict[str, Any]]` (12 домов × 7 полей: `title` / `main` / `additional` / `compact` / `solar_framing` / `natal_domain` / `short`). 4 ранее локальных dict'а теперь derived aliases:
 

@@ -7,7 +7,7 @@
 - Model: Claude Opus 4.7 (1M context)
 - Role mode: Worker
 - TASK: `project-overlays/astro/TASKS/2026-05-20-unified-house-meanings-dictionary.md`
-- Status: open
+- Status: closed
 - Product repo status: committed (`22dc672` on `main`, backup pushed)
 
 ## Что сделано
