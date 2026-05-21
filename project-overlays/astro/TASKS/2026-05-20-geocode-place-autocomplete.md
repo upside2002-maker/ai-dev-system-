@@ -1,6 +1,6 @@
 # TASK: geocode-place-autocomplete
 
-- Status: open
+- Status: review
 - Ready: yes
 - Date: 2026-05-20
 - Project: astro
