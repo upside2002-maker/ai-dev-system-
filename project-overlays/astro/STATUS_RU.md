@@ -1,8 +1,45 @@
 # Статус — Astro
 
-Дата последнего обновления: 2026-05-20 (Unified House Meanings Dictionary CLOSED — pytest 643/3/0; canonical 12×7 dict; 4 derived aliases; PDF surface bit-identical Olga + 3 calibrated; engine UNTOUCHED; TL inline-verify APPROVE + user closure ack).
+Дата последнего обновления: 2026-05-20 (Geocode Place Autocomplete DELIVERED — pytest 653/3/0; backend endpoint + frontend integration; LRU cache 100; UA `astro-internal-tool/1.0`; manual override + Nominatim-down failover preserved; engine UNTOUCHED; awaiting TL inline-verify per clarification 5 = (a) optional).
 
 ## Сейчас
+
+**TASK geocode-place-autocomplete — DELIVERED 2026-05-20 (Tier B UX feature; Reviewer optional per clarification 5 = (a)).** Автоподтягивание `latitude` / `longitude` / IANA `timezone` по названию места в PersonForm (место рождения) и ConsultationForm (место встречи соляра). Helper, не gate: ручной ввод editable; Nominatim-down failover guaranteed (backend 503 + frontend controlled error message; lat/lon/tz fields stay editable; save Person + compute + PDF продолжают работать без geocode).
+
+**Architecture:**
+- **Backend:** `services/api-python/app/api/geocode.py` — `APIRouter` mounted as `/api/v1/geocode` через `app.include_router(geocode_router, prefix="/api/v1")` в `main.py`. Nominatim search (User-Agent `astro-internal-tool/1.0`, 5s timeout, limit=5). Timezonefinder server-side для IANA resolution. `functools.lru_cache(maxsize=100)` keyed by normalised query — identical queries hit cache, zero повторных Nominatim calls. Controlled HTTPException envelopes: 503 для upstream timeout/5xx, 502 для malformed payload — никаких traceback'ов.
+- **Frontend:** `apps/web-react/src/api.ts` добавлен `geocodePlace(query)` + `GeocodeResult` interface. Обе формы (PersonForm.tsx, ConsultationForm.tsx) получили «Найти координаты» кнопку рядом с input места + inline radio-list для multi-result + controlled error messages. Single-result → auto-fill immediately; multi-result → operator выбирает radio; default = first result. Manual fields остаются editable (no `disabled`/`readOnly`). Existing «Подставить координаты места рождения» button в ConsultationForm preserved.
+- **Storage:** **NO new DB columns.** Использует existing `birth_latitude` / `birth_longitude` / `birth_timezone` (persons) + `solar_meeting_*` (consultations). Geocode результат **не сохраняется отдельно** — оператор кликает radio → state записывается → submit идёт через standard `createPerson` / `createConsultation`.
+
+**Tests:** 10 backend tests в `tests/test_geocode_endpoint.py`. 6 strict per TASK § 7.1 (Москва happy path / empty query 422 / Nominatim empty / timezonefinder None → tz null / Nominatim timeout → 503 / multi-result capped at 5) + 4 adjacent per Ready clarification 4 = (b) (cache hit → 1 upstream call across 2 identical queries / malformed Nominatim payload → 502 / special chars apostrophe + Cyrillic + accented Latin + quotes / User-Agent header verification). All 10 PASS. Pytest baseline 643 → **653 passed + 3 skipped + 0 failed** (+10 new).
+
+**Manual smoke (live Nominatim):**
+- `Москва, Россия` → lat 55.625578, lon 37.6063916, tz `Europe/Moscow` (centroid, не Кремль; оператор может скорректировать).
+- `Санкт-Петербург, Россия` → lat 59.9606739, lon 30.1586551, tz `Europe/Moscow`.
+- Empty query → HTTP 422 (FastAPI `Query(min_length=1)`).
+- Cabal: **Up to date** (no Haskell change).
+- Frontend `npm run build`: clean (TS sync, gzip bundle 82.85 kB).
+
+**Critical guards satisfied:**
+- **Nominatim-down failover (verbatim 2026-05-20):** «Если Nominatim недоступен, ручной ввод должен остаться полностью рабочим.» — Backend 503 covered by test #5; frontend controlled error covered by `formatGeocodeError` helper в обоих формах; lat/lon/tz fields никогда не disabled; save Person + compute + PDF не зависят от geocode.
+- **Manual override preserved:** geocode результат записывается в те же React state slots, что и ручной ввод; operator может редактировать после auto-fill.
+- **No silent wrong-city selection:** multi-result MUST show all options через radio-list; default = first result, оператор выбирает.
+- **Bright lines:** #3 (HTTP только в FastAPI) ✅, #7 (Python владеет geocode + timezonefinder; raw data only) ✅. Engine не тронут (no astrology math).
+- **Discipline:** NO new DB columns ✅; NO frontend timezone computation ✅; NO new frontend test framework ✅; NO Nominatim ToS violation (User-Agent + 5s timeout + LRU cache, low volume, не scraping) ✅; NO LLM ✅.
+
+**Files (product, single atomic commit `948cbdc`):**
+- new: `services/api-python/app/api/__init__.py` + `app/api/geocode.py` (FastAPI router + LRU cache + Nominatim + timezonefinder).
+- new: `services/api-python/tests/test_geocode_endpoint.py` (10 tests).
+- modify: `services/api-python/app/main.py` (+7 lines — import + `include_router`).
+- modify: `apps/web-react/src/api.ts` (+26 lines — `geocodePlace` + `GeocodeResult`).
+- modify: `apps/web-react/src/pages/PersonForm.tsx` (+195/−24 — button + radio-list + error handling + Phase 0.1 comment replaced).
+- modify: `apps/web-react/src/pages/ConsultationForm.tsx` (+216/−24 — same for meeting place + Phase 0.1 comments replaced).
+
+HANDOFF: `HANDOFFS/2026-05-20-worker-to-tl-geocode-place-autocomplete.md`.
+
+Lifecycle: TASK `open → review` (Worker delivered; TL inline-verify per clarification 5 = (a) optional; external Reviewer не spawned unless manual smoke surfaces concerns).
+
+---
 
 **TASK unified-house-meanings-dictionary — CLOSED 2026-05-20 (Tier C consolidation refactor; ACCEPTED по TL inline-verify + user explicit closure ack; Reviewer optional per clarification 4 = (a) honoured).** Single source of truth для значений 12 домов установлен в `services/api-python/app/pdf/house_meanings.py` (canonical `HOUSE_MEANINGS` dict 12×7 fields). 4 ранее локальных dict'а теперь derived aliases (soft transition). Pytest **643/3/0** (+10 new tests). **TL independent verification (2026-05-20):** все 48 user-listed required keywords present (0 missing); derived aliases все 4 correctness-verified (`_HOUSE_TOPICS_RU` == canonical['compact'], etc); HOUSE_PAIR_THEMES 144 cells untouched; Olga consultation 12 PDF text-extract diff vs `5070ea0` baseline = **0 lines, 0 chars** (bit-identical, file sizes 156473 bytes both, text 70828 chars both). Combined с Worker's diff на 3 calibrated cases (02-Maxim / 05-Ekaterina / 08-Natalya all 0 chars), **4 cases verified bit-identical** post-refactor. Engine / template / schema / migrations untouched. Critical PDF preservation guard («PDF surface должен остаться практически без изменений») fully satisfied empirically.
 
