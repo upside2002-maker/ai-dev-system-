@@ -1,8 +1,37 @@
 # Статус — Astro
 
-Дата последнего обновления: 2026-05-20 (Solar Meeting Place CLOSED — pytest 633/3/0; consultation-level meeting_place plumbed end-to-end; engine UNTOUCHED; critical invariant proven; external Reviewer APPROVE).
+Дата последнего обновления: 2026-05-20 (Unified House Meanings Dictionary DELIVERED — pytest 643/3/0 (+10 new); canonical 12×7 dict + 4 derived aliases; PDF surface unchanged 0-char diff на 3 calibrated cases; engine UNTOUCHED; awaiting TL inline-verify per clarification 4 = optional Reviewer).
 
 ## Сейчас
+
+**TASK unified-house-meanings-dictionary — DELIVERED 2026-05-20 (Tier C consolidation refactor; Reviewer optional per clarification 4).** Single source of truth для значений 12 домов в PDF слое. Создан `services/api-python/app/pdf/house_meanings.py` с `HOUSE_MEANINGS: dict[int, dict[str, Any]]` (12 домов × 7 полей: `title` / `main` / `additional` / `compact` / `solar_framing` / `natal_domain` / `short`). 4 ранее локальных dict'а теперь derived aliases:
+
+- `synthesis_themes._HOUSE_TOPICS_RU`  ← `HOUSE_MEANINGS[h]["compact"]`
+- `synthesis_themes._HOUSE_SHORT_RU`   ← `HOUSE_MEANINGS[h]["short"]`
+- `house_pair_themes.SOLAR_HOUSE_FRAMING` ← `HOUSE_MEANINGS[h]["solar_framing"]`
+- `house_pair_themes.NATAL_HOUSE_DOMAIN`  ← `HOUSE_MEANINGS[h]["natal_domain"]`
+
+**HOUSE_PAIR_THEMES (144 curated cells) НЕ тронуты.** Existing callsites (`_house_topic_phrase`, `house_pair_text` fallback, inline insertions) работают без правок.
+
+**Critical PDF preservation guard satisfied:** `compact` / `solar_framing` / `natal_domain` / `short` values скопированы character-for-character из существующих локальных dict'ов. PDF text-extract diff pre/post = **0 chars** для 02-maksim + 05-ekaterina + 08-natalya. Только `title` + `main` + `additional` — новый канонический контент (внутренний semantic source, НЕ рендерится в PDF).
+
+**48 user-listed required keywords** (4 на дом × 12) присутствуют в `main` (все 48 в `main`); адъютантные ключи (3-7 на дом) добавлены в `additional` — Daragan + традиционные русско-астрологические архетипы; авторские короткие фразировки, no verbatim copy.
+
+**Tests** (9 категорий + bonus = 10 тестов): completeness / field coverage / 48 required keywords / `_house_topic_phrase` regression / `house_pair_text` fallback regression / field types / no duplicates / no circular imports (AST scan) / derived alias correctness / helper API smoke. Все PASS в 0.34s.
+
+**Pytest 633 → 643 passed + 3 skipped + 0 failed (+10 новых).** Cabal: Up to date (Haskell не тронут). `house_meanings.py` импортирует только stdlib (`typing`) — dependency graph one-directional.
+
+**Files (product, single atomic commit `22dc672`):**
+- new: `services/api-python/app/pdf/house_meanings.py` (canonical dict + helper API)
+- new: `services/api-python/tests/test_house_meanings.py` (10 tests)
+- modify: `services/api-python/app/pdf/synthesis_themes.py` (2 локальных dict'а → derived aliases)
+- modify: `services/api-python/app/pdf/house_pair_themes.py` (2 локальных dict'а → derived aliases; 144 cells untouched)
+
+HANDOFF: `HANDOFFS/2026-05-20-worker-to-tl-unified-house-meanings-dictionary.md`.
+
+Lifecycle: TASK `open → review` (Worker delivered; TL inline-verify per clarification 4 = optional, не блокер).
+
+---
 
 **TASK solar-meeting-place-per-consultation — CLOSED 2026-05-20 (Tier B+, ACCEPTED по TL inline-verify + external Reviewer APPROVE + user explicit closure ack).** Consultation-level `meeting_place` plumbed end-to-end (DB migration + API + Pydantic + storage + compute + UI form + PDF template + schema-change-gate atomic commit). **Engine UNTOUCHED** — core support already existed (`bridge.py:559-563`, `Solar.hs:746-757`); product layer plumbed без Haskell modification. **External Reviewer verdict (2026-05-20, clarification 6 = REQUIRED honoured):** APPROVE. All 11 Reviewer criteria + 11 additional rigorous checks + 5 live verifications PASS. 0 STOP triggers fired. 0 concerns/blockers.
 
