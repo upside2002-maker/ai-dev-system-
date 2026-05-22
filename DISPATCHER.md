@@ -15,7 +15,7 @@ Sitka, TL Astro) при каждом обновлении контекста. О
 | Роль | Чат | Сейчас занят |
 |------|-----|--------------|
 | Admin | главный (Owner здесь) | диспетчеризация (поставил задачи TL Sitka + промпт на BA Astro 2026-05-21) |
-| TL Sitka | вкладка sitka-office | в работе: (б) TASK `2026-05-21-parser-two-word-broad-mode` через Worker+Reviewer+merge+auto-deploy + (в) архитектурный аудит inventory_parser subagent'ом в фоне (отчёт → `project-overlays/sitka-office/research/inventory-parser-architecture-audit-2026-05-21.md`) |
+| TL Sitka | вкладка sitka-office | свободен; обе задачи из ящика закрыты (PR #89 merged + deployed, аудит inventory_parser лежит в `research/`). Записка с обоими докладами в `to-admin.md`. Ждёт решения Owner'а по форку парсера (рекомендация §7 аудита). |
 | TL Astro | вкладка astro | свободен; BA-аналитика блога Марины запускается отдельной сессией по промпту 2026-05-21 |
 
 «Сейчас занят» обновляется ролью на старте задачи и снова на её
@@ -46,6 +46,7 @@ Sitka, TL Astro) при каждом обновлении контекста. О
 Последние ~5 событий которые касаются больше чем одной роли. Старые
 переезжают в `OPERATING/journal/` соответствующего overlay.
 
+- 2026-05-22 (ночь): TL Sitka закрыл обе задачи из ящика. (б) PR #89 → master `ccac24b`, задеплоен, smoke зелёный (Blizzard parka теперь находит товары). (в) Архитектурный аудит в `research/inventory-parser-architecture-audit-2026-05-21.md`, светофор ЖЁЛТЫЙ, рекомендация — fork parser. Доклад в `MAILBOX/to-admin.md`. Решение по форку — за Owner'ом.
 - 2026-05-21: TL Sitka подтвердил end-to-end протокол MAILBOX (тестовая записка от 2026-05-20 закрыта). Обе майские записки переехали в `MAILBOX/archive/2026-05.md`. Взяты в параллельную работу: (б) парсер двусловных и (в) архитектурный аудит.
 - 2026-05-21: Admin поставил TL Sitka задачу на архитектурный аудит
   парсера `sitka-services/vendor/inventory_parser/` (vendored код,
