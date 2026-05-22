@@ -95,6 +95,7 @@ Operational discipline:
 - **Session rotation.** Стартую свежую сессию когда: длинный CI-style отчёт, drive-by правки без озвученного плана, серия больших правок, забываются договорённости.
 - **Submit / accept lifecycle.** TL не делает manual edit `Status:` в TASK. Worker submit'ит через `make submit-task` (open|in-progress → review). TL принимает через `make accept-task` (review → done + перенос в archive). HANDOFF лайфциклу — `make accept-handoff`.
 - **Постоянный чат (с 2026-05-20).** Эта вкладка TL Astro теперь живёт постоянно (модель `policies/SESSIONS.md`). Новые задачи прилетают через `MAILBOX/to-tl-astro.md` от Admin, отчёты ухожу в `MAILBOX/to-admin.md`. Статус роли держу актуальным в `DISPATCHER.md` (раздел «Активные роли»). Обработанные записки перемещаю в `MAILBOX/archive/<YYYY-MM>.md` (вырезать-вставить). Если контекст переполнен — предлагаю Owner'у `/clear` + полный refresh, не открываю новый чат.
+- **Take-shift перед работой из MAILBOX.** Записка из ящика — это новая активная работа, не pull-задача. **Первое действие** перед оформлением TASK / запуском Worker'а: `make -C /Users/ilya/Projects/ai-dev-system take-shift SLUG=astro SCOPE="..."` если ведение свободно (см. `policies/SHIFTS.md`).
 
 8 bright lines из `target-architecture.md § 11` (highest priority — нарушение блокирует ревью):
 1. Core не хранит клиентов (Person/Consultation — только Python+SQLite)
