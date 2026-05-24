@@ -1,21 +1,41 @@
 # Статус — Astro
 
-Дата последнего обновления: 2026-05-24 (Intercepted-Sign Rulership Fix Stage 0 STOP gate fired — empirics disagree с user expectations across all chart layers; pytest 673/3/0 baseline preserved; product untouched; user clarification required).
+Дата последнего обновления: 2026-05-24 (Intercepted-Sign Rulership Fix Stages 1-6 implementation landed — Path 1 empirical acceptance; pytest 697/3/0; product `d43e05e`; Reviewer REQUIRED).
 
 ## Сейчас
 
-**TASK intercepted-sign-rulership-fix — Stage 0 STOP gate (Path A submit; awaits user clarification).** Worker завершил все 5 sub-stages эмпирического baseline (clarification 6 = (a)). **Engine emits только Placidus** (natal + solar); whole-sign не available. Olga natal cusps (DB-verified, match TASK prelim exactly): `[94.15, 108.33, 123.56, 143.31, 173.99, 224.85, 274.15, 288.33, 303.56, 323.31, 353.99, 44.85]`. **Strict intercepted signs** (Placidus natal, 4 houses): Libra → Дом 5; Sagittarius → Дом 6; Aries → Дом 11; Gemini → Дом 12. **None из 5 user expectations подтверждаются ни в одной из 3 доступных chart layers** (natal Placidus / solar Placidus / whole-sign natal Cancer-rising). Mars → {6, 11} actual vs {1} expected; Uranus → {9, 10} vs {11, 12}; Jupiter → {6, 11} vs {1, 9, 10}; Venus → {5, 12} vs {7}; Useful people natal Asc = Cancer (NOT Scorpio/Taurus). Worker fabrication explicitly запрещён STOP triggers — submit Path A. Product unchanged (baseline `732759d`). Pytest **673/3/0** preserved. TL escalation required: user должен выбрать один из 4 paths (revise expectations to empirics / different chart layer / different rulership convention / chart identity re-check).
+**TASK intercepted-sign-rulership-fix — Stages 1-6 implementation completed 2026-05-24 (Path 1 empirical acceptance; product `d43e05e`; Reviewer REQUIRED per user direction).** Worker выполнил все 6 стадий per revised acceptance: новый helper `house_signs(cusps)` (3 edge cases handled: wrap 0° Aries / cusp at boundary / empty intercepted); `rulership_houses` + `target_house_set` extended (intercepted-aware); `_useful_people_block` full rewrite (axis 1-7 cusp+intercepted + co-rulers + 1st-house planets + solar Sun-axis match) + legacy preserved; 31 new tests + 3 Натальи docstring updates; calibrated 6 cases verified (0 PDF regression — `_OUTER_CARD_FACTS` curated immune). **Pytest 697 passed + 3 skipped + 0 failed (+24 new vs 673 baseline). Cabal clean. 0 STOP triggers fired.** Olga consultation 12 PDF render confirms: «Полезные люди» = «Раки + Козероги + марсианская инициатива + солнечные Раки по той же оси» (axis Cancer-Capricorn empirical, NOT solar-Libra drift); outer-card row 3 «Управление домами радикса» surfaces intercepted co-rulerships для Venus/Jupiter targets.
 
-**Что Worker зарегистрировал (HANDOFF 2026-05-24-worker-to-tl-intercepted-sign-rulership-fix.md):**
-- Stage 0.1 chart-layer inventory: outer cards / calendar читают **natal Placidus cusps** (generic path через `rulership_houses` helper; calibrated path curated в `_OUTER_CARD_FACTS`).
-- Stage 0.2 per-house intercepted table (12 rows, strict-intercepted definition).
-- Stage 0.3 current vs new rulership table (10 planets; 4 planets gain houses with intercepted-aware logic: Mercury +12, Venus +5, Mars +11, Jupiter +6).
-- Stage 0.4 useful-people empirical: Asc Cancer/Libra (natal/solar), 1st-house planets = только Mars, axis 1-7 = Cancer/Capricorn.
-- Stage 0.5 STOP gate evaluation: 5/5 user expectations contradict empirics across all 3 available chart layers.
+**Что landed (product `d43e05e`):**
+- `services/api-python/app/pdf/rulership_houses.py` +148/-50 — `house_signs(cusps)` returns `{house: {cusp_sign, intercepted_signs, all_signs}}`; `rulership_houses` walks all_signs (intercepted-aware); `target_house_set` auto-propagates; Asc/MC special cases preserved. PLANET_RULES UNTOUCHED (clarification 3 = (c)).
+- `services/api-python/app/pdf/synthesis_themes.py` +190/-75 — `_useful_people_block` rewrite + `_useful_people_block_legacy` rollback ref + new `_natal_cusps` / `_planet_natal_house` helpers; imports `house_signs, rulership_houses` from rulership_houses.
+- `services/api-python/tests/test_intercepted_signs.py` NEW +331 — 25 tests: 11 `house_signs` (Olga 4 intercepted + 5 synthetic + defensive), 5 `rulership_houses` Olga regression, 6 `target_house_set` Olga, 3 invariants.
+- `services/api-python/tests/test_consultation_summary_evidence.py` +35/-24 — Olga fixture extended with real DB cusps; useful-people assertion rewritten to Path 1 empirical (Cancer/Capricorn axis + forbidden phrases).
+- `services/api-python/tests/test_rulership_houses.py` +35/-15 — Натальи Venus/Mars values updated to intercepted-aware behaviour with docstring rationale.
 
-**TL recommendation в HANDOFF:** user может revise expectations к empirical values — helper'а intercepted-aware extension всё ещё имеет real value (4 planets gain valid intercepted-sign rulerships для Ольги; calendar «Дома цели» benefit'нет правильно). Useful people rewrite остаётся valid (axis 1-7 = Cancer/Capricorn по фактическим cusps + Mars в 1 доме). Если user revise — Worker может выполнить Stages 1-6 за один cycle с эмпирическими acceptance criteria.
+Net product: +812 / -100 (5 files).
 
-**Baseline preserved:** product main `732759d`; pytest 673 passed + 3 skipped + 0 failed; cabal clean.
+**Calibrated immunity confirmed (Stage 3 + Stage 6):**
+- `_OUTER_CARD_FACTS` (curated dict, hand-authored per Marina golden-rule tables) UNTOUCHED.
+- All 6 calibrated cases (02/03/05/07/08/10) produce `provenance=calibrated` cards with row 3 «Управление домами радикса» reading directly from curated `transit_ruled_houses` / `target_ruled_houses` lists. Helper change has zero effect on calibrated PDF output.
+- Calibrated PDF regression: 0.
+
+**Stage 5.5 Натальи helper-level diff (documented):**
+Натальи's natal chart has 2 intercepted signs (Scorpio в Дом 3, Taurus в Дом 9). New `rulership_houses` adds: Venus +9, Mars +3, Pluto +3. `target_house_set` Marina parity: Mars `[3, 8, 9]` IDENTICAL (placement-3 dedups); Venus `[2, 3, 9, 12]` DIVERGES from Marina's `{2, 3, 12}` by +9. Test updated to new value; **Reviewer must judge** whether Marina's reference systematically excludes intercepted signs (revert specific assertion if so) или editorial omission (keep). NO PDF regression — calibrated `_OUTER_CARD_FACTS` golden-rule row 3 for Натальи Venus is curated `{2, 9}` (Marina pp. 18 golden-rule, different semantic from calendar), bit-identical preserved.
+
+**Olga PDF acceptance verified (Path 1 empirical):**
+- Required phrases present: «Раки» (natal Asc Cancer), «Козероги» (natal Дом 7 Capricorn), «договороспособные», «структурные», «ответственность», «марсианск*» (Mars sole 1st-house planet), «солнечные Раки» (Sun in Cancer on axis 1-7).
+- Forbidden phrases absent: «Овны», «Львы» (wrong axis), «Скорпион», «Тельцы» (Path 1 supersedes), «солнечное присутствие», «меркурианская лёгкость» (pre-rewrite drift).
+
+**Baseline restored:** product main `d43e05e`; pytest 697/3/0; cabal clean.
+
+**HANDOFF**: `HANDOFFS/2026-05-24-worker-to-tl-intercepted-sign-rulership-fix-impl.md` (Reviewer-ready).
+
+**Reviewer REQUIRED** per user direction 2026-05-24 verbatim: «Reviewer REQUIRED. This touches astrology semantics, not just text.» — TL spawns external Reviewer post-submission.
+
+---
+
+**TASK intercepted-sign-rulership-fix — Stage 0 STOP gate (Path A submit, archived 2026-05-24).** Worker завершил все 5 sub-stages эмпирического baseline (clarification 6 = (a)). **Engine emits только Placidus** (natal + solar); whole-sign не available. Olga natal cusps (DB-verified, match TASK prelim exactly): `[94.15, 108.33, 123.56, 143.31, 173.99, 224.85, 274.15, 288.33, 303.56, 323.31, 353.99, 44.85]`. **Strict intercepted signs** (Placidus natal, 4 houses): Libra → Дом 5; Sagittarius → Дом 6; Aries → Дом 11; Gemini → Дом 12. **None из 5 user expectations подтверждаются ни в одной из 3 доступных chart layers** (natal Placidus / solar Placidus / whole-sign natal Cancer-rising). User accepted Path 1 (revise expectations to empirics) 2026-05-24 → Worker re-engaged Stages 1-6 implementation (above). Stage 0 HANDOFF preserved as inventory reference: `HANDOFFS/2026-05-24-worker-to-tl-intercepted-sign-rulership-fix.md`.
 
 ---
 
