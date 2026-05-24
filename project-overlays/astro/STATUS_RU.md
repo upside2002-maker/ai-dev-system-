@@ -1,8 +1,57 @@
 # Статус — Astro
 
-Дата последнего обновления: 2026-05-20 (Geocode Place Autocomplete CLOSED — pytest 653/3/0; live smoke Москва + Питер verified; backend self-resolves координаты + IANA timezone; manual override + Nominatim-down failover preserved; engine UNTOUCHED).
+Дата последнего обновления: 2026-05-24 (Solar Planets House Distribution DELIVERED — pytest 673/3/0; новая секция «Распределение планет по домам соляра» landed product `732759d`; Olga 4-10 axis accent + 10 per-planet interpretations ≤2 sentences; meeting_place invariant proved Москва vs Питер; Reviewer REQUIRED per clarification 5 = (b) pending).
 
 ## Сейчас
+
+**TASK solar-planets-house-distribution — DELIVERED 2026-05-24 (Tier B new client-facing section + 2 helper modules; ACCEPTED Worker self-review; Reviewer REQUIRED per clarification 5 = (b) — pending external pass).** Pytest **673/3/0** (+20 new tests, base was 653/3/0). Новая секция «Распределение планет по домам соляра» добавлена в PDF между натальной страницей и блоком «Темы года» (перед основными прогнозными разделами per clarification 2 = (a)). 12-строчная таблица «Дом / Планеты» (пустые домики «-», multi-planet через запятую, ретро через « R»), акцент оси ≥3 планет (Olga 4-10 = 4 планеты → «Акцент на оси 4-10.») + по одной интерпретации на планету (1-2 предложения каждая per critical brevity guard 2026-05-24). Композиция: `PLANET_ARCHETYPES[planet]` × `HOUSE_MEANINGS[house]['main'][:3]` + per-planet verb + optional retrograde nuance — 120 (planet, house) combinations covered без ручного каталога per clarification 4 = (a). **Existing «Соляр — позиции планет» reference table в конце PDF preserved unchanged.**
+
+**Что landed (product `732759d`):**
+- `services/api-python/app/pdf/planet_archetypes.py` NEW (+85) — canonical `PLANET_ARCHETYPES` 10-entry dict + `PLANET_ORDER` tuple (verbatim per user spec 2026-05-20).
+- `services/api-python/app/pdf/solar_house_distribution.py` NEW (+424) — `solar_planets_by_house`, `format_planet_for_house`, `format_house_row`, `calculate_axis_accents`, `axis_accent_phrase`, `accent_houses_from`, `solar_planet_house_text`, `planet_house_header`, `build_solar_house_distribution`.
+- `services/api-python/tests/test_solar_house_distribution.py` NEW (+393) — 20 tests (grouping / sort / retrograde / 6 axis cases / 3 interpretation spot checks / PDF render / meeting_place invariant / Lilith-Nodes-leak guard / 240-paragraph brevity sweep + bonus structural assertions).
+- `services/api-python/app/pdf/templates/solar.html.j2` +59 — new `<section class="section-page">` block с 12-row table, axis accent phrase, и per-planet interpretation headers + bodies.
+- `services/api-python/app/pdf/builder.py` +2 — import + Jinja global wire-up.
+- `services/api-python/tests/test_api_pdf_endpoint.py` ±7 — page-count upper bound 21 → 23 (Natalya PDF теперь ~22 страницы из-за новой секции).
+
+Net product: +1113 / −1.
+
+**Программная значимость:** клиент-facing аналог Marina'иного раздела «Распределение планет по домам соляра» (образец Соляр 2025-2026 pp. 7-23) теперь рендерится автоматически из `facts.solar_chart.positions`. Композиция читается из единого SoT (`PLANET_ARCHETYPES` + canonical `HOUSE_MEANINGS`) — будущие переходы (natal planet-in-house, transit interpretations) могут использовать тот же archetype dict без duplication. Brevity guard structurally enforced (≤2 sentences per planet, no override path).
+
+**Critical guards verified ✅:**
+- **Data source discipline:** uses `facts.solar_chart.positions` exclusively. NEVER reads `natal_chart.positions` или `annual_transit_table`. Single grep verifies.
+- **`house_placidus` field used:** `position["house_placidus"]` — solar Placidus house, not natal.
+- **meeting_place invariant honoured:** empirically Москва vs Питер via Haskell core — Уран shifts solar house 8 → 9; distribution diff confirms presentation layer reacts к SR cusps shift.
+- **Brevity guard ≤2 sentences:** 240-paragraph sweep test (10 planets × 12 houses × 2 retrograde) asserts `1 <= sentence_count <= 2` для всех. 0 violations.
+- **Multi-planet separate paragraphs:** Olga 10-дом (Sun + Mercury R + Jupiter) рендерится 3 separate ≤2-sentence interpretations, NOT one combined paragraph.
+- **No Lilith / Nodes / Chiron invention:** `solar_planets_by_house` drops anything outside `PLANET_ORDER` silently; defensive test 14 asserts.
+- **Existing reference table preserved:** template change is pure insertion; «Справочные данные» block at line 893+ untouched; test 12 asserts substring presence.
+- **No Daragan verbatim copy:** all 10 archetype strings + 10 verb strings + 10 retrograde nuance strings = Worker-authored Russian; HOUSE_MEANINGS source is project's own canonical dict.
+- **No hand-crafted (planet, house) overrides catalog:** 120 combinations covered structurally via composition per clarification 4.
+- **No LLM:** deterministic Python.
+- **No Haskell touch:** core/, schemas, fixtures, migrations untouched. Cabal Up to date.
+
+**Olga sample (consultation 12 — birth Москва):**
+
+| Дом | Планеты |
+|-----|---------|
+| 4 | Плутон R |
+| 6 | Нептун R |
+| 7 | Сатурн |
+| 8 | Уран |
+| 9 | Луна, Марс |
+| **10** | **Солнце, Меркурий R, Юпитер** |
+| 11 | Венера |
+
+Axis: «Акцент на оси 4-10.» 10 interpretation paragraphs rendered, max 2 sentences each. Example (Pluto R IV): «Глубокая трансформация, давление, кризис/сила в этом году трансформируют тему дом, семья, недвижимость. Трансформация идёт глубоко и тихо, без внешней драматизации.»
+
+**Empirical meeting_place verification (via Haskell core):** Olga Москва → Питер: Уран shifts solar house 8 → 9. Distribution differs, axis-accent phrase remains 4-10 (strongest axis identity preserved through this particular shift, since Sun + Mercury R + Jupiter stay in 10 and Pluto R stays in 4). Invariant satisfied: rendering responds к SR cusps shift.
+
+HANDOFF: `HANDOFFS/2026-05-24-worker-to-tl-solar-planets-house-distribution.md`.
+
+Lifecycle: TASK `open → review` (Worker delivered; TL must spawn external Reviewer per clarification 5 = (b) REQUIRED).
+
+---
 
 **TASK geocode-place-autocomplete — CLOSED 2026-05-20 (Tier B UX feature; ACCEPTED по TL inline-verify + live smoke + user explicit closure ack; Reviewer optional per clarification 5 = (a) honoured).** Pytest **653/3/0** (+10 new tests). **TL live smoke (2026-05-20):** Москва → lat 55.625578 / 37.6063916 + lat 55.7505412 / 37.6174782 (multi-result Nominatim, both Europe/Moscow); Санкт-Петербург → lat 59.9606739 / 30.1586551 + lat 59.938732 / 30.316229 (both Europe/Moscow); empty query → HTTP 422 controlled validation. API endpoint reachable, multi-result UX surfaces administrative variants для operator choice. Backend test inventory 10/10 PASS: 6 strict (Moscow happy / empty 422 / Nominatim empty / timezonefinder None / Nominatim timeout 503 / multi-result cap 5) + 4 adjacent (cache hit / malformed response / special chars / User-Agent header verification). LRU cache `functools.lru_cache(maxsize=100)` keyed by normalised query — single upstream call across identical queries verified empirically. User-Agent `astro-internal-tool/1.0` constant + test #10 assertion. Frontend `npm run build` clean (Vite bundle 253.58 kB / gzip 82.85 kB).
 
