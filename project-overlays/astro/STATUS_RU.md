@@ -1,8 +1,53 @@
 # Статус — Astro
 
-Дата последнего обновления: 2026-05-24 (Intercepted-Sign Rulership Fix CLOSED — Reviewer APPROVE-WITH-COMMENTS + user closure ack; pytest 697/3/0; product `d43e05e`).
+Дата последнего обновления: 2026-05-24 (Useful People Human Readability Polish — Worker submitted; pytest 705/3/0; product `ba806d5`).
 
 ## Сейчас
+
+**TASK useful-people-human-readability-polish — Stages 1-5 implementation landed 2026-05-24 (Tier B− text polish on top of Intercepted-Sign Rulership Fix; product `ba806d5`; Reviewer optional per TASK; user confirmation needed for 5 Worker-drafted planet phrases).** Worker выполнил все 5 стадий per TASK + 4 clarifications applied (all = (a) Recommended): новый `_join_sign_people` helper (Oxford-style join «Водолеи, Рыбы и Овны» вместо legacy «X и Y и Z»); `_FIRST_HOUSE_PLANET_PEOPLE_RU` full delete-and-replace (5 user-given + 5 Worker-drafted human-quality phrases без астрологического жаргона); `[:2]` cap сохранён + explicit test; 3-sentence template untouched. **Pytest 705 passed + 3 skipped + 0 failed (+8 net new vs 697 baseline). Cabal clean. 0 STOP triggers fired.**
+
+**Marina consultation 15 fresh render (verbatim, pdftotext):**
+```
+Вам опорно рядом Водолеи, Рыбы и Овны — люди вашей собственной оси…
+По партнёрской оси — Львы, Девы и Весы: люди структурные…
+Также в этом году хорошо рядом — люди яркие, самостоятельные, с сильным личным
+центром; люди лёгкие в общении…; и солнечные Овны по той же оси.
+```
+
+**Olga consultation 12 fresh render (verbatim, Path 1 invariants preserved + new Mars wording):**
+```
+Вам опорно рядом Раки — люди вашей собственной оси…
+По партнёрской оси — Козероги: люди структурные…
+Также в этом году хорошо рядом — люди инициативные, прямые, готовые действовать;
+и солнечные Раки по той же оси.
+```
+
+**Что landed (product `ba806d5`):**
+- `services/api-python/app/pdf/synthesis_themes.py` — +84/-31 (`_join_sign_people` helper + axis 1/7 sentences refactor + `_FIRST_HOUSE_PLANET_PEOPLE_RU` full rewrite). Legacy two-branch `{cusp_label} и {intercepted_join}` snippets deleted в обоих axis sentences.
+- `services/api-python/tests/test_consultation_summary_evidence.py` — +35/-13 (Olga regression: required substring «марсианск» → «инициатив», forbidden «Тельцы» → «Тельц», defensive « и Раки и» / « и Козероги и» canaries added).
+- `services/api-python/tests/test_useful_people_polish.py` NEW +248 — 5 join unit tests (0/1/2/3/4 signs) + 2 Marina regression (axis-signs Oxford join + first-house planet phrasing) + 1 `[:2]` cap test.
+
+Net product: +367 / -44 (3 files).
+
+**5 Worker-drafted planet phrases (user confirmation needed at closure per clarification 1 = (a)):**
+
+| Planet  | Worker draft (no jargon, human qualities) |
+|---|---|
+| Moon    | «люди тёплые, чуткие, умеющие создать ощущение дома и заботы» |
+| Jupiter | «люди широкие, оптимистичные, дающие чувство смысла и перспективы» |
+| Saturn  | «люди надёжные, выдержанные, умеющие держать структуру и слово» |
+| Uranus  | «люди независимые, нестандартные, открывающие неожиданный угол зрения» |
+| Neptune | «люди чувствующие, творческие, умеющие услышать невысказанное» |
+
+(5 user-given verbatim: Sun «люди яркие, самостоятельные, с сильным личным центром» / Mercury «люди лёгкие в общении, быстрые на мысль, помогающие договориться и найти нужные слова» / Venus «люди мягкие, эстетичные, умеющие сглаживать острые углы» / Mars «люди инициативные, прямые, готовые действовать» / Pluto «люди сильные, собранные, умеющие проходить через кризисы» — untouched).
+
+**Calibrated 6 cases regression (2026-05-24):** все 6 (02 / 03 / 05 / 07 / 08 / 10) → «Полезные люди» renders без crash, без legacy jargon (cross 9 forbidden phrases × 6 cases = 0 leak), без triple-«и» pattern. Existing calibrated outer-card golden-rule tests passing (unrelated path, unaffected).
+
+**STOP triggers (per TASK § STOP triggers):** все 0 fired. No engine touch, no `rulership_houses.py` modification, no `_OUTER_CARD_FACTS` modification, no Daragan verbatim, no LLM, no fabrication.
+
+Lifecycle: TASK `open`; HANDOFF `open` (Reviewer optional per TASK; awaiting user confirmation for 5 drafted phrases).
+
+---
 
 **TASK intercepted-sign-rulership-fix — CLOSED 2026-05-24 (Tier B+ astrology semantics fix; ACCEPTED по Reviewer APPROVE-WITH-COMMENTS + user closure ack; Reviewer REQUIRED per clarification honoured).** Pytest **697 passed + 3 skipped + 0 failed** (+24 new vs 673 baseline). Cabal clean. 0 STOP triggers.
 
