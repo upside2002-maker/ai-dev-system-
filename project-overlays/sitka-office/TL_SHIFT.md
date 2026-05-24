@@ -1,13 +1,19 @@
 # Ведение проекта — sitka-office
 
-- Released: no
-- Holder: upside2002@gmail.com
-- Started: 2026-05-24 15:33:40
-- Expires: бессрочно
-- Scope: инцидент: касса не пускает с правильным паролем
+- Released: yes
+- Holder: (нет)
+- Started: (нет)
+- Expires: (нет)
+- Scope: (нет)
 - Active TASK: (нет)
 
 ## Notes
+
+### 2026-05-24 15:40:15 — upside2002@gmail.com
+
+- Зона ведения: инцидент: касса не пускает с правильным паролем
+- Начало:       2026-05-24 15:33:40
+- Заметки:      инцидент CORE_AUTH drift закрыт: ядро пересоздано, касса пускает с паролем, retro-вопрос в backlog (auto-deploy scope=services не подхватывает .env при recreate core)
 
 ### 2026-05-13 21:23:45 — upside2002@gmail.com
 
