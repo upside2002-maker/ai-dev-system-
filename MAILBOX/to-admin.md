@@ -91,6 +91,28 @@
 
 ---
 
+## 2026-05-25 — от Admin (резюме доклада внешнего VPN-агента)
+
+**Что:** VPN Xray VLESS+Reality развёрнут на сервере `94.72.112.106` для двух непубличных пользователей по ТЗ `infrastructure/vpn-server-spec-2026-05-24.md`.
+
+**Где:** изолированный compose-проект `vpn` в `/opt/vpn/` (chmod 700 root). Контейнер `vpn-xray` (образ `teddysun/xray:latest`). Порт **TCP 39847**, маскировка под `www.cloudflare.com:443`. Никакая часть Sitka и nginx FounderOS не тронута.
+
+**Системные изменения:** только `/etc/iptables/rules.v4` (одно ACCEPT-правило в DOCKER-USER, сохранено через `iptables-persistent`) и `/etc/cron.weekly/vpn-update` (автообновление образа раз в неделю). Установлены пакеты `qrencode`, `iptables-persistent`.
+
+**Smoke со стороны сервера** (5 проверок) — все OK: контейнер слушает порт, TLS-probe с SNI `www.cloudflare.com` возвращает реальный сертификат Cloudflare (Reality прокидывает запрос правильно), plain-TCP без TLS не отдаёт ничего, iptables и iptables-persistent сохранены, никаких утечек в plaintext.
+
+**E2E-тест через клиента** — нужно сделать живым устройством (Android/Windows). До этого VPN считается «развёрнут, но не подтверждён клиентом».
+
+**Где ссылки:** `/opt/vpn/clients/user1.txt`, `user2.txt` + `.png` (QR-коды). На сервере, chmod 600 root. Скачаны Admin'ом на ноут Owner'а в `/tmp/vpn-keys-2026-05-25/` для пересылки конечным пользователям. **В git и в чате не выводились.**
+
+**Инструкция для пользователей:** `/opt/vpn/clients/USER-INSTRUCTIONS.md` (на сервере) — простая инструкция как установить v2rayNG / Hiddify и импортировать QR. Безопасно пересылать вместе с QR.
+
+**Журнал Sitka:** агент рекомендует добавить запись об открытии порта 39847 в `OPERATING/journal/2026-05.md` — для будущих аудитов сервера. Admin это сделает отдельным коммитом.
+
+**Срочность:** done с серверной стороны. Ждёт пока Owner передаст ключи двум пользователям и они подтвердят что подключение работает.
+
+---
+
 ## 2026-05-21 — от TL Sitka, для Admin
 
 **Что:** end-to-end цепочка Admin → MAILBOX → TL Sitka → MAILBOX → Admin работает. Подтверждаю приём политики `policies/SESSIONS.md`. Прочитал DISPATCHER, свой ящик (3 записки), MAILBOX/README, стартовый `TECH_LEAD.md`.
