@@ -1,6 +1,6 @@
 # HANDOFF: worker → tl — intercepted-sign-rulership-fix (Stages 1-6 implementation)
 
-- Status: open (Reviewer REQUIRED)
+- Status: closed
 - Date: 2026-05-24
 - Project: astro
 - From: worker

@@ -1,10 +1,35 @@
 # Статус — Astro
 
-Дата последнего обновления: 2026-05-24 (Intercepted-Sign Rulership Fix Stages 1-6 implementation landed — Path 1 empirical acceptance; pytest 697/3/0; product `d43e05e`; Reviewer REQUIRED).
+Дата последнего обновления: 2026-05-24 (Intercepted-Sign Rulership Fix CLOSED — Reviewer APPROVE-WITH-COMMENTS + user closure ack; pytest 697/3/0; product `d43e05e`).
 
 ## Сейчас
 
-**TASK intercepted-sign-rulership-fix — Stages 1-6 implementation completed 2026-05-24 (Path 1 empirical acceptance; product `d43e05e`; Reviewer REQUIRED per user direction).** Worker выполнил все 6 стадий per revised acceptance: новый helper `house_signs(cusps)` (3 edge cases handled: wrap 0° Aries / cusp at boundary / empty intercepted); `rulership_houses` + `target_house_set` extended (intercepted-aware); `_useful_people_block` full rewrite (axis 1-7 cusp+intercepted + co-rulers + 1st-house planets + solar Sun-axis match) + legacy preserved; 31 new tests + 3 Натальи docstring updates; calibrated 6 cases verified (0 PDF regression — `_OUTER_CARD_FACTS` curated immune). **Pytest 697 passed + 3 skipped + 0 failed (+24 new vs 673 baseline). Cabal clean. 0 STOP triggers fired.** Olga consultation 12 PDF render confirms: «Полезные люди» = «Раки + Козероги + марсианская инициатива + солнечные Раки по той же оси» (axis Cancer-Capricorn empirical, NOT solar-Libra drift); outer-card row 3 «Управление домами радикса» surfaces intercepted co-rulerships для Venus/Jupiter targets.
+**TASK intercepted-sign-rulership-fix — CLOSED 2026-05-24 (Tier B+ astrology semantics fix; ACCEPTED по Reviewer APPROVE-WITH-COMMENTS + user closure ack; Reviewer REQUIRED per clarification honoured).** Pytest **697 passed + 3 skipped + 0 failed** (+24 new vs 673 baseline). Cabal clean. 0 STOP triggers.
+
+**External Reviewer verdict (2026-05-24):** APPROVE-WITH-COMMENTS — ship as-is. Все 9 verification categories независимо воспроизведены: `house_signs` Olga 4 intercepted houses (Libra→5 / Sagittarius→6 / Aries→11 wrap / Gemini→12) подтверждены ручной cusp-арифметикой; Olga rulership Mercury/Venus/Mars/Jupiter `{5,12}/{5,12}/{6,11}/{6,11}` — экспериментально воспроизведены; Useful people rendered block содержит «Раки + Козероги + договороспособные + структурные + ответственность + марсианск* + солнечные Раки», forbidden phrases (Овны / Львы / Скорпион / Тельцы / «солнечное присутствие» / «меркурианская лёгкость») отсутствуют; calibrated 6 cases sample-check (02-maksim + 08-natalya) — `provenance=calibrated` preserved, row 3 bit-identical curated; все 7 STOP triggers независимо подтверждены чистыми (`git diff` для `_OUTER_CARD_FACTS`/core/migrations пуст; нет LLM imports; нет Daragan verbatim).
+
+**Натальи Venus divergence resolved (Reviewer substantive finding):** Worker raw `rulership_houses("Venus", natalya) = [2, 3, 9]` → `target_house_set = {2, 3, 9, 12}` vs Marina calendar pp. 22-23 `{2, 3, 12}` (diff +9). Reviewer вышел за рамки Worker'овской claim и нашёл confirmation в *других* Marina-материалах: outer-card golden_rule самой Натальи показывает Venus `radix='2, 9 дома'` — то есть Marina САМА признаёт Venus rules Дом 9 (Taurus intercepted). Calendar omission `{2,3,12}` объясняется editorial brevity, не другой астрологической системой. **Verdict (a) ACCEPT divergence:** Worker'овский superset — conceptually rigorous derivation, согласующаяся с Marina'ой own outer-card practice. Test assertion keep at `{2, 3, 9, 12}`. **User closure ack 2026-05-24 verbatim:** «По Venus у Натальи Reviewer правильно поймал важную вещь: если outer-card golden rule у самой Марины уже признаёт 9 дом, то календарное `{2,3,12}` — это не контраргумент к derivation, а editorial omission / brevity. Значит `{2,3,9,12}` можно принимать как более строгий вывод, а не regression.»
+
+**Reviewer non-blocking comments logged (NOT scheduled per user direction 2026-05-24):**
+- `co_rulers_1` / `co_rulers_7` computed in `_useful_people_block` but не используются в текущих фразах — defensible как «future expansion», но dead computation. Тривиально снять.
+- `test_house_signs_synthetic_pisces_intercepted` имеет рамблинговый Worker-комментарий — cosmetic.
+- `test_olga_useful_people_block_present` OR-fallback для «солнечные Раки» слегка weak (но для текущего вывода работает).
+
+**User direction verbatim 2026-05-24:** «Non-blocking comments не трогаем сейчас. Dead computation и косметический комментарий — не повод открывать ещё один виток.»
+
+**TL closure cascade (2026-05-24):**
+- TASK Status: `open → review` (commit `1d9dc18`) → `review → done` (accept-task.sh) → archived `TASKS/archive/`.
+- HANDOFF Status: `open (Reviewer REQUIRED) → closed` (accept-handoff.sh) → archived `HANDOFFS/archive/`.
+- STATUS_RU updated with closure entry + Reviewer findings + user closure ack.
+- Product main `d43e05e` (backup pushed `732759d..d43e05e`). Overlay master closure commit pending.
+
+**Baseline restored:** product main `d43e05e`; pytest 697/3/0; cabal clean. Worker и Reviewer оба независимо воспроизвели — 0 расхождений.
+
+Lifecycle: TASK `review → done`; HANDOFF `open → closed`; both archived.
+
+---
+
+**TASK intercepted-sign-rulership-fix — Stages 1-6 implementation landed 2026-05-24 (Path 1 empirical acceptance; product `d43e05e`; Reviewer REQUIRED per user direction).** Worker выполнил все 6 стадий per revised acceptance: новый helper `house_signs(cusps)` (3 edge cases handled: wrap 0° Aries / cusp at boundary / empty intercepted); `rulership_houses` + `target_house_set` extended (intercepted-aware); `_useful_people_block` full rewrite (axis 1-7 cusp+intercepted + co-rulers + 1st-house planets + solar Sun-axis match) + legacy preserved; 31 new tests + 3 Натальи docstring updates; calibrated 6 cases verified (0 PDF regression — `_OUTER_CARD_FACTS` curated immune). **Pytest 697 passed + 3 skipped + 0 failed (+24 new vs 673 baseline). Cabal clean. 0 STOP triggers fired.** Olga consultation 12 PDF render confirms: «Полезные люди» = «Раки + Козероги + марсианская инициатива + солнечные Раки по той же оси» (axis Cancer-Capricorn empirical, NOT solar-Libra drift); outer-card row 3 «Управление домами радикса» surfaces intercepted co-rulerships для Venus/Jupiter targets.
 
 **Что landed (product `d43e05e`):**
 - `services/api-python/app/pdf/rulership_houses.py` +148/-50 — `house_signs(cusps)` returns `{house: {cusp_sign, intercepted_signs, all_signs}}`; `rulership_houses` walks all_signs (intercepted-aware); `target_house_set` auto-propagates; Asc/MC special cases preserved. PLANET_RULES UNTOUCHED (clarification 3 = (c)).
