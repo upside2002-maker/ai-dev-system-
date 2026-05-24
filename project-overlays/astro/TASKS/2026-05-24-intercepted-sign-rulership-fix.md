@@ -1,6 +1,6 @@
 # TASK: intercepted-sign-rulership-fix
 
-- Status: open
+- Status: review
 - Ready: yes
 - Date: 2026-05-24
 - Project: astro

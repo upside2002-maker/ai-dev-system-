@@ -1,8 +1,23 @@
 # Статус — Astro
 
-Дата последнего обновления: 2026-05-24 (Solar Planets House Distribution CLOSED — pytest 673/3/0; новая клиентская секция в начале прогнозной части PDF; Reviewer APPROVE; placement в правильном месте per user direction).
+Дата последнего обновления: 2026-05-24 (Intercepted-Sign Rulership Fix Stage 0 STOP gate fired — empirics disagree с user expectations across all chart layers; pytest 673/3/0 baseline preserved; product untouched; user clarification required).
 
 ## Сейчас
+
+**TASK intercepted-sign-rulership-fix — Stage 0 STOP gate (Path A submit; awaits user clarification).** Worker завершил все 5 sub-stages эмпирического baseline (clarification 6 = (a)). **Engine emits только Placidus** (natal + solar); whole-sign не available. Olga natal cusps (DB-verified, match TASK prelim exactly): `[94.15, 108.33, 123.56, 143.31, 173.99, 224.85, 274.15, 288.33, 303.56, 323.31, 353.99, 44.85]`. **Strict intercepted signs** (Placidus natal, 4 houses): Libra → Дом 5; Sagittarius → Дом 6; Aries → Дом 11; Gemini → Дом 12. **None из 5 user expectations подтверждаются ни в одной из 3 доступных chart layers** (natal Placidus / solar Placidus / whole-sign natal Cancer-rising). Mars → {6, 11} actual vs {1} expected; Uranus → {9, 10} vs {11, 12}; Jupiter → {6, 11} vs {1, 9, 10}; Venus → {5, 12} vs {7}; Useful people natal Asc = Cancer (NOT Scorpio/Taurus). Worker fabrication explicitly запрещён STOP triggers — submit Path A. Product unchanged (baseline `732759d`). Pytest **673/3/0** preserved. TL escalation required: user должен выбрать один из 4 paths (revise expectations to empirics / different chart layer / different rulership convention / chart identity re-check).
+
+**Что Worker зарегистрировал (HANDOFF 2026-05-24-worker-to-tl-intercepted-sign-rulership-fix.md):**
+- Stage 0.1 chart-layer inventory: outer cards / calendar читают **natal Placidus cusps** (generic path через `rulership_houses` helper; calibrated path curated в `_OUTER_CARD_FACTS`).
+- Stage 0.2 per-house intercepted table (12 rows, strict-intercepted definition).
+- Stage 0.3 current vs new rulership table (10 planets; 4 planets gain houses with intercepted-aware logic: Mercury +12, Venus +5, Mars +11, Jupiter +6).
+- Stage 0.4 useful-people empirical: Asc Cancer/Libra (natal/solar), 1st-house planets = только Mars, axis 1-7 = Cancer/Capricorn.
+- Stage 0.5 STOP gate evaluation: 5/5 user expectations contradict empirics across all 3 available chart layers.
+
+**TL recommendation в HANDOFF:** user может revise expectations к empirical values — helper'а intercepted-aware extension всё ещё имеет real value (4 planets gain valid intercepted-sign rulerships для Ольги; calendar «Дома цели» benefit'нет правильно). Useful people rewrite остаётся valid (axis 1-7 = Cancer/Capricorn по фактическим cusps + Mars в 1 доме). Если user revise — Worker может выполнить Stages 1-6 за один cycle с эмпирическими acceptance criteria.
+
+**Baseline preserved:** product main `732759d`; pytest 673 passed + 3 skipped + 0 failed; cabal clean.
+
+---
 
 **TASK solar-planets-house-distribution — CLOSED 2026-05-24 (Tier B new client-facing section + 2 helper modules; ACCEPTED по TL inline-verify + external Reviewer APPROVE + user explicit closure ack; Reviewer REQUIRED per clarification 5 = (b) honoured).** Pytest **673/3/0** (+20 new tests). **External Reviewer verdict (2026-05-24):** APPROVE. Все 12 Reviewer criteria + 9 additional rigorous checks PASS. Live PDF inspection on Olga consultation 12 verified: section title «РАСПРЕДЕЛЕНИЕ ПЛАНЕТ ПО ДОМАМ СОЛЯРА» rendered (page 3); 12-row Дом/Планеты table correctly (empty=`-`, multi-planet comma-separated, retrograde with `R` suffix); axis accent «Акцент на оси 4-10.» (Olga 4 planets на этой оси); 10/10 per-planet interpretations each ≤2 sentences (sentence-counted independently); multi-planet 10-house renders 3 separate paragraphs (Sun + Mercury R + Jupiter) NOT combined per brevity guard; meeting_place invariant honoured (Олга Москва vs Питер → Уран shifts solar house 8 → 9, distribution differs); existing «Соляр — позиции планет» reference table bit-identical preserved at end of PDF; 0 Daragan verbatim matches (grep по «рождает», «даёт человеку», «следует ожидать» — 0); 0 Lilith/Nodes/Chiron invention (defensive filter test PASS); 0 STOP triggers fired.
 
