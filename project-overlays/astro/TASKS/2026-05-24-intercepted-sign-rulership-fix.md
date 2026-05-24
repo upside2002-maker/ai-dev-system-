@@ -1,7 +1,7 @@
 # TASK: intercepted-sign-rulership-fix
 
 - Status: open
-- Ready: no
+- Ready: yes
 - Date: 2026-05-24
 - Project: astro
 - Layer: services (Python presentation: `rulership_houses.py` helper + downstream propagation в outer_cards / transit_themes / synthesis_themes Полезные люди block)
@@ -58,31 +58,58 @@ This means Worker's empirical verification на Stage 0 **может НЕ сов
 
 ## Scope (Tier B+ astrology semantics fix)
 
-### Stage 0 — Empirical baseline (Olga + STOP gate)
+### Stage 0 — Empirical baseline (Olga + STOP gate) per user clarification 6 = (a)
 
-**0.1 — Compute Olga's intercepted signs per house:**
+User direction 2026-05-24 verbatim: «Нельзя сейчас шить правило под ожидания, если фактические cusps Ольги их не подтверждают. Пусть Worker сначала докажет, какой слой карты он читает: натал/соляр, Placidus/другая система, birth place/meeting place. Только после этого можно решать, где реально включённые знаки и какие управители должны попасть в 1/7/11/12 дома.»
 
-Worker reads `facts.natal_chart.house_systems.Placidus.cusps` (12 floats). Для каждого Дом i (cusp i → cusp i+1):
+**0.1 — Chart layer identification (NEW critical step):**
+
+Worker MUST explicitly document **which chart layer / house system** rulership_houses reads from:
+- `facts.natal_chart.house_systems.Placidus.cusps`? — natal Placidus.
+- `facts.natal_chart.house_systems.WholeSign.cusps`? — natal whole-sign (if engine emits).
+- `facts.solar_chart.house_systems.Placidus.cusps`? — solar Placidus.
+- Some derived structure?
+
+Read existing `rulership_houses.py:137` signature + callsites. **Document chart layer used today.** Confirm whether change is needed (e.g. user expects solar cusps but software reads natal).
+
+This is the **first STOP check**: if rulership_houses currently uses natal Placidus but user expects solar cusps (or vice versa), это primary discrepancy. Resolution requires user clarification BEFORE intercepted-sign work.
+
+**0.2 — Compute Olga's intercepted signs per house (for identified chart layer):**
+
+Worker reads cusps from the layer identified в 0.1. Для каждого Дом i (cusp i → cusp i+1):
 - Identify sign of cusp i and cusp i+1.
 - Identify any signs **fully contained** between (intercepted signs).
 - Output: `{house: {"cusp_sign": str, "intercepted_signs": [str], "all_signs": [str]}}`.
 
-**0.2 — Compute current vs expected rulership:**
+**0.3 — Compute current vs expected rulership:**
 
 Run current `rulership_houses("Mars", olga_cusps)`, `..."Uranus"...`, etc. Document current output.
 
-Compute expected output using intercepted-sign logic. If expected matches user expectations from § Problem (Mars → 1; Uranus → 11, 12; Jupiter → 1, 9, 10; Venus → 7) — proceed Stage 1.
+Compute expected output using intercepted-sign logic. Compare to user expectations from § Problem (Mars → 1; Uranus → 11, 12; Jupiter → 1, 9, 10; Venus → 7).
 
-**If empirical expected ≠ user expectations (e.g. Olga natal cusps show Aries intercepted в Дом 11 не Дом 1):**
-- **STOP.** Document discrepancy в Worker HANDOFF.
-- Possibilities: user may use whole-sign houses, OR SOLAR cusps not natal, OR misremembers chart, OR uses different rulership convention.
-- Escalate user clarification before proceeding к implementation.
+**0.4 — Useful people empirical:**
 
-**0.3 — Useful people empirical:**
+Worker reads Olga's:
+- Natal Asc sign.
+- Natal Дом 1 cusp sign + intercepted signs (per identified chart layer).
+- Natal Дом 7 cusp sign + intercepted signs.
 
-Worker reads Olga's natal Asc sign, Дом 1 cusp sign + intercepted signs, Дом 7 cusp sign + intercepted signs.
+Compare to user expectations («Асц в Скорпионе или Тельце; Венера/Марс/Плутон в 1 доме»).
 
-Compare to user expectations («Асц в Скорпионе или Тельце; Венера/Марс/Плутон в 1 доме»). If natal data shows Asc = 4° Cancer (Дом 1 = Cancer only, no Scorpio/Taurus involvement) → STOP, escalate.
+**0.5 — STOP gate criteria:**
+
+If ANY of:
+- Chart layer not identifiable / ambiguous.
+- Intercepted signs не подтверждают user-expected co-rulership (Mars → 1; Uranus → 11/12; Venus → 7; Jupiter → 1/9/10).
+- Useful people Asc axis не Scorpio/Taurus (e.g. natal Asc = Cancer).
+
+→ **STOP. Document discrepancy в Worker HANDOFF. Escalate user clarification BEFORE Stage 1.**
+
+Worker MUST NOT fabricate rulership logic to match user expectations if empirics contradict. Possibilities for user clarification:
+- Whole-sign houses (different intercepted signs than Placidus).
+- SOLAR cusps (Olga solar Asc = Libra, не Cancer; check solar intercepted).
+- Different rulership convention (esoteric / Egyptian terms / classical-only / etc.).
+- Misremembered Olga's chart — user revises expectations.
 
 ### Stage 1 — Rulership helper extension (включённые знаки)
 
@@ -121,12 +148,11 @@ planet rules house IFF planet rules sign_on_cusp
 planet rules house IFF planet rules ANY sign in all_signs[house]
 ```
 
-**1.4 — Modern vs classical rulers (per § Ready clarification 3):**
+**1.4 — Modern vs classical rulers (per user clarification 3 = (c) preserve current convention):**
 
-Worker investigates existing `rulership_houses` rulership scheme:
-- (a) Modern only (Mars→Aries; Pluto→Scorpio; Saturn→Capricorn; Uranus→Aquarius; Jupiter→Sagittarius; Neptune→Pisces).
-- (b) Classical + Modern co-rulers.
-- (c) Preserve current convention (Worker reads existing code + matches).
+Worker reads existing `rulership_houses.py:137` source + matches its rulership scheme exactly (whatever it currently uses — modern only, classical+modern, или other). This preserves backward compatibility для calibrated cards и existing tests.
+
+If Worker discovers convention ambiguity (e.g. comment says modern but logic includes classical co-rulers), document в HANDOFF; preserve current behaviour without change.
 
 ### Stage 2 — Calendar `target_house_set` update
 
@@ -146,10 +172,16 @@ Asc / MC special cases preserved (`[1]` / `[10]`).
 
 `outer_cards.py` generic path использует `rulership_houses(...)` — изменение helper'а auto-fixes outer-card «Управление домами радикса» строки.
 
-**Calibrated cards check:**
-- `_OUTER_CARD_FACTS` has hand-curated «rulership_houses» field per card?
-- Worker investigates: if hand-curated, calibrated cards NOT auto-affected; preserve.
-- If auto-derived, calibrated cards may change — Worker documents diff per case в HANDOFF, escalate if substantive regression.
+**Calibrated cards check (per user clarification 5 = (c) Worker investigates):**
+
+Worker investigates code path:
+1. Read `outer_cards.py` to identify how «Управление домами радикса» строка is generated for calibrated vs generic cards.
+2. Check `_OUTER_CARD_FACTS` schema — does it contain hand-curated `rulership_houses` field, or derived at render-time via helper?
+3. Document findings в HANDOFF.
+
+**Decision tree:**
+- If hand-curated в `_OUTER_CARD_FACTS` → calibrated cards NOT auto-affected; new logic applies only to generic path. Document.
+- If auto-derived via `rulership_houses(...)` helper → calibrated cards auto-update; document diff per case в HANDOFF; if substantive regression on calibrated → STOP, escalate.
 
 User direction: «calibrated allowlist cards не переписывать руками; `_OUTER_CARD_FACTS` не трогать без отдельного решения.»
 
@@ -177,10 +209,18 @@ User-expected новый algorithm:
 
 **Critical:** if Stage 0 empirics не support Scorpio/Taurus axis (Olga natal Asc = Cancer) → STOP, escalate. Не fabricate.
 
-**Rewrite approach (per § Ready clarification 4):**
-- (a) **Full rewrite** based on new principles (axis 1-7 signs + co-rulers + house-1 planets + solar matches).
-- (b) **Extend existing 5-channel** с intercepted-sign awareness.
-- (c) Worker proposes.
+**Rewrite approach (per user clarification 4 = (a) full rewrite):**
+
+Worker replaces 5-channel approach с new principles:
+
+1. **Axis 1-7 signs:** natal Дом 1 cusp sign + intercepted signs + Дом 7 cusp sign + intercepted signs (per identified chart layer от Stage 0.1).
+2. **Co-rulers of Дом 1 / Дом 7:** planets ruling all signs in those houses (via updated `rulership_houses`).
+3. **Planets in natal 1st house:** reuse existing `_natal_first_house_planets` helper.
+4. **Solar signs matching axis 1-7:** people с solar Sun в axis signs are «полезные» year-anchor.
+
+Compositional output: 2-3 short sentences referencing real signs + planets. NO Daragan verbatim. NO fabrication if Stage 0 STOP fired.
+
+Existing 5-channel logic preserved as `_useful_people_block_legacy` (или similar) for rollback / regression reference; not called в production path.
 
 ### Stage 5 — Tests
 
@@ -349,37 +389,27 @@ External Reviewer pass REQUIRED после Worker self-submit. If Agent tool una
 - Solar Meeting Place / Geocode / House Meanings dictionaries.
 - `_OUTER_CARD_FACTS` (calibrated curated data).
 
-**Ready: no** — pending 6 clarifications below.
+**Ready: yes** — 6 clarifications applied 2026-05-24 + critical Stage 0 STOP gate:
 
-## Ready clarifications (pending user direction 2026-05-24)
+1. **Edge cases = (a)** — Worker handles 3 cases: wrap 0° Aries / cusp at sign boundary / empty intercepted list. Synthetic fixtures verify. Applied Stage 1.2.
 
-1. **Intercepted-sign algorithm edge cases.**
-   - (a) Worker handles 3 cases: wrap around 0° Aries / cusp at sign boundary / empty intercepted list. Synthetic test fixtures верифицируют.
-   - (b) Worker proposes additional edge case handling.
+2. **«Включённые знаки» = (a) strict intercepted** — only signs FULLY contained within single house. Applied Stage 1.
 
-2. **«Включённые знаки» definition.**
-   - (a) Strict «intercepted» — only signs FULLY contained within a single house.
-   - (b) Loose «all signs touching house arc» — any sign overlapping house span (включая partial overlap).
-   - (c) Worker proposes (likely (a) per user-expected behaviour).
+3. **Rulership convention = (c) preserve current.** Worker reads existing `rulership_houses.py:137` + matches existing scheme. Documents any ambiguity в HANDOFF без changing behaviour. Applied Stage 1.4.
 
-3. **Modern vs classical rulers convention.**
-   - (a) Modern only (Mars→Aries; Pluto→Scorpio; Saturn→Capricorn; Uranus→Aquarius; Jupiter→Sagittarius; Neptune→Pisces).
-   - (b) Classical + Modern co-rulers (Mars rules both Aries+Scorpio; Saturn rules both Capricorn+Aquarius; Jupiter rules both Sagittarius+Pisces).
-   - (c) Preserve current `rulership_houses.py` convention (Worker reads existing code + matches).
+4. **Useful people = (a) full rewrite.** New principles: axis 1-7 cusp+intercepted signs + co-rulers + house-1 planets + solar matches. Existing 5-channel preserved as legacy для rollback reference. Applied Stage 4.
 
-4. **Useful people algorithm strategy.**
-   - (a) Full rewrite based on new principles (axis 1-7 cusp+intercepted signs + co-rulers + house-1 planets + solar matches).
-   - (b) Extend existing 5-channel с intercepted-sign awareness.
-   - (c) Worker proposes.
+5. **`_OUTER_CARD_FACTS` policy = (c) Worker investigates.** Reads code path; documents whether calibrated cards use auto-derived OR curated rulership_houses; proposes accordingly. Applied Stage 3.
 
-5. **Calibrated `_OUTER_CARD_FACTS` impact policy.**
-   - (a) Hands-off — calibrated cards preserve current curated «rulership_houses» строки даже если new logic disagrees.
-   - (b) Auto-derive — calibrated cards regenerate «rulership_houses» строки на basis of new logic; document diff per case в HANDOFF.
-   - (c) Worker investigates code path; documents whether calibrated cards use auto-derived OR curated rulership_houses; propose accordingly.
+6. **Stage 0 = (a) empirics first + STOP gate.** User direction verbatim: «Нельзя сейчас шить правило под ожидания, если фактические cusps Ольги их не подтверждают. Пусть Worker сначала докажет, какой слой карты он читает: натал/соляр, Placidus/другая система, birth place/meeting place. Только после этого можно решать, где реально включённые знаки и какие управители должны попасть в 1/7/11/12 дома.»
 
-6. **Stage 0 empirics vs user expectations.**
-   - Olga natal cusps show: Дом 1 = Cancer only (no intercepted); Дом 11 = Pisces+Aries+Taurus; Дом 12 = Taurus+Gemini+Cancer. User expects Mars co-rules 1; Uranus 11+12; Useful people Scorpio/Taurus axis.
-   - Discrepancy: Mars would rule 11 (не 1); Uranus would still be 9-10 (Aquarius cusp); Asc-axis Cancer-Capricorn (не Scorpio-Taurus).
-   - (a) Worker proceeds with empirical Stage 0 verification; if empirics ≠ user expectations → STOP, escalate user clarification (user may use whole-sign houses OR misremember Olga's chart OR have other reasoning).
-   - (b) User confirms expectations override empirics (Worker computes regardless).
-   - (c) User confirms expectations correct + provides correction для chart reading.
+**Critical Stage 0 chart-layer identification added (per user emphasis 2026-05-24):**
+
+Worker MUST explicitly identify в Stage 0.1:
+- Chart layer: natal / solar.
+- House system: Placidus / whole-sign / другое.
+- Birth place / meeting place lattice.
+
+BEFORE computing intercepted signs OR rulership. If chart layer ambiguous → STOP, escalate.
+
+If chart layer identifiable + empirics ≠ user expectations → STOP, escalate user clarification (whole-sign? solar cusps? esoteric rulers? misremembered?). NO fabrication.
