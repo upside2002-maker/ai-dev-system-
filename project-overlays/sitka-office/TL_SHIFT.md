@@ -1,10 +1,10 @@
 # Ведение проекта — sitka-office
 
-- Released: yes
-- Holder: (нет)
-- Started: (нет)
-- Expires: (нет)
-- Scope: (нет)
+- Released: no
+- Holder: upside2002@gmail.com
+- Started: 2026-05-24 15:33:40
+- Expires: бессрочно
+- Scope: инцидент: касса не пускает с правильным паролем
 - Active TASK: (нет)
 
 ## Notes
