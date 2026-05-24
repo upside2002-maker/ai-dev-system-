@@ -7,7 +7,7 @@
 - Model: Claude Opus 4.7 (1M context)
 - Role mode: Worker
 - TASK: `project-overlays/astro/TASKS/2026-05-20-solar-planets-house-distribution.md`
-- Status: ready_for_review
+- Status: closed
 - Product repo status: committed (`732759d` on `main`, backup pushed
   `948cbdc..732759d`)
 

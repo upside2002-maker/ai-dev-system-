@@ -1,8 +1,40 @@
 # Статус — Astro
 
-Дата последнего обновления: 2026-05-24 (Solar Planets House Distribution DELIVERED — pytest 673/3/0; новая секция «Распределение планет по домам соляра» landed product `732759d`; Olga 4-10 axis accent + 10 per-planet interpretations ≤2 sentences; meeting_place invariant proved Москва vs Питер; Reviewer REQUIRED per clarification 5 = (b) pending).
+Дата последнего обновления: 2026-05-24 (Solar Planets House Distribution CLOSED — pytest 673/3/0; новая клиентская секция в начале прогнозной части PDF; Reviewer APPROVE; placement в правильном месте per user direction).
 
 ## Сейчас
+
+**TASK solar-planets-house-distribution — CLOSED 2026-05-24 (Tier B new client-facing section + 2 helper modules; ACCEPTED по TL inline-verify + external Reviewer APPROVE + user explicit closure ack; Reviewer REQUIRED per clarification 5 = (b) honoured).** Pytest **673/3/0** (+20 new tests). **External Reviewer verdict (2026-05-24):** APPROVE. Все 12 Reviewer criteria + 9 additional rigorous checks PASS. Live PDF inspection on Olga consultation 12 verified: section title «РАСПРЕДЕЛЕНИЕ ПЛАНЕТ ПО ДОМАМ СОЛЯРА» rendered (page 3); 12-row Дом/Планеты table correctly (empty=`-`, multi-planet comma-separated, retrograde with `R` suffix); axis accent «Акцент на оси 4-10.» (Olga 4 planets на этой оси); 10/10 per-planet interpretations each ≤2 sentences (sentence-counted independently); multi-planet 10-house renders 3 separate paragraphs (Sun + Mercury R + Jupiter) NOT combined per brevity guard; meeting_place invariant honoured (Олга Москва vs Питер → Уран shifts solar house 8 → 9, distribution differs); existing «Соляр — позиции планет» reference table bit-identical preserved at end of PDF; 0 Daragan verbatim matches (grep по «рождает», «даёт человеку», «следует ожидать» — 0); 0 Lilith/Nodes/Chiron invention (defensive filter test PASS); 0 STOP triggers fired.
+
+**User feedback 2026-05-24 verbatim:** «Вот это как раз тот недостающий кусок: таблица по домам соляра + акцент оси + короткие трактовки по каждой планете. И хорошо, что он поставил блок в начало прогнозной части, а не в справочные данные в конце — там ему и место.»
+
+**Что landed (product `732759d`):**
+- `services/api-python/app/pdf/planet_archetypes.py` NEW (+76) — canonical `PLANET_ARCHETYPES` 10-entry dict + `PLANET_ORDER` tuple (verbatim per user spec 2026-05-20).
+- `services/api-python/app/pdf/solar_house_distribution.py` NEW (+479) — 9 functions: grouping / format / axis accent / compositional interpretations / build_solar_house_distribution dispatcher.
+- `services/api-python/app/pdf/templates/solar.html.j2` +59 — new section placed between natal-page и `{% set cs %}` skeleton (BEFORE «Темы года»); reading flow: натальная карта → распределение планет → темы → прогрессии → транзиты → итоги → reference table.
+- `services/api-python/app/pdf/builder.py` +2 — Jinja global wire-up.
+- `services/api-python/tests/test_api_pdf_endpoint.py` ±7 — page-count upper bound 21 → 23 (Natalya PDF +1 page).
+- `services/api-python/tests/test_solar_house_distribution.py` NEW (+491, 20 tests).
+
+Net product: +1113 / -1.
+
+**Placement decision** (Worker's user-intent reading approved by Reviewer): Worker placed section **между natal-page и «Темы года»** (page 3 в PDF), preserving reference table at end (page 25+). Reading flow: натальная карта → РАСПРЕДЕЛЕНИЕ ПЛАНЕТ ПО ДОМАМ СОЛЯРА → темы года → прогрессии → транзиты → итоги → справочные данные. Per user 2026-05-24 verbatim: «Хорошо, что он поставил блок в начало прогнозной части, а не в справочные данные в конце — там ему и место.» TASK Stage 4.1 literal «after reference table at end» semantically incorrect (reference table physically at PDF end); Worker prioritized user-intent reading from 2026-05-24 direction.
+
+**Critical guards verified ✅:**
+- Data source: `facts.solar_chart.positions[*]` only (NEVER natal_chart, NEVER annual_transit_table).
+- house_placidus (solar Placidus house, NOT natal house).
+- Multi-planet brevity ≤2 sentences per planet — 240-paragraph sweep + 5 random spot-checks PASS.
+- meeting_place invariant honoured (Solar Meeting Place TASK preserved).
+- Existing reference table bit-identical at line 1020+ в PDF.
+- No Daragan verbatim (Worker composition «{Archetype} в этом году {verb} тему {topics}» ≠ Daragan «...рождает / даёт человеку»).
+- No Lilith/Nodes/Chiron invention (defensive filter test 14 PASS).
+
+**Reviewer non-blocking suggestions logged (NOT scheduled):**
+- Roman numerals consistency (table 1..12 Arabic vs headers I..XII Roman — intentional per Marina style, but visual asymmetry candidate для future unification).
+- Defensive depth — `_house_topics_phrase` KeyError protection for direct call с house=0/13 (internal API).
+- Page-count test bound bump 21→23 — future pytest.parametrize fixture-based improvement.
+
+Lifecycle: TASK `review → done`; HANDOFF `ready_for_review → closed`; both archived.
 
 **TASK solar-planets-house-distribution — DELIVERED 2026-05-24 (Tier B new client-facing section + 2 helper modules; ACCEPTED Worker self-review; Reviewer REQUIRED per clarification 5 = (b) — pending external pass).** Pytest **673/3/0** (+20 new tests, base was 653/3/0). Новая секция «Распределение планет по домам соляра» добавлена в PDF между натальной страницей и блоком «Темы года» (перед основными прогнозными разделами per clarification 2 = (a)). 12-строчная таблица «Дом / Планеты» (пустые домики «-», multi-planet через запятую, ретро через « R»), акцент оси ≥3 планет (Olga 4-10 = 4 планеты → «Акцент на оси 4-10.») + по одной интерпретации на планету (1-2 предложения каждая per critical brevity guard 2026-05-24). Композиция: `PLANET_ARCHETYPES[planet]` × `HOUSE_MEANINGS[house]['main'][:3]` + per-planet verb + optional retrograde nuance — 120 (planet, house) combinations covered без ручного каталога per clarification 4 = (a). **Existing «Соляр — позиции планет» reference table в конце PDF preserved unchanged.**
 

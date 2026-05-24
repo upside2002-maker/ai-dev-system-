@@ -1,6 +1,6 @@
 # TASK: solar-planets-house-distribution
 
-- Status: review
+- Status: done
 - Ready: yes
 - Date: 2026-05-20
 - Project: astro
