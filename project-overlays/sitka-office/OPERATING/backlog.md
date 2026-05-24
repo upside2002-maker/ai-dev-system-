@@ -11,6 +11,8 @@
 
 ## Production / security
 
+- **CORE_AUTH drift в живом контейнере vs `.env` (наткнулись 2026-05-24)** — основной случай: `.env` и `compose config` показывают `CORE_AUTH=disabled`, но в running core контейнере env-var была `required`. Восстановлено через `docker compose up -d --no-deps --force-recreate core`. Гипотеза: `bash deploy/auto-deploy.sh` при scope=services перезапускает services+web, а core берёт из кэша compose'а без `--force-recreate` → env file читается лениво и расходится. Раскопать: (1) что точно делает auto-deploy.sh с core при разных scope'ах, (2) добавить smoke-step «assert env match» перед smoke probe, (3) либо хранить `CORE_AUTH` в `docker-compose.override.yml` чтобы расхождение compose vs running было невозможно. Tier B (auth-bypass-shaped risk), ~30-50 LOC + читка скрипта.
+
 - **Frontend bearer auth flow** — сейчас prod использует `CORE_AUTH=disabled` + `SITKA_API_TOKEN=""` потому что frontend никогда не реализован для bearer header. Если когда-нибудь захочется external exposure (DNS+SSL+Let's Encrypt phase 5) — нужен frontend auth flow ~50-100 LOC + token storage. На internal IP-only сейчас не критично (perimeter Basic Auth + loopback bind закрывают всё что нужно).
 
 ## Frontend / build / deploy
