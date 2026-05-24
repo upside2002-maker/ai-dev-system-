@@ -1,6 +1,6 @@
 # TASK: intercepted-sign-rulership-fix
 
-- Status: review
+- Status: open
 - Ready: yes
 - Date: 2026-05-24
 - Project: astro
@@ -24,29 +24,60 @@ User PDF audit 2026-05-24 на Olga consultation 12 identified **3 bugs одно
 
 **Concrete bugs Worker должен зафиксировать на Stage 0:**
 
-User expectations (per direction 2026-05-24):
+**ORIGINAL user expectations (per direction 2026-05-24 — SUPERSEDED by Path 1 resolution 2026-05-24):**
 - Uranus: rules / co-rules `1, 11, 12` (currently incomplete).
 - Mars: co-rules `1` (Aries intercepted).
 - Jupiter: co-rules `1, 9, 10`.
 - Venus: co-rules `7` (Taurus intercepted).
-- Calendar «Дома цели»: includes co-ruled houses from included signs.
-- Useful people: «Асц в Скорпионе или Тельце; солнечные Тельцы / Скорпионы; люди с Венерой / Марсом / Плутоном в 1 доме». NOT «Овны / Львы / солнечное присутствие / меркурианская лёгкость».
+- Useful people: «Асц в Скорпионе или Тельце; солнечные Тельцы / Скорпионы; люди с Венерой / Марсом / Плутоном в 1 доме».
 
-**Critical Stage 0 caveat (TL prelim verification 2026-05-24):** Olga's natal cusps:
+**Stage 0 STOP fired 2026-05-24** — Worker's empirical Stage 0 inventory (HANDOFF `2026-05-24-worker-to-tl-intercepted-sign-rulership-fix.md`, overlay `e02e9b8`) showed **0 из 5 user expectations confirmed** across natal Placidus / solar Placidus / whole-sign chart layers. User accepted **Path 1** (revise expectations to empirical) 2026-05-24.
+
+**REVISED ACCEPTANCE (Path 1, per user direction 2026-05-24):**
+
+User direction verbatim: «Признаём, что мои/твои ожидания по Ольге были привязаны не к тем cusps / не к той карте. Не пытаемся натянуть Скорпион/Телец, Овен в 1 и Уран 11/12 туда, где их нет. Всё равно делаем полезный фикс: включённые знаки должны учитываться. Так мы закрываем реальный rule gap и не фабрикуем карту.»
+
+**Empirical Olga acceptance (intercepted-sign logic применяется):**
+- Mercury: `[5]` → `[5, 12]` (Gemini intercepted в Дом 12).
+- Venus: `[12]` → `[5, 12]` (Libra intercepted в Дом 5).
+- Mars: `[6]` → `[6, 11]` (Aries intercepted в Дом 11).
+- Jupiter: `[11]` → `[6, 11]` (Sagittarius intercepted в Дом 6).
+- Sun / Moon / Saturn / Uranus / Neptune / Pluto — unchanged (их ruled signs не intercepted в Olga's chart).
+
+**Calendar «Дома цели» (per `target_house_set` update):**
+- Includes newly co-ruled houses through intercepted signs (Mercury → +12; Venus → +5; Mars → +11; Jupiter → +6).
+- Asc / MC special cases preserved (`[1]` / `[10]`).
+
+**Useful people (empirical Olga axis Cancer-Capricorn):**
+- Required phrases (axis 1-7 от actual Olga chart):
+  - Asc Cancer / семейное-домашнее.
+  - Capricorn Дом 7 / структура-партнёрство.
+  - Mars-dominance Дом 1 (sole 1st-house planet).
+  - Solar Cancer (natal Sun в Cancer Дом 2).
+- Forbidden phrases (preserved от original problem report):
+  - «Овны», «Львы» (wrong axis).
+  - «Скорпионы», «Тельцы» (wrong axis — superseded by empirical).
+  - «солнечное присутствие», «меркурианская лёгкость» (vague non-evidence-based generic).
+
+**Stage 0 inventory verified 2026-05-24 (Worker HANDOFF `e02e9b8`, TL prelim confirmed):**
+
+Olga's natal cusps:
 ```
 [94.15, 108.33, 123.56, 143.31, 173.99, 224.85, 274.15, 288.33, 303.56, 323.31, 353.99, 44.85]
 ```
-- Дом 1 = 4° Cancer cusp → 18° Cancer cusp; NO intercepted signs в Дом 1 (just Cancer).
-- Дом 11 = 23° Pisces cusp → 14° Taurus cusp; **Aries intercepted в Дом 11**.
-- Дом 12 = 14° Taurus cusp → 4° Cancer cusp; **Gemini intercepted в Дом 12**.
-- Aquarius is cusp Дом 9 (3° Aquarius) → cusp Дом 10 (23° Aquarius); Aquarius spans 9-10 only.
 
-This means Worker's empirical verification на Stage 0 **может НЕ совпасть с user expectations**:
-- Mars co-rules 1? Aries intercepted в Дом 11, не Дом 1 (per actual cusps).
-- Uranus rules 11, 12? Aquarius spans 9-10, не 11/12 (per actual cusps).
-- Useful people Scorpio/Taurus axis? Olga natal Дом 1 = Cancer only; natal axis 1-7 = Cancer-Capricorn.
+Intercepted signs (strict — fully contained within house arc):
+- Дом 5: **Libra** intercepted (arc 50.86°).
+- Дом 6: **Sagittarius** intercepted (arc 49.30°).
+- Дом 11: **Aries** intercepted (arc 50.86°).
+- Дом 12: **Gemini** intercepted (arc 49.30°).
+- Все остальные 8 houses: cusp-sign only (no intercepted).
 
-**Worker MUST run empirical Stage 0 first** и если expectations ≠ empirics → **STOP и escalate user clarification.** Может быть user counts via different house system (whole-sign?), uses SOLAR cusps instead of natal, OR misremembers Olga's chart. NOT fabricate to match expectations.
+Natal Asc = **4°09′ Cancer**. Natal axis 1-7 = Cancer-Capricorn (cusps unsigned, no intercepted). Solar Asc = 9°29′ Libra (different layer).
+
+**Stage 0 STOP gate result:** ORIGINAL user expectations не confirmed (0/5 across 3 chart layers). **User accepted Path 1 resolution** 2026-05-24 (revised acceptance per empirical).
+
+Worker re-engages Stages 1-6 с revised acceptance criteria documented above.
 
 ## Worker framing (verbatim user direction 2026-05-24)
 
@@ -58,7 +89,13 @@ This means Worker's empirical verification на Stage 0 **может НЕ сов
 
 ## Scope (Tier B+ astrology semantics fix)
 
-### Stage 0 — Empirical baseline (Olga + STOP gate) per user clarification 6 = (a)
+### Stage 0 — COMPLETED (Worker re-engages Stages 1-6 per Path 1)
+
+Stage 0 was executed 2026-05-24 by Worker. STOP gate fired. User accepted Path 1 (revise to empirical). Worker re-engages Stages 1-6 with revised acceptance criteria.
+
+**Stage 0 inventory archived в HANDOFF** `project-overlays/astro/HANDOFFS/2026-05-24-worker-to-tl-intercepted-sign-rulership-fix.md` (overlay `e02e9b8`). Worker may re-read for reference; does NOT re-execute Stage 0.
+
+### Stage 0 (historical — original directive)
 
 User direction 2026-05-24 verbatim: «Нельзя сейчас шить правило под ожидания, если фактические cusps Ольги их не подтверждают. Пусть Worker сначала докажет, какой слой карты он читает: натал/соляр, Placidus/другая система, birth place/meeting place. Только после этого можно решать, где реально включённые знаки и какие управители должны попасть в 1/7/11/12 дома.»
 
@@ -203,11 +240,18 @@ User-expected новый algorithm:
 - Планеты реально в Дом 1.
 - Solar signs matching axis 1-7 signs.
 
-**Acceptance for Olga (per user 2026-05-24, contingent on Stage 0 verification):**
-- Required: «Асц в Скорпионе или Тельце; солнечные Тельцы / Скорпионы; Венера / Марс / Плутон в 1 доме».
-- Forbidden: «Овны, Львы, солнечное присутствие, меркурианская лёгкость».
+**Acceptance for Olga (Path 1 revised 2026-05-24, per empirical chart):**
 
-**Critical:** if Stage 0 empirics не support Scorpio/Taurus axis (Olga natal Asc = Cancer) → STOP, escalate. Не fabricate.
+Required phrases (axis Cancer-Capricorn от actual Olga natal cusps):
+- Asc Cancer / семейная-домашняя ось / опора через близких.
+- Capricorn Дом 7 / структурные партнёрства / договорённости / ответственность.
+- Mars-dominance в Дом 1 (sole 1st-house planet, Cancer 9°51′).
+- Solar Cancer themes (natal Sun в Cancer Дом 2 / resource-foundation).
+
+Forbidden phrases:
+- «Овны», «Львы» (wrong axis).
+- «Скорпионы», «Тельцы» (wrong axis — superseded by Path 1 empirical reality).
+- «солнечное присутствие», «меркурианская лёгкость» (vague non-evidence-based generic — original user complaint preserved).
 
 **Rewrite approach (per user clarification 4 = (a) full rewrite):**
 
@@ -241,22 +285,45 @@ def test_rulership_includes_intercepted():
     """rulership_houses("Venus", cusps) includes house with intercepted Taurus."""
 ```
 
-**5.2 — Olga regression (contingent on Stage 0 PASS):**
+**5.2 — Olga regression (Path 1 empirical acceptance):**
 
 ```python
-def test_olga_uranus_rulership():
-    assert set(rulership_houses("Uranus", olga_cusps)) >= {1, 11, 12}  # IF Stage 0 confirms
-    # OR per actual empirics:
-    assert set(rulership_houses("Uranus", olga_cusps)) == {9, 10}  # IF empirics differ
+def test_olga_mercury_rulership_includes_intercepted_gemini_house_12():
+    assert set(rulership_houses("Mercury", olga_cusps)) == {5, 12}
+
+def test_olga_venus_rulership_includes_intercepted_libra_house_5():
+    assert set(rulership_houses("Venus", olga_cusps)) == {5, 12}
+
+def test_olga_mars_rulership_includes_intercepted_aries_house_11():
+    assert set(rulership_houses("Mars", olga_cusps)) == {6, 11}
+
+def test_olga_jupiter_rulership_includes_intercepted_sagittarius_house_6():
+    assert set(rulership_houses("Jupiter", olga_cusps)) == {6, 11}
+
+def test_olga_unaffected_planets_preserved():
+    # Sun/Moon/Saturn/Uranus/Neptune/Pluto: их ruled signs не intercepted в Olga
+    assert set(rulership_houses("Sun", olga_cusps)) == {3, 4}    # Leo cusps Дом 3-4
+    assert set(rulership_houses("Uranus", olga_cusps)) == {9, 10} # Aquarius cusps Дом 9-10
+    # ...etc
 ```
 
 **5.3 — Calendar tests:**
 
 `target_house_set("Neptune", natal_chart)` includes co-ruled houses от intercepted signs.
 
-**5.4 — Useful people tests (per user spec, contingent на Stage 0):**
+**5.4 — Useful people tests (Path 1 empirical acceptance):**
 
-Olga required phrases present; forbidden phrases absent.
+Olga required phrases (axis Cancer-Capricorn empirical):
+- Cancer / Раки (Asc + Sun axis).
+- Capricorn / Козероги (Дом 7 axis).
+- Mars (sole 1st-house planet).
+
+Olga forbidden phrases (preserved от original problem):
+- Aries / Овны.
+- Leo / Львы.
+- Scorpio / Скорпионы (was user expectation; superseded by Path 1).
+- Taurus / Тельцы (was user expectation; superseded by Path 1).
+- «солнечное присутствие», «меркурианская лёгкость» (vague generic).
 
 ### Stage 6 — Calibrated regression
 
