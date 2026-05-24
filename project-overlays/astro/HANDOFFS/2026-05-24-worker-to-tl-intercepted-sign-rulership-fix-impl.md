@@ -10,6 +10,7 @@
 - Role mode: Worker
 - TASK: project-overlays/astro/TASKS/2026-05-24-intercepted-sign-rulership-fix.md (Path 1 revised acceptance)
 - Predecessor: 2026-05-24-worker-to-tl-intercepted-sign-rulership-fix.md (Stage 0 STOP gate)
+- Product repo status: committed (`d43e05e` on `main`, backup pushed `732759d..d43e05e`)
 
 ## Summary
 
@@ -256,7 +257,7 @@ This is the kind of substantive diff the TASK § Stage 6 directive expects: "Wor
 
 ## Reviewer-Ready
 
-**Reviewer REQUIRED** per user direction 2026-05-24: «Reviewer REQUIRED. This touches astrology semantics, not just text.»
+**Reviewer REQUIRED** per user direction 2026-05-24 (`ae055ad`): «Reviewer REQUIRED. This touches astrology semantics, not just text.»
 
 External Reviewer должен independently confirm:
 1. `house_signs` synthetic fixture correctness (4+ intercepted-sign edge cases).
