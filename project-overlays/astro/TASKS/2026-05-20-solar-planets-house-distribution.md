@@ -1,7 +1,7 @@
 # TASK: solar-planets-house-distribution
 
 - Status: open
-- Ready: no
+- Ready: yes
 - Date: 2026-05-20
 - Project: astro
 - Layer: services (Python presentation: new helper module + new PDF section + tests)
@@ -117,26 +117,25 @@ def axis_accent_phrase(accents: list[tuple[int, int]]) -> str:
     """
 ```
 
-**2.3 — Threshold (per § Ready clarification 3):**
+**2.3 — Threshold (per user clarification 3 = (a) ≥3 planets):**
 
-- (a) ≥3 planets on axis = considered accent.
-- (b) ≥4 (more conservative).
-- (c) Worker proposes (e.g. ≥ (total_planets // 4)).
+User direction 2026-05-24 verbatim: «≥3 планеты на оси. Для 10 планет это уже заметный акцент.»
+
+Worker uses threshold = 3. For 10-planet typical distribution, mean = ~1.67 planets per axis; ≥3 = clearly above-mean significant grouping. Olga's 4-10 axis = 4 planets — emits accent phrase. Если ни одна ось не достигает 3 → axis accent phrase omitted (no padding).
 
 ### Stage 3 — Planet-in-solar-house interpretations
 
-**3.1 — Approach (per § Ready clarification 4):**
+**3.1 — Approach (per user clarification 4 = (a) compositional generic):**
 
-- (a) **Compositional generic** — combine planet archetype + house meaning to produce 1-2 sentence text (e.g. «Pluto archetype: глубокая трансформация» + «House 4 meaning: дом, семья, недвижимость» → «Глубокие перемены затрагивают дом, семью, недвижимость и внутреннюю опору.»). Covers all 120 (10×12) combinations через generic composition.
-- (b) **Per-(planet, house) overrides catalog** — Worker authors 30-50 hand-crafted entries для high-significance combinations + compositional fallback for rest.
-- (c) Worker proposes.
+User direction 2026-05-24 verbatim: «Compositional generic на базе planet archetype × house meanings. Без каталога 120 ручных трактовок сейчас.»
 
-**3.2 — Planet archetype dict location (per § Ready clarification 1):**
+Worker implements **compositional generic** — combines `PLANET_ARCHETYPES[planet]` + `HOUSE_MEANINGS[house]["main"]/"additional"` через template composition (e.g. «{planet_archetype_clause} затрагивает {house_main_topics}»). Covers all 120 combinations через composition; no hand-crafted catalog в текущей TASK. Future per-(planet, house) overrides — separate TASK if specific combos требуют nuance.
 
-- (a) **Embedded в `solar_house_distribution.py`** — self-contained.
-- (b) **Extend `house_meanings.py`** — single source of truth для astrological vocabulary (но pattern conflicts: house_meanings is house-focused, не planet-focused).
-- (c) **New module `planet_archetypes.py`** — separate planet vocabulary.
-- (d) Worker proposes.
+**3.2 — Planet archetype dict location (per user clarification 1 = (c) separate module):**
+
+User direction 2026-05-24 verbatim: «Отдельный `planet_archetypes.py`. Это правильнее: значения планет не надо смешивать со значениями домов.»
+
+Worker creates `services/api-python/app/pdf/planet_archetypes.py` с canonical `PLANET_ARCHETYPES` dict. Separation of concerns: planet vocabulary vs house vocabulary (per consolidation discipline established в Unified House Meanings TASK). Future-reusable: natal-planet-house, transit interpretations и т.д. могут использовать тот же canonical archetype dict.
 
 **3.3 — Planet archetypes (per user verbatim 2026-05-20):**
 
@@ -180,13 +179,13 @@ def solar_planet_house_text(planet: str, house: int, is_retrograde: bool) -> str
 
 ### Stage 4 — PDF template integration
 
-**4.1 — Section placement (per § Ready clarification 2):**
-
-- (a) После «Соляр — позиции планет» reference table (at top of forecast region).
-- (b) Перед «Итоги консультации» (near end, as synthesis context).
-- (c) Worker proposes.
+**4.1 — Section placement (per user clarification 2 = (a) after solar table):**
 
 User direction 2026-05-20 verbatim: «после страницы соляра / перед основными прогнозными разделами».
+
+User direction 2026-05-24 confirmed: «После страницы/таблицы соляра, перед основными прогнозными разделами. Это ровно место этого блока.»
+
+Worker places section **после «Соляр — позиции планет» reference table**, перед forecast sections (directions, transits, outer cards). Reading flow: technical positions → client-facing interpretations → forecast → synthesis Итоги.
 
 **4.2 — Template content** (в `solar.html.j2`):
 
@@ -346,14 +345,50 @@ def test_solar_house_distribution_changes_with_meeting_place():
 - Worker replaces existing «Соляр — позиции планет» reference table → STOP, add new section, не заменять.
 - Worker copies Daragan book verbatim → STOP, author's own short prose.
 - Worker introduces LLM → STOP, deterministic only.
+- **Worker emits >2 sentences per planet interpretation** → STOP per critical brevity guard 2026-05-24. Multi-planet house НЕ раздувается в простыню.
+- Worker combines multi-planet house в один paragraph вместо separate interpretations → STOP, каждая planet отдельно.
+- Worker adds hand-crafted (planet, house) overrides catalog в этой TASK → STOP per clarification 4 (compositional generic only; overrides — future TASK).
 
-## Reviewer subagent — per § Ready clarification 5
+## Reviewer subagent — REQUIRED (per user clarification 5 = (b))
 
-Tier B feature with content authoring. Per recent precedent: similar Tier B content TASKs (specificity / generic-psychology) used REQUIRED Reviewer. Geocode (B UX feature) used optional. This TASK has both new helper logic + content authoring — could go either way.
+User direction 2026-05-24 verbatim: «REQUIRED. Это клиентский текст, нужно внешнее чтение глазами.»
+
+External Reviewer pass REQUIRED после Worker self-submit. If Agent tool unavailable в Worker runtime (recurring Phase 8/9 precedent), Worker self-review + TL spawns external Reviewer post-submission.
+
+**Reviewer criteria:**
+- New helper module structure correct (planet_archetypes.py separate; solar_house_distribution.py uses it).
+- All 10 planet archetypes present per user-verbatim spec.
+- Compositional generic produces читаемые, корректные phrasings (Reviewer reads sample output для Olga + ≥1 calibrated).
+- **Multi-planet house brevity guard** (per additional guard 2026-05-24): каждая planet trактовка 1-2 sentences; multi-planet house НЕ раздут до простыни.
+- Axis accent threshold ≥3 correctly applied; no-accent case omits phrase.
+- Section placement (после solar reference table; перед forecast sections).
+- Retrograde marker «R» rendered correctly.
+- Existing «Соляр — позиции планет» reference table preserved unchanged.
+- meeting_place invariant honoured (distribution shifts с meeting_place change).
+- No Daragan verbatim copy.
+- No Lilith / Nodes invention.
+- 0 STOP triggers fired.
 
 ## Context
 
-**Mode normal + Tier B (Reviewer disposition per § Ready).** Worker mode: normal.
+**Mode normal + Tier B (Reviewer REQUIRED per user clarification 5).** Worker mode: normal.
+
+## Critical brevity guard (per user direction 2026-05-24, verbatim)
+
+> «Если в доме несколько планет, трактовки выводить по каждой планете отдельно, но не раздувать раздел до простыни. Лучше коротко: 1–2 предложения на планету.»
+
+**Operational implication:**
+
+Olga имеет 3 планеты в 10 доме (Sun + Mercury R + Jupiter). Worker renders 3 separate interpretations:
+- «Солнце в X доме» + 1-2 sentence text
+- «Меркурий R в X доме» + 1-2 sentence text
+- «Юпитер в X доме» + 1-2 sentence text
+
+NOT one combined paragraph. NOT 4+ sentence essays per planet. Compact, по одной planet за раз.
+
+**Hard target:** каждая interpretation paragraph ≤ 2 sentences. Worker template composition должен enforce этот limit (e.g. opener sentence + optional secondary sentence; no third).
+
+**Acceptance test (Stage 5.15 — new):** assert каждая rendered interpretation `paragraph_count <= 2` (sentences ending с `.`, `!`, `?`).
 
 **Baseline:**
 - Product main @ `948cbdc` (Geocode Autocomplete closed).
@@ -378,32 +413,24 @@ Tier B feature with content authoring. Per recent precedent: similar Tier B cont
 - Modifying canonical `house_meanings.py` или `house_pair_themes.py`.
 - Modifying existing «Соляр — позиции планет» reference table.
 
-**Ready: no** — pending 5 clarifications below.
+**Ready: yes** — 5 clarifications applied 2026-05-24 + brevity guard:
 
-## Ready clarifications (pending user direction 2026-05-20)
+1. **Planet archetypes = (c) separate module** `planet_archetypes.py`. Separation of concerns: planet vocabulary vs house vocabulary. Future-reusable. Applied Stage 3.2.
 
-1. **Planet archetype dict location.**
-   - (a) **Embedded в `solar_house_distribution.py`** — self-contained.
-   - (b) **Extend `house_meanings.py`** — single source of truth (но conflicts с house-focused pattern).
-   - (c) **New module `planet_archetypes.py`** — separate planet vocabulary, future-reusable.
-   - (d) Worker proposes.
+2. **Placement = (a) after solar table** перед forecast sections. Reading flow: technical positions → client-facing interpretations → forecast → synthesis. Applied Stage 4.1.
 
-2. **PDF section placement.**
-   - (a) После «Соляр — позиции планет» reference table (at top of forecast region).
-   - (b) Перед «Итоги консультации» (near end, as synthesis context).
-   - (c) After monthly transit table (mid PDF).
-   - (d) Worker proposes.
+3. **Axis threshold = (a) ≥3 planets** on axis = accent. Для 10-planet distribution ≥3 = заметный signal без overstrict. Applied Stage 2.3.
 
-3. **Axis accent threshold.**
-   - (a) ≥3 planets on axis = accent.
-   - (b) ≥4 (more conservative).
-   - (c) Worker proposes (e.g. `≥ total_planets // 4` = 2-3 planets for 10-planet typical).
+4. **Interpretation = (a) compositional generic** на базе `PLANET_ARCHETYPES × HOUSE_MEANINGS`. Без каталога 120 ручных трактовок в этой TASK. Future overrides — separate TASK. Applied Stage 3.1.
 
-4. **Interpretation coverage strategy.**
-   - (a) **Compositional generic** (10 archetypes × 12 house_meanings) — covers all 120 combinations via composition.
-   - (b) **Per-(planet, house) overrides catalog** — Worker authors 30-50 hand-crafted entries для high-significance combinations + compositional fallback.
-   - (c) Worker proposes.
+5. **Reviewer = (b) REQUIRED.** Клиентский текст — нужно внешнее чтение глазами. External pass после Worker submit. Applied Reviewer section.
 
-5. **Reviewer subagent.**
-   - (a) Optional + TL inline-verify + manual PDF inspection.
-   - (b) REQUIRED external Reviewer (Tier B content authoring; parallel к specificity-enrichment / generic-psychology pattern).
+**Critical brevity guard (per user direction 2026-05-24, verbatim):**
+
+> «Если в доме несколько планет, трактовки выводить по каждой планете отдельно, но не раздувать раздел до простыни. Лучше коротко: 1–2 предложения на планету.»
+
+Applied across:
+- Critical brevity guard dedicated section с operational implication для Olga's 10-house (3 planets).
+- STOP triggers: «>2 sentences per planet → STOP» + «multi-planet combined paragraph → STOP».
+- Acceptance test 5.15: assert `paragraph_count <= 2` per rendered interpretation.
+- Reviewer criteria: «multi-planet house НЕ раздут до простыни».
