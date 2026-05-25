@@ -6,6 +6,25 @@
 
 ---
 
+## 2026-05-25 (поздний вечер) — TECH-REC UPDATE от Admin, для TL Astro
+
+**Что:** заметил что в свежесданном tech-recommendation deliverable BA Astro (`marina-tech-recommendation-2026-05-24.md` §9) написано «**подтверждаю Astro + Cloudflare Pages**» — это устаревшая рекомендация. Чуть позже того же дня я через факт-чек снял CF Pages из-за 16-КБ throttling РКН с июня 2025. Owner подтвердил переход на Yandex Cloud.
+
+**Что нужно от BA Astro:**
+- Переписать §9 tech-rec на **Yandex Cloud Object Storage + Yandex CDN + Yandex DNS** (вместо CF Pages).
+- Учесть что Decap CMS как был — он работает с любым git-based хостингом, не привязан к CF.
+- Workflow деплоя меняется: вместо `wrangler` / CF GitHub Actions — `yc` CLI или Yandex Object Storage GitHub Action.
+- SSL — Yandex Certificate Manager (бесплатно, авто-выписка через домен).
+- Также пересмотреть § «Готовность к Этапу 2» — добавить шаг «Owner создаёт аккаунт Yandex Cloud + привязка карты для free tier» как блокирующее предусловие.
+
+Остальные 5 deliverables (Stylebook, контент-план, архитектура воронки, мокапы, пилотный пост) остаются как есть — они не привязаны к стеку хостинга.
+
+**Срочность:** не горит, но до начала Этапа 2 нужно. Можно сделать одновременно с правками Марины (она ревьюит контент-deliverables, BA в параллель правит §9).
+
+**Что вернуть в `to-admin.md`:** короткая записка после правки §9.
+
+---
+
 ## 2026-05-25 (вечер) — STACK UPDATE от Admin, для TL Astro
 
 **Что:** стек этапа 2 окончательно решён — **Yandex Cloud Object Storage + Yandex CDN + Yandex DNS** для хостинга, **Astro framework** для генератора. Cloudflare Pages (упомянутый утром того же дня) снят с рассмотрения.
