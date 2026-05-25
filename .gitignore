@@ -9,3 +9,9 @@ __pycache__/
 .vscode/
 .claude/worktrees/
 **/.DS_Store
+
+# Сырые корпусы постов для BA-аналитики (объёмные дампы контента
+# третьих лиц для рабочего процесса; deliverables на них опираются
+# но сами posts сохраняем только локально).
+project-overlays/*/RESEARCH/_corpus/
+project-overlays/*/research/_corpus/
