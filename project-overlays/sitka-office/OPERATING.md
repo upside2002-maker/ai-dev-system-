@@ -11,6 +11,7 @@
 
 ## Активные TASKS
 
+- [`TASKS/2026-05-27-inventory-parser-fork-task-b-title-matches.md`](TASKS/2026-05-27-inventory-parser-fork-task-b-title-matches.md) — `Status: open`, Layer services, Tier B, Mode normal, Worker model Claude Code. Закрывает P0-1 архитектурного аудита: убрать substring-check в `BaseStoreAdapter.title_matches` для target mode + property-тесты через `hypothesis`. 3+ словные запросы будут находить товары с «вставкой» между токенами.
 - [`TASKS/2026-04-29-dm7-c-backend-widget-prereq.md`](TASKS/2026-04-29-dm7-c-backend-widget-prereq.md) — `Status: open` → DRAFT → Worker → расширить `Api.TransactionResp` полем `trExpenseCategoryId :: Maybe Int64`. **НЕ срочно** — запускать только когда оператор захочет breakdown в виджете. Класс A без `Mode:` — перед запуском нужно дописать `Mode: strict` (или явно понизить класс с обоснованием), иначе `accept-task` откажет; см. STATUS_RU.md.
 
 См. [`TASKS/README.md`](TASKS/README.md) для правил.
