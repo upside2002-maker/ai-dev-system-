@@ -1,6 +1,6 @@
 # TASK: inventory-parser-fork-task-a
 
-- Status: open
+- Status: done
 - Ready: yes
 - Date: 2026-05-27
 - Project: sitka-office
@@ -34,7 +34,7 @@ Owner принял решение 2026-05-25 — форкнуть `sitka-service
 - new: `sitka-services/app/inventory/core.py` — facade (тонкий wrapper, копия из vendor `inventory/v2/core.py`).
 - new: `sitka-services/app/inventory/types.py` — dataclasses + enums (копия `vendor/inventory_parser/inventory/v2/types.py`).
 - new: `sitka-services/app/inventory/query.py` — `parse_query()`. **Импорт `from shared.product.sitka_catalog` заменить на `from app.inventory._sitka_catalog`** (см. ниже).
-- new: `sitka-services/app/inventory/_sitka_catalog.py` — копия нужных функций из `vendor/avito_parser/shared/product/sitka_catalog/__init__.py`. Использовать `inventory/v2/query.py` как референс — копировать **только** функции/константы которые там импортируются: `COLOR_PARSE_TERMS`, `SIZE_PARSE_TERMS`, `canonical_color_key`, `canonical_product_tokens`, `canonical_size_key`, `canonical_token_variants`, `color_matches`, `normalize_match_text`, `phrase_pattern`, `size_matches`. Сверь grep'ом: `grep -E "^from shared\." vendor/inventory_parser/inventory/v2/query.py` показывает один live импорт со списком.
+- new: `sitka-services/app/inventory/_sitka_catalog.py` — копия нужных функций из `vendor/avito_parser/shared/product/sitka_catalog/__init__.py`. Использовать `inventory/v2/query.py` как референс — копировать **только** функции/константы которые там импортируются: `COLOR_PARSE_TERMS`, `SIZE_PARSE_TERMS`, `canonical_color_key`, `canonical_product_tokens`, `canonical_size_key`, `canonical_token_variants`, `color_matches`, `normalize_match_text`, `phrase_pattern`, `size_matches`. Сверь grep'ом: `grep -E "^from shared\." vendor/inventory_parser/inventory/v2/query.py` показывает один live импорт со списком. **TL correction post-handoff:** Worker'ская инвентаризация показала ещё 9 live import sites в alive адаптерах (eurooptic, franks, als, outdoor_insiders, shopify_stores, families/shopify_support, families/bigcommerce_support, catalog/sitka_canon) → 15 дополнительных символов резолвятся через avito vendor editable install. Принято решение TL: оставить minimal scope в TASK A (10 символов), завести follow-up TASK A2 «Дотащить остальные 15 символов в `_sitka_catalog.py`» — обязательный pre-req для avito-аудита (иначе форк avito сломает inventory-adapters).
 - new: `sitka-services/app/inventory/registry.py` — копия `inventory/v2/registry.py`, **удалить** `basspro` импорт и регистрацию (basspro dead, не в DEFAULT_STORE_NAMES).
 - new: `sitka-services/app/inventory/_governor.py` — Protocol stub (копия `inventory/v2/snapshot/types.py` → только `Governor` Protocol; остальные классы из этого файла не нужны).
 - new: `sitka-services/app/inventory/proxy_pool.py` — копия `inventory/v2/snapshot/proxy_pool.py`. Нужен `eurooptic.py` И `scheels.py`. Hardcoded путь `/srv/sitka-qa/config/proxies.txt` оставить как есть — это тема P1 (P1-3 в backlog аудита), не TASK A scope.
@@ -103,7 +103,7 @@ Owner принял решение 2026-05-25 — форкнуть `sitka-service
 - [ ] Тесты:
   - [ ] `sitka-services/tests/test_inventory_query.py` (7 кейсов из PR #89 + новые) — зелёный.
   - [ ] `sitka-services/tests/test_inventory_title_matches.py` — зелёный, покрывает broad positives/negatives + target substring (текущее поведение).
-  - [ ] `sitka-services/tests/test_inventory_registry.py` — `build_registry()` × 23 store без basspro.
+  - [ ] `sitka-services/tests/test_inventory_registry.py` — `build_registry()` × **20** уникальных адаптеров (TL correction post-handoff: исходная цифра «23» была file-count в `adapters/stores/`, включая `__init__.py` + два aggregator-файла `shopify_stores.py`/`bigcommerce_stores.py` экспортирующих по несколько thin классов; корректный счёт adapter-классов — 20), basspro absent, DEFAULT_STORE_NAMES содержит rogers/1shot/als/lancaster.
   - [ ] `sitka-services/tests/test_inventory_smoke.py` — fixture-based, минимум rogers + 1shot + shopify + bigcommerce.
 - [ ] `make services-test` зелёный целиком.
 - [ ] `cd sitka-services && .venv/bin/python -c "from app.inventory.core import ParserService; print(ParserService)"` работает без editable install vendor.

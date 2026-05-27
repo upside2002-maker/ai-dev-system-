@@ -15,7 +15,7 @@ Sitka, TL Astro) при каждом обновлении контекста. О
 | Роль | Чат | Сейчас занят |
 |------|-----|--------------|
 | Admin | главный (Owner здесь) | диспетчеризация (поставил задачи TL Sitka + промпт на BA Astro 2026-05-21) |
-| TL Sitka | вкладка sitka-office | inventory fork: spike сделан (9116 alive / 30676 dead), записка в `to-admin.md`. Сейчас оформляю TASK A (Tier B, 3-4 дня) — физический форк в `app/inventory/` + тесты с нуля. Дальше B (substring drop) → C (Amazon timeout) → D (overlay refresh + CODEOWNERS). |
+| TL Sitka | вкладка sitka-office | inventory fork: **TASK A закрыт в проде** (PR #90 → master `8f1d5c4`, smoke 21 hit на blizzard, -31 482 LOC). Беру TASK B (P0-1 substring drop в `title_matches`, ~1 день, property-тесты через hypothesis). Дальше C (Amazon timeout) → D (overlay refresh + CODEOWNERS) → A2 (расширение `_sitka_catalog.py`, pre-req для avito-аудита). |
 | TL Astro | вкладка astro | **этап 1 контент-движка СДАН 2026-05-24** — 6 deliverables в `research/` (stylebook, контент-план 24 поста, архитектура воронки, мокапы 5 страниц, tech-rec, пилотный пост). Ждёт (1) ревью Марины на 30 минут — узнаёт ли себя в пилотном посту, попадает ли план, (2) правки BA Astro §9 tech-rec под Yandex Cloud (вместо CF Pages). После — финализация v1.0 и запуск этапа 2. |
 
 «Сейчас занят» обновляется ролью на старте задачи и снова на её
@@ -57,6 +57,7 @@ Sitka, TL Astro) при каждом обновлении контекста. О
 Последние ~5 событий которые касаются больше чем одной роли. Старые
 переезжают в `OPERATING/journal/` соответствующего overlay.
 
+- 2026-05-27 (вечер): TL Sitka закрыл TASK A inventory fork. PR #90 → master `8f1d5c4`, auto-deploy scope=services, prod smoke 21 hit на blizzard. -31 482 LOC в репо, vendor каталог удалён. Один retry CI (inline pin pytest-asyncio<0.27, drive-by на pre-existing flake test_core_client.py — long-fix в backlog). Дальше TASK B (P0-1 substring drop). Доклад в `MAILBOX/to-admin.md`.
 - 2026-05-22 (ночь): TL Sitka закрыл обе задачи из ящика. (б) PR #89 → master `ccac24b`, задеплоен, smoke зелёный (Blizzard parka теперь находит товары). (в) Архитектурный аудит в `research/inventory-parser-architecture-audit-2026-05-21.md`, светофор ЖЁЛТЫЙ, рекомендация — fork parser. Доклад в `MAILBOX/to-admin.md`. Решение по форку — за Owner'ом.
 - 2026-05-25 (поздний вечер): **Owner принял рекомендацию форка парсера Sitka**. TL Sitka получил декомпозицию на 4 TASK'а (spike + форк + 2× P0-fix + overlay refresh, ориентир — рабочая неделя). Также BA Astro закрыл этап 1 контент-движка 2026-05-24 — 6 deliverables в `research/`, ждёт ревью Марины и правки §9 tech-rec под Yandex Cloud.
 - 2026-05-25 (вечер): стек этапа 2 для контент-воронки Марины — **Yandex Cloud Object Storage + CDN + DNS** (вместо Cloudflare Pages). Admin сделал факт-чек: с июня 2025 года Cloudflare фактически блокирован для русской аудитории через 16-КБ throttling. Yandex Cloud free tier бесплатный, российская инфраструктура без замедлений, SSL автоматический. ТЗ обновлено.

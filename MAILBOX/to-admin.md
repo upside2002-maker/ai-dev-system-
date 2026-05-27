@@ -275,3 +275,29 @@ Spike прошёл, цифры реальные (не из памяти):
 Дальше: оформляю TASK A (Tier B, 3-4 дня), стандартный lifecycle Worker → Reviewer → merge → auto-deploy → smoke. Доклад после merge.
 
 ---
+
+## 2026-05-27 — TASK A closed — от TL Sitka
+
+**Что:** TASK A inventory_parser fork закрыт в проде.
+
+- **PR #90 → master `8f1d5c4`**, squash-merged через `--admin`.
+- **Lifecycle:** Worker iter1 (2 commits — pure `git mv` + rewrite/cleanup) → Reviewer iter1 ACCEPT (без findings, все 6 worker conflict items cross-checked) → accept-handoff×2 + accept-task → push + PR + CI (один retry: drive-by inline-pin `pytest-asyncio<0.27` в `.github/workflows/ci.yml`, пояснение ниже) → squash-merge → auto-deploy через `bash deploy/auto-deploy.sh` scope=services → smoke OK.
+- **LOC delta:** 230 файлов, +1267 / -32 749, **net -31 482 LOC** в репо.
+- **Тесты:** 4 новых файла = 31/31 (7 query [PR #89 cases preserved] + 13 title_matches + 6 registry + 5 smoke с fixture-HTML без сети). Полный `make services-test` 265 passed + 1 skipped (+24 vs master).
+- **Prod smoke:** `POST /api/sourcing/search` с `desiredItem=blizzard` на 4 магазинах → 21 hit (rogers 5, 1shot 5, als 1, lancaster 4). До форка по тому же запросу было 16 hit — als и lancaster подтянулись, видимо рост каталога или улучшение парсинга. Главное — нет регрессии. `from app.inventory.core import ParserService` импорт-чек работает; `DEFAULT_STORE_NAMES` возвращает 20 stores (pinned в `tests/test_inventory_registry.py`).
+
+**Что закрыто из аудита:** §7 fork & own — физически выполнено, vendor каталог удалён. Структура `app/inventory/` со сглаженной v2 (без `v2/` префикса), `snapshot/` ужат до двух нужных файлов (`_governor.py` + `proxy_pool.py`), 4 compat shim'а перенесены без переписывания store-импортов (минимальный scope, TL judgment). P0-1 (substring drop) и P0-2 (Amazon timeout) **не тронуты** — копированы как есть, идут TASK B и C соответственно.
+
+**Drive-by inline patch (TL по small-patch rule):** `.github/workflows/ci.yml` — pin `pytest-asyncio<0.27`. CI после моего push'а поймал 19 fails в `tests/test_core_client.py` с `RuntimeError: There is no current event loop`. Это **pre-existing flake**: тесты используют deprecated `asyncio.get_event_loop().run_until_complete()`, который в pytest-asyncio≥1.0 уже не auto-fallback. На master случайно работал т.к. локально у Worker/Reviewer запинено 0.26 в `.venv`. После удаления editable install vendor'а (TASK A) изменился pip resolution order и CI начал ставить latest. Inline-pin восстанавливает CI, **долгосрочный fix** (переписать `test_core_client.py` на `asyncio.run()` / async fixtures) заведён отдельным backlog-пунктом — после него pin можно убрать.
+
+**Worker conflict items (для audit-trail):** все 6 разобраны и приняты:
+- 10 vs 25 символов в `_sitka_catalog.py` → TASK A2 как pre-req для avito-аудита.
+- 23 vs 20 store reconciliation → моя ошибка в acceptance, поправил в TASK header.
+- 4 compat shim'а → принял minimal scope.
+- 2-commit split → удался чисто, commit 1 git распознал как 100% rename.
+- gitleaks-allowlist drive-by → принял (точно следует из rename, иначе следующий commit поймал бы Klevu key).
+- «296» typo в commit message → отсутствие amend — правильное поведение per проектному anti-pattern.
+
+**Что дальше:** беру TASK B (P0-1 substring drop в `BaseStoreAdapter.title_matches`, ~1 день, +property-тесты через hypothesis). Записка после закрытия. AVITO-аудит остаётся в очереди после TASK D, но теперь с явным pre-req `TASK A2`.
+
+---
