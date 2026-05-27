@@ -11,6 +11,7 @@
 
 ## Активные TASKS
 
+- [`TASKS/2026-05-27-inventory-parser-fork-task-a.md`](TASKS/2026-05-27-inventory-parser-fork-task-a.md) — `Status: open`, Layer services, Tier B, Mode normal, Worker model Claude Code. Первый из четырёх по форку парсера (см. Admin записку 2026-05-25): физический переезд 9116 alive LOC из `vendor/inventory_parser/` в `sitka-services/app/inventory/`, чистка 30 676 dead LOC, тесты регрессионные с нуля, удаление editable-install хака из CI/Dockerfile. После — TASK B (substring drop), C (Amazon timeout), D (overlay refresh + CODEOWNERS).
 - [`TASKS/2026-04-29-dm7-c-backend-widget-prereq.md`](TASKS/2026-04-29-dm7-c-backend-widget-prereq.md) — `Status: open` → DRAFT → Worker → расширить `Api.TransactionResp` полем `trExpenseCategoryId :: Maybe Int64`. **НЕ срочно** — запускать только когда оператор захочет breakdown в виджете. Класс A без `Mode:` — перед запуском нужно дописать `Mode: strict` (или явно понизить класс с обоснованием), иначе `accept-task` откажет; см. STATUS_RU.md.
 
 См. [`TASKS/README.md`](TASKS/README.md) для правил.
