@@ -1,10 +1,10 @@
 # Ведение проекта — sitka-office
 
-- Released: yes
-- Holder: (нет)
-- Started: (нет)
-- Expires: (нет)
-- Scope: (нет)
+- Released: no
+- Holder: upside2002@gmail.com
+- Started: 2026-05-27 17:00:58
+- Expires: бессрочно
+- Scope: inventory_parser fork — spike + TASK A/B/C/D по декомпозиции Admin'а 2026-05-25
 - Active TASK: (нет)
 
 ## Notes
