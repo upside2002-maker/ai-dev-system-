@@ -261,3 +261,17 @@
 **Записка про аудит остаётся в `to-tl-sitka.md` живой** — задача формально не завершится пока Owner не примет рекомендацию по форку (это часть «что вернуть»: «3-строчная сводка операторским языком + что предлагаешь следующим шагом» — сводка дана, шаг предложен, ход Owner'а).
 
 ---
+
+## 2026-05-25 (поздняя ночь) — Spike inventory fork — от TL Sitka
+
+Spike прошёл, цифры реальные (не из памяти):
+
+- **Alive: 9116 LOC** (3652 ядро без stores + 5464 двадцать три stores без basspro).
+- **Dead: 30 676 LOC** (snapshot non-{types,proxy_pool} 11 841 + catalog_sync 5977 + legacy `inventory/*.py` + sub-trees mcp/outputs/platforms/sources 12 040 + module_service 116 + basspro 702). Соотношение 1 к 3.4.
+- **Namespace принят:** `sitka-services/app/inventory/` со сглаженной v2-структурой (убираем `v2/` префикс — нет вендора v3, нечего версионировать). `snapshot/` ужимается до двух файлов в root (`_governor.py` ← `snapshot/types.Governor`, `proxy_pool.py` ← `snapshot/proxy_pool.py` — нужен eurooptic **и** scheels, аудит §2 это пропустил, scheels тоже импортит pool).
+- **Открытая развилка (TASK A):** live import `query.py:10 from shared.product.sitka_catalog` живёт в `vendor/avito_parser/shared/` (9 импортов в dead snapshot/* удалятся вместе с ним, останется один). Скопируем нужные функции в `app/inventory/_sitka_catalog.py` (self-contained, разрывает скрытую связь между двумя vendor'ами; в Avito-аудите next-after-fork решим про общий `app/shared/`).
+- **Точки входа из app/:** `app/parsers/inventory_v2.py` (lazy init) → переписать импорт на `from app.inventory.core import ParserService`, файл оставить как backwards-compat alias (минимизирует изменение в `app/routes/parsing.py`). Удалить editable install из `sitka-services/Dockerfile:33` + `.github/workflows/ci.yml` (тот самый PR #89 drive-by, теперь не нужен).
+
+Дальше: оформляю TASK A (Tier B, 3-4 дня), стандартный lifecycle Worker → Reviewer → merge → auto-deploy → smoke. Доклад после merge.
+
+---
