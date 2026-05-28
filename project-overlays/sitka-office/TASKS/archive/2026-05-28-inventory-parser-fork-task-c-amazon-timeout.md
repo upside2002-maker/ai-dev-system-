@@ -1,6 +1,6 @@
 # TASK: inventory-parser-fork-task-c-amazon-timeout
 
-- Status: open
+- Status: done
 - Ready: yes
 - Date: 2026-05-28
 - Project: sitka-office

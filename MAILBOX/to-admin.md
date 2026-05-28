@@ -325,3 +325,34 @@ Spike прошёл, цифры реальные (не из памяти):
 **Дальше:** беру TASK C (P0-2 Amazon timeout collision, ~1 день). После — D (overlay refresh + CODEOWNERS) → A2 (расширение `_sitka_catalog.py`, pre-req для avito-аудита) → AVITO-аудит. Backlog #12 (переписать test_core_client.py на asyncio.run) остаётся в очереди как технический долг.
 
 ---
+
+## 2026-05-28 (день) — TASK C closed + Amazon впервые работает — от TL Sitka
+
+**TASK C (P0-2 Amazon timeout collision) закрыт в проде.**
+
+- **PR #93 → master `4aa26ec`**, squash-merged через `--admin`. CI зелёный с первого раза.
+- **Lifecycle:** Worker iter1 → Reviewer iter1 ACCEPT (no blockers, 3 non-blocking nits — docstring неточность, intentional getattr fallback, int vs float annotation). Auto-deploy succeeded (full scope — full image rebuild) без CORE_AUTH сюрпризов: override-fix PR #92 защищает даже при scope=full.
+- **Изменения:** `_RUN_STORE_TIMEOUT_SECONDS = 35.0` → helper `_store_run_timeout(adapter)` который возвращает `max(adapter.search_timeout_seconds + 10s buffer, 35.0 floor)`. `BaseStoreAdapter.search_timeout_seconds: float = 35.0` явный class attribute. Default cap стал 45s (35+10) — минорный slowdown оператора, оправдан надёжностью.
+- **Тесты:** 7 new в `tests/test_inventory_runtime_timeout.py` (default cap, amazon-style, floor clamp, timeout-fires end-to-end через mock). Full `make services-test` 283 passed + 1 skipped (+7 vs TASK B baseline).
+
+**🎯 Главный результат — Amazon работает первый раз с момента vendoring 2026-04-27.**
+
+Prod smoke: `POST /api/sourcing/search` с `desiredItem="sitka jetstream"`, `stores=["amazon"]`:
+- До TASK C: всегда `failed:store_timeout` (35s cap режет Apify cold start)
+- После TASK C: **`status=ok, total=4 items`** (`elapsed=63162ms` — 63 секунды на cold-start Apify, теперь 190s cap пропускает)
+- Реальные товары: «SITKA Gear Men's Hunting Windproof Jetstream Jacket» $299.95, «Jetstream Vest» $157.29, «Jetstream Windstopper Watertight Jacket» $235.00
+
+Оператор теперь видит Amazon в выдаче. До этого 23 рабочих адаптера + 1 мёртвый (Amazon) — теперь 24 рабочих.
+
+**Аудит других адаптеров:** только Amazon declared `search_timeout_seconds` override. Остальные 19 на default 35→45s cap. **Один follow-up в backlog #14:** eurooptic Playwright `page.goto(timeout=45000)` впритык к новому default — нужно `search_timeout_seconds = 50` когда eurooptic заработает через proxy (P1-3 другой fix shape).
+
+**Параллельный wins за серию форка (A → B → C):**
+- 30 676 LOC dead кода удалено (TASK A).
+- 24 vs 23 рабочих store (Amazon добавился).
+- 3+ словные запросы находят товары через разделители (TASK B).
+- Recurring CORE_AUTH drift root-caused и закрыт (PR #92).
+- Pre-existing flake `test_core_client.py` запинен (CI стабилен).
+
+**Дальше:** TASK D — финиш-линия. Overlay refresh (PROJECT_MAP, KNOWN_ISSUES, NEXT_ACTIONS, OPERATING) + CODEOWNERS обновить под `app/inventory/`. Tier C, ~0.5 дня. После него — TASK A2 (расширение `_sitka_catalog.py`) → AVITO-аудит по 7-секционному шаблону.
+
+---

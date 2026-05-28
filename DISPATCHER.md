@@ -15,7 +15,7 @@ Sitka, TL Astro) при каждом обновлении контекста. О
 | Роль | Чат | Сейчас занят |
 |------|-----|--------------|
 | Admin | главный (Owner здесь) | диспетчеризация (поставил задачи TL Sitka + промпт на BA Astro 2026-05-21) |
-| TL Sitka | вкладка sitka-office | inventory fork: **TASK A + B закрыты в проде** (PR #90 master `8f1d5c4`, PR #91 master `89a6c25`). По дороге root-caused recurring CORE_AUTH drift (override.yml win над prod.yml — PR #92 ждёт CI). Беру TASK C (P0-2 Amazon timeout collision, ~1 день). Дальше D → A2 → AVITO-аудит. |
+| TL Sitka | вкладка sitka-office | inventory fork: **A + B + C закрыты в проде** (PR #90/91/93 → master `4aa26ec`). **Amazon впервые работает с момента vendoring** (status=ok 4 items по «sitka jetstream»). Recurring CORE_AUTH drift root-caused и закрыт (PR #92). Беру TASK D — финиш-линия (overlay refresh + CODEOWNERS, ~0.5 дня). После — A2 → AVITO-аудит. |
 | TL Astro | вкладка astro | **этап 1 контент-движка СДАН 2026-05-24** — 6 deliverables в `research/` (stylebook, контент-план 24 поста, архитектура воронки, мокапы 5 страниц, tech-rec, пилотный пост). Ждёт (1) ревью Марины на 30 минут — узнаёт ли себя в пилотном посту, попадает ли план, (2) правки BA Astro §9 tech-rec под Yandex Cloud (вместо CF Pages). После — финализация v1.0 и запуск этапа 2. |
 
 «Сейчас занят» обновляется ролью на старте задачи и снова на её
@@ -57,6 +57,7 @@ Sitka, TL Astro) при каждом обновлении контекста. О
 Последние ~5 событий которые касаются больше чем одной роли. Старые
 переезжают в `OPERATING/journal/` соответствующего overlay.
 
+- 2026-05-28 (день): TL Sitka закрыл TASK C (P0-2 Amazon timeout). PR #93 → master `4aa26ec`. Главный win — **Amazon работает первый раз с момента vendoring**: prod smoke «sitka jetstream» → status=ok, 4 items, 63s elapsed (раньше всегда failed:store_timeout). Дальше TASK D.
 - 2026-05-28 (ночь): TL Sitka закрыл TASK B (P0-1 substring drop) — PR #91 → master `89a6c25`. Параллельно root-caused recurring CORE_AUTH drift: `deploy/auto-deploy.sh:33` подмешивал `prod.yml` с hardcoded `CORE_AUTH=required`, побеждал `.env=disabled`. Server-only fix через override.yml; PR #92 зеркалит example. Прод-смок 3-словного запроса находит «Blizzard AeroLite Parka». Доклад в `MAILBOX/to-admin.md`. Дальше TASK C (Amazon timeout).
 - 2026-05-27 (вечер): TL Sitka закрыл TASK A inventory fork. PR #90 → master `8f1d5c4`, auto-deploy scope=services, prod smoke 21 hit на blizzard. -31 482 LOC в репо, vendor каталог удалён. Один retry CI (inline pin pytest-asyncio<0.27, drive-by на pre-existing flake test_core_client.py — long-fix в backlog). Дальше TASK B (P0-1 substring drop). Доклад в `MAILBOX/to-admin.md`.
 - 2026-05-22 (ночь): TL Sitka закрыл обе задачи из ящика. (б) PR #89 → master `ccac24b`, задеплоен, smoke зелёный (Blizzard parka теперь находит товары). (в) Архитектурный аудит в `research/inventory-parser-architecture-audit-2026-05-21.md`, светофор ЖЁЛТЫЙ, рекомендация — fork parser. Доклад в `MAILBOX/to-admin.md`. Решение по форку — за Owner'ом.
