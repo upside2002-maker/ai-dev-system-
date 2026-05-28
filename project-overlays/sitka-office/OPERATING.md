@@ -11,6 +11,7 @@
 
 ## Активные TASKS
 
+- [`TASKS/2026-05-28-inventory-parser-fork-task-c-amazon-timeout.md`](TASKS/2026-05-28-inventory-parser-fork-task-c-amazon-timeout.md) — `Status: open`, Layer services, Tier B, Mode normal, Worker model Claude Code. Закрывает P0-2 архитектурного аудита: per-adapter timeout cap в `runtime/service.py` (Amazon `search_timeout_seconds=180` сейчас режется глобальным cap 35s, де-факто всегда `failed:store_timeout`).
 - [`TASKS/2026-04-29-dm7-c-backend-widget-prereq.md`](TASKS/2026-04-29-dm7-c-backend-widget-prereq.md) — `Status: open` → DRAFT → Worker → расширить `Api.TransactionResp` полем `trExpenseCategoryId :: Maybe Int64`. **НЕ срочно** — запускать только когда оператор захочет breakdown в виджете. Класс A без `Mode:` — перед запуском нужно дописать `Mode: strict` (или явно понизить класс с обоснованием), иначе `accept-task` откажет; см. STATUS_RU.md.
 
 См. [`TASKS/README.md`](TASKS/README.md) для правил.
