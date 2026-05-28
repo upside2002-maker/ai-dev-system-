@@ -1,13 +1,19 @@
 # Ведение проекта — sitka-office
 
-- Released: no
-- Holder: upside2002@gmail.com
-- Started: 2026-05-27 17:00:58
-- Expires: бессрочно
-- Scope: TASK C inventory_parser fork — P0-2 Amazon timeout collision + audit других адаптеров
+- Released: yes
+- Holder: (нет)
+- Started: (нет)
+- Expires: (нет)
+- Scope: (нет)
 - Active TASK: (нет)
 
 ## Notes
+
+### 2026-05-28 13:37:55 — upside2002@gmail.com
+
+- Зона ведения: TASK C inventory_parser fork — P0-2 Amazon timeout collision + audit других адаптеров
+- Начало:       2026-05-27 17:00:58
+- Заметки:      серия inventory_parser fork (A→B→C→D) полностью закрыта; -31482 LOC; Amazon работает первый раз с vendoring; обе P0 из аудита закрыты; recurring CORE_AUTH drift root-caused и закрыт; финальный summary в to-admin.md
 
 ### 2026-05-24 15:40:15 — upside2002@gmail.com
 
