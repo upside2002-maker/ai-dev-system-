@@ -1,13 +1,19 @@
 # Ведение проекта — sitka-office
 
-- Released: no
-- Holder: upside2002@gmail.com
-- Started: 2026-05-28 16:59:46
-- Expires: бессрочно
-- Scope: TASK A2 (расширение _sitka_catalog) + AVITO architecture audit параллельно
+- Released: yes
+- Holder: (нет)
+- Started: (нет)
+- Expires: (нет)
+- Scope: (нет)
 - Active TASK: (нет)
 
 ## Notes
+
+### 2026-05-28 17:49:22 — upside2002@gmail.com
+
+- Зона ведения: TASK A2 (расширение _sitka_catalog) + AVITO architecture audit параллельно
+- Начало:       2026-05-28 16:59:46
+- Заметки:      TASK A2 закрыт; серия inventory fork (A→B→C→D→A2) полностью завершена; AVITO audit готов; Sitka в стабильном состоянии — ждём Owner'ского решения по avito Option 1/2/3
 
 ### 2026-05-28 13:37:55 — upside2002@gmail.com
 
