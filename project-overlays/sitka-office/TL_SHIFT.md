@@ -4,7 +4,7 @@
 - Holder: upside2002@gmail.com
 - Started: 2026-05-27 17:00:58
 - Expires: бессрочно
-- Scope: inventory_parser fork — spike + TASK A/B/C/D по декомпозиции Admin'а 2026-05-25
+- Scope: TASK C inventory_parser fork — P0-2 Amazon timeout collision + audit других адаптеров
 - Active TASK: (нет)
 
 ## Notes
