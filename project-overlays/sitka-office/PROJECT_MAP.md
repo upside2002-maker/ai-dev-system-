@@ -111,9 +111,19 @@ app/tasks/avito_poller.py         ← inbound message poller
 app/tasks/avito_sender.py         ← outbound sender
 app/tasks/exchange_rate.py        ← FX updater
 
-vendor/inventory_parser/          ← vendored из upside2002-maker/sitka @ a7dc558
-                                    (US-store inventory parser ~2.1 MB, PR #67)
-vendor/avito_parser/              ← vendored Avito parser v2 (PR #55)
+app/inventory/                    ← US-store inventory parser (forked 2026-05-27 из
+                                    vendor/inventory_parser @ a7dc558 PR #67). Series:
+                                    PR #90 (TASK A — переезд + чистка 30K dead),
+                                    PR #91 (TASK B — substring drop),
+                                    PR #93 (TASK C — per-adapter timeout cap).
+                                    Подмодули: adapters/ (base + families/ + stores/),
+                                    runtime/ (service + execution + postprocess + session),
+                                    catalog/sitka_canon.py, query.py, types.py, registry.py,
+                                    _governor.py + proxy_pool.py (бывший snapshot/),
+                                    _sitka_catalog.py (10 символов из avito vendor; A2
+                                    дотащит остальные 15).
+vendor/avito_parser/              ← vendored Avito parser v2 (PR #55). Аудит запланирован
+                                    как next-after-fork (после TASK A2).
 
 tests/                            ← Python tests
 ```
@@ -230,7 +240,8 @@ docs/DM-7-cashbox.md               ← живой дизайн-док cashbox (P
   `workspace/{AwaitingPaymentStep, ConfirmedStep, FulfillmentStep, CompletedStep}.tsx`
 - **сообщения:** `Domain.Conversation` + `Api.Messages` + `app/tasks/avito_*` +
   `src/components/message-inbox/`
-- **парсер:** `app/parsers/inventory_v2.py` + `vendor/inventory_parser/` (US-stores) /
-  `vendor/avito_parser/` (Avito) + `src/components/parser/`
+- **парсер:** `app/parsers/inventory_v2.py` (backwards-compat alias) → `app/inventory/`
+  (US-stores, форкнут из vendor 2026-05-27) / `vendor/avito_parser/` (Avito) +
+  `src/components/parser/`
 - **knowledge base (БЗ):** см. `Api.Messages` + KB-related endpoints +
   `src/components/knowledge/`

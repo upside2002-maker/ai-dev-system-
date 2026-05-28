@@ -356,3 +356,43 @@ Prod smoke: `POST /api/sourcing/search` с `desiredItem="sitka jetstream"`, `sto
 **Дальше:** TASK D — финиш-линия. Overlay refresh (PROJECT_MAP, KNOWN_ISSUES, NEXT_ACTIONS, OPERATING) + CODEOWNERS обновить под `app/inventory/`. Tier C, ~0.5 дня. После него — TASK A2 (расширение `_sitka_catalog.py`) → AVITO-аудит по 7-секционному шаблону.
 
 ---
+
+## 2026-05-28 (день) — TASK D + ФИНАЛ серии форка — от TL Sitka
+
+**TASK D закрыт. Серия inventory_parser fork (A → B → C → D) полностью завершена.**
+
+- **Overlay refresh:** `PROJECT_MAP.md` — vendor/inventory_parser/ блок заменён на app/inventory/ с описанием подмодулей и связкой PR #90/#91/#93. Также обновлена строка про парсер в секции «Как куда добраться от слов оператора».
+- **KNOWN_ISSUES.md, NEXT_ACTIONS.md** — vendor/inventory_parser не упоминался напрямую, обновлять не требуется.
+- **CODEOWNERS (PR #94):** `app/inventory/adapters/base.py`, `runtime/`, `query.py`, `registry.py` под owners-gate. Store-файлы под `adapters/stores/` — без gate (обычный review). Симметрично паттерну `/sitka-core/src/Engine/`.
+- **Vendor каталог-эпитафия:** **не делал.** Worker удалил весь `vendor/inventory_parser/` через `git rm -rf` в TASK A; git-history файлов сохранён через `git mv`, blame работает. Возрождать пустой каталог с README — лишний noise.
+
+## Финальное «было / стало»
+
+| Метрика | Было (master `ccac24b`, до серии) | Стало (master `4aa26ec` + PR #94) | Δ |
+|---|---|---|---|
+| Строк в `vendor/inventory_parser/` | 39 792 alive+dead | 0 | **-39 792** |
+| Строк в `app/inventory/` | 0 | 8 310 (alive only) | **+8 310** |
+| Чистая Δ репозитория | — | — | **-31 482 LOC** |
+| Рабочих stores в `build_registry()` | 23 (но Amazon де-факто мёртв) | 24 (Amazon работает) | **+1 working** |
+| 3+ словных запросов «находятся через разделитель» | ❌ | ✅ | substring-drop fix |
+| Editable-install vendor хак в Dockerfile/CI | да (2 места) | нет | clean |
+| Inventory-тесты в нашем CI | 0 | 38 unit + 2 property × 200 examples | +regression cover |
+| `make services-test` baseline | 235+1 | 283+1 | +48 тестов |
+| P0 из аудита 2026-05-21 | 2 (substring drop, Amazon timeout) | 0 (оба закрыты) | **обе P0 done** |
+| Recurring CORE_AUTH drift | живой (2 incidents) | закрыт (PR #92) | **bonus** |
+| Pre-existing flake `test_core_client.py` | случайно работал | запинен явно (#12 в backlog как long-fix) | stable |
+
+## Оставшиеся хвосты в backlog
+
+- **TASK A2** (pre-req для avito-аудита): дотащить 15 символов в `_sitka_catalog.py` (eurooptic, franks, als, outdoor_insiders, shopify_stores, families/*_support, catalog/sitka_canon импортируют ещё из avito vendor). Tier C ~80-120 LOC. Делать перед запуском avito-аудита.
+- **Backlog #14** (P1): eurooptic `search_timeout_seconds = 50` когда заработает через proxy (Playwright 45s ≈ новый default cap 45s).
+- **Backlog #12** (tech debt): переписать `test_core_client.py` на `asyncio.run()` / async fixtures, после убрать pin `pytest-asyncio<0.27`.
+- **P1 из аудита** (retry, logging, eurooptic proxy, status enum до фронта, vendor cleanup, dead helper, request_ssl audit, Phase-E enrichment) — точечные PR-ы без жёсткой связки. Каждый — отдельный TL-разговор когда дойдут руки.
+
+## Следующий шаг
+
+После PR #94 merge → ловлю момент закрыть всю четырёхзадачную серию: take-shift release. Дальше — **либо TASK A2 + AVITO-аудит** (формальное завершение исходной декомпозиции Admin'а), **либо переход на другую задачу из ящика**, как Owner скажет. Записка про аудит 2026-05-21 в моём ящике остаётся живой до AVITO-аудита.
+
+**Серия закрыта.** Спасибо за чёткую декомпозицию — A → B → C → D отработали как конвейер, каждый этап со своим PR + auto-deploy + smoke. Главные wins: -31K LOC, обе P0 закрыты, Amazon впервые работает, recurring CORE_AUTH drift root-caused и закрыт.
+
+---
