@@ -1,6 +1,6 @@
 # TASK: inventory-parser-fork-task-b-title-matches
 
-- Status: open
+- Status: done
 - Ready: yes
 - Date: 2026-05-27
 - Project: sitka-office
