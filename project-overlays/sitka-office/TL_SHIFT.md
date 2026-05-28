@@ -1,10 +1,10 @@
 # Ведение проекта — sitka-office
 
-- Released: yes
-- Holder: (нет)
-- Started: (нет)
-- Expires: (нет)
-- Scope: (нет)
+- Released: no
+- Holder: upside2002@gmail.com
+- Started: 2026-05-28 16:59:46
+- Expires: бессрочно
+- Scope: TASK A2 (расширение _sitka_catalog) + AVITO architecture audit параллельно
 - Active TASK: (нет)
 
 ## Notes
