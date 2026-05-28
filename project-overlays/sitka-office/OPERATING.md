@@ -11,6 +11,7 @@
 
 ## Активные TASKS
 
+- [`TASKS/2026-05-28-inventory-parser-fork-task-a2-extend-sitka-catalog.md`](TASKS/2026-05-28-inventory-parser-fork-task-a2-extend-sitka-catalog.md) — `Status: open`, Layer services, Tier C, Mode normal, Worker model Claude Code. Финальная post-fork задача: расширить `app/inventory/_sitka_catalog.py` до 25 символов и переписать 8 файлов адаптеров (eurooptic, franks, als, outdoor_insiders, shopify_stores, families/*_support, catalog/sitka_canon). Pre-req для avito-форка (если Owner так решит после параллельного аудита).
 - [`TASKS/2026-04-29-dm7-c-backend-widget-prereq.md`](TASKS/2026-04-29-dm7-c-backend-widget-prereq.md) — `Status: open` → DRAFT → Worker → расширить `Api.TransactionResp` полем `trExpenseCategoryId :: Maybe Int64`. **НЕ срочно** — запускать только когда оператор захочет breakdown в виджете. Класс A без `Mode:` — перед запуском нужно дописать `Mode: strict` (или явно понизить класс с обоснованием), иначе `accept-task` откажет; см. STATUS_RU.md.
 
 См. [`TASKS/README.md`](TASKS/README.md) для правил.

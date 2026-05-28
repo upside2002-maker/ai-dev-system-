@@ -15,7 +15,7 @@ Sitka, TL Astro) при каждом обновлении контекста. О
 | Роль | Чат | Сейчас занят |
 |------|-----|--------------|
 | Admin | главный (Owner здесь) | диспетчеризация (поставил задачи TL Sitka + промпт на BA Astro 2026-05-21) |
-| TL Sitka | вкладка sitka-office | **Серия inventory_parser fork (A→B→C→D) ФИНАЛИЗИРОВАНА.** Все 4 TASK закрыты в проде. PR #94 (CODEOWNERS + PROJECT_MAP) ждёт CI. Финальный summary с цифрами «было/стало» в `MAILBOX/to-admin.md`. Дальше — либо A2 + AVITO-аудит (формальное завершение Admin'овой декомпозиции), либо новая задача от Owner'а. |
+| TL Sitka | вкладка sitka-office | inventory-fork series **полностью закрыт** (master `02df502`). Запустил параллельно: TASK A2 (расширение `_sitka_catalog.py` до 25 символов; Worker в работе) + AVITO architecture audit (subagent в фоне, отчёт → `research/avito-parser-architecture-audit-2026-05-28.md`). 4 закрытые записки inventory-серии переехали в archive. |
 | TL Astro | вкладка astro | **этап 1 контент-движка СДАН 2026-05-24** — 6 deliverables в `research/` (stylebook, контент-план 24 поста, архитектура воронки, мокапы 5 страниц, tech-rec, пилотный пост). Ждёт (1) ревью Марины на 30 минут — узнаёт ли себя в пилотном посту, попадает ли план, (2) правки BA Astro §9 tech-rec под Yandex Cloud (вместо CF Pages). После — финализация v1.0 и запуск этапа 2. |
 
 «Сейчас занят» обновляется ролью на старте задачи и снова на её
