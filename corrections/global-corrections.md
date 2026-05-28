@@ -328,6 +328,28 @@
 
 ---
 
+## Correction 018: env-precedence в multi-file docker-compose merge → скрытый config drift при recreate
+
+**BAD:**
+
+- В стеке используется multi-file compose merge (`docker compose -f base.yml -f prod.yml -f override.yml ...`), где **base** объявляет дефолтное значение env-переменной (например, `CORE_AUTH=disabled` в dev-варианте), **prod-overlay** жёстко прописывает другое значение (`CORE_AUTH=required`), а server-only **override** должен возвращать prod-обратно к ожидаемому состоянию для конкретного хоста (например, internal IP-only deploy без bearer auth с фронта).
+- Server-only override не покрывает все переменные, которые prod.yml жёстко переопределяет. На реальном хосте `.env` содержит правильное значение, но в env-precedence compose **YAML литералы из prod.yml побеждают `.env`** — `.env` подставляется только в `${VAR}` references, не в hardcoded литералы.
+- Auto-deploy на этом стеке (например, через `bash deploy/auto-deploy.sh`) делает `docker compose up -d --no-deps <service>` со всем set'ом compose-файлов. Образ собирается, контейнер recreate'ится, но **env-переменная получает значение из prod.yml**, не то которое оператор ожидает увидеть по `.env`.
+- Ручной recreate того же сервиса в оболочке **без prod.yml** даёт правильное значение из `.env` — оператор лечит «руками работает» → закрывает инцидент → следующий auto-deploy ломает то же место. Recurring drift.
+
+**GOOD:**
+
+- В server-only override **явно перечислять все env-переменные, которые prod.yml переопределяет не так, как нужно на этом конкретном хосте**. Comment в override должен указывать: «здесь побеждает prod.yml, конкретная причина для этого хоста — такая-то». Это сознательное решение, не упущение.
+- При первом обнаружении recurring drift — **искать root cause в env-precedence**, не лечить состояние живого контейнера. Признак: «руками recreate работает, auto-deploy ломает».
+- Зеркалирование server-only override в репо как **`.example.yml`-файла** — обязательное условие воспроизводимости (см. Correction 017 → PR #88). При смене стратегии (например, frontend реализует bearer auth) — переменная снимается из override-а **одновременно** с deploy того релиза, не отдельным шагом.
+- В `auto-deploy.sh` после recreate-этапа **smoke-проверка должна включать verify ожидаемых env-переменных**, не только health-endpoint. `docker exec <container> env | grep <KEY>` → сверить с ожидаемым → fail-early если drift. Сэкономит ручную диагностику в следующий раз.
+
+**WHY:** Multi-file compose merge — мощный инструмент для разделения базовых дефолтов от deploy-specific overrides, но **env-precedence неочевидна**. Многие разработчики думают «`.env` всегда побеждает» — это неверно для hardcoded литералов в compose-файлах. Когда prod.yml явно пишет `ENV_KEY: "value"`, то это значение **выживает любые `.env`-переопределения**. Если этот литерал не подходит для конкретного хоста — нужен override который переопределяет переопределение. Если override отсутствует или не покрывает все нужные переменные — каждый recreate сервиса возвращает не-тот конфиг, до тех пор пока оператор не залезет в live container и снова не починит руками. Это **класс багов «деплой работает по букве, но не по смыслу»** — самый коварный, потому что лечение в живом контейнере не закрывает корень.
+
+**Source:** инцидент 2026-05-24, recurring 2026-05-27. На проде Sitka `.env` содержит `CORE_AUTH=disabled` (внутренний IP-only setup, фронт не реализовывал bearer auth с заголовком), но `docker-compose.prod.yml` жёстко переопределяет на `required`. После каждого `bash deploy/auto-deploy.sh` core recreate'ится с `CORE_AUTH=required` (literal из prod.yml побеждает `.env`), API возвращает 401 на все запросы, оператор не может войти. TL Sitka 2026-05-24 первый раз лечил «руками» (recreate core в оболочке без prod.yml — без diagnose root cause), 2026-05-27 после deploy TASK B (PR #91 substring drop fix) drift воспроизвёлся идентично. Только во второй раз TL Sitka задал правильный вопрос «почему `.env` не побеждает» и нашёл что hardcoded литерал в prod.yml выигрывает env-precedence. Fix: добавить `CORE_AUTH: "disabled"` явно в server-only override.yml с подробным комментарием объясняющим зачем; зеркалировать в `deploy/docker-compose.override.example.yml` (PR #92, master 89a6c25); тест пройден под полным auto-deploy-стеком — drift закрыт.
+
+---
+
 ## Как добавлять новые записи
 
 Формат:
