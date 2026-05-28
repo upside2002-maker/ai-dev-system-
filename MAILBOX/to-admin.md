@@ -396,3 +396,38 @@ Prod smoke: `POST /api/sourcing/search` с `desiredItem="sitka jetstream"`, `sto
 **Серия закрыта.** Спасибо за чёткую декомпозицию — A → B → C → D отработали как конвейер, каждый этап со своим PR + auto-deploy + smoke. Главные wins: -31K LOC, обе P0 закрыты, Amazon впервые работает, recurring CORE_AUTH drift root-caused и закрыт.
 
 ---
+
+## 2026-05-28 (вечер) — AVITO architecture audit готов — от TL Sitka
+
+**Аудит `vendor/avito_parser/` сдан subagent'ом.** Отчёт — `project-overlays/sitka-office/research/avito-parser-architecture-audit-2026-05-28.md` (464 строки, все 7 разделов по тому же шаблону что inventory-audit).
+
+**Светофор: ЖЁЛТЫЙ, 0 P0.**
+
+**3-строчное operator-language summary (для Owner'а):**
+- Avito-парсер работает в проде стабильно через два endpoint'а (Lead Inbox + sourcing), vendor-каталог не правился 34 дня — либо живой стабильный код, либо upstream-abandoned.
+- Главный архитектурный риск **не в самом парсере, а в его двойной роли**: своя market.* API + cross-vendor donor для нашего `app/inventory/` после inventory-форка (10 файлов inventory импортируют `shared.product.sitka_catalog` / `shared.apify_runner` из vendor/avito_parser/). TASK A2 (запущен параллельно с этим аудитом, Worker в работе) это закрывает.
+- Один subtle finding — два почти-идентичных Apify-runner'а в одном vendor'е (sync для Avito + async для Amazon/eBay-inventory) с **немного разными rotation markers** на rate-limit. Amazon/eBay сейчас НЕ ротируют токен при 429, что может проявиться после нашего недавнего TASK C (Amazon впервые работает → больше Apify-вызовов → больше шанс наткнуться на rate-limit). 5-строчный fix.
+
+**11 finding'ов:** 0 P0, 4 P1, 5 P2, 2 NTH. Полный backlog в §6 отчёта.
+
+**Sharpest (F-DUP-1):** `market/avito/client.py:ZenStudioAvitoClient` (sync/urllib) и `shared/apify_runner.py:ApifyRunner` (async/aiohttp) дублируют 394 LOC с subtle разницей в `_is_rotation_error` markers. P1-1 fix = ~5 LOC синхронизации.
+
+**Рекомендация (§7): ОСТАВИТЬ КАК VENDORED** с двумя условиями:
+- (a) Завести `vendor/avito_parser/UPSTREAM.md` (когда импортировано, какой commit, dead-list, our patches). Без этого следующая сессия будет тратить время на reverse-engineering.
+- (b) Подключить vendor's existing `test_market.py` к CI (~3-5 LOC в `.github/workflows/ci.yml`). Vendor — это "trusted but not verified" сейчас; первый случайный edit ловится только на проде.
+
+**Обоснование решения (диаметрально от inventory):** 4.9K LOC vs 40K у inventory; 0 vendor edits за 34 дня (vs active edits у inventory); узкий контракт integration (2 import символа из vendor); нет блокирующего P0 (inventory имел substring drop). Fork-стоимость превышает пользу.
+
+**Что делать дальше — твоё/Owner'а решение:**
+
+Option 1 (минимальный, рекомендованный): принять «оставить vendored», в эту же неделю закрыть UPSTREAM.md + CI hookup (P2-1 + P1-2) одним маленьким PR. ~30 минут моей работы.
+
+Option 2 (P1 full pass): плюс к Option 1 — закрыть P1-1 (sync markers) и P1-4 (force_refresh в `/api/avito/search`). +60 минут. После этого vendor становится "tested, observable, no known issues".
+
+Option 3 (fork — отвергнут в §7): дороже чем польза. Создаст три копии `sitka_catalog` (avito + inventory_fork + наш `_sitka_catalog`). Хуже текущего.
+
+**TASK A2 (параллельный поток):** Worker в работе. По расписанию закроется в течение часа, после чего vendor/avito_parser перестаёт быть cross-vendor donor → свобода правок shared/* восстанавливается. После A2 — переоценка ситуации; вероятно ничего не изменится, но проверю на свежую голову.
+
+**Записка про AVITO задачу из ящика** — могу архивировать после твоего решения по recommendation (Option 1/2/3). Сейчас оставляю живой до явного «да/нет».
+
+---

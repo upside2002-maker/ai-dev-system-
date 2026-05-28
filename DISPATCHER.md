@@ -15,7 +15,7 @@ Sitka, TL Astro) при каждом обновлении контекста. О
 | Роль | Чат | Сейчас занят |
 |------|-----|--------------|
 | Admin | главный (Owner здесь) | диспетчеризация (поставил задачи TL Sitka + промпт на BA Astro 2026-05-21) |
-| TL Sitka | вкладка sitka-office | inventory-fork series **полностью закрыт** (master `02df502`). Запустил параллельно: TASK A2 (расширение `_sitka_catalog.py` до 25 символов; Worker в работе) + AVITO architecture audit (subagent в фоне, отчёт → `research/avito-parser-architecture-audit-2026-05-28.md`). 4 закрытые записки inventory-серии переехали в archive. |
+| TL Sitka | вкладка sitka-office | TASK A2 Worker в работе. **AVITO architecture audit сдан** (ЖЁЛТЫЙ светофор, 0 P0, recommendation = «оставить vendored» с двумя условиями UPSTREAM.md + CI hookup). Записка в `MAILBOX/to-admin.md` 2026-05-28 вечер — Owner решает Option 1/2/3. |
 | TL Astro | вкладка astro | **этап 1 контент-движка СДАН 2026-05-24** — 6 deliverables в `research/` (stylebook, контент-план 24 поста, архитектура воронки, мокапы 5 страниц, tech-rec, пилотный пост). Ждёт (1) ревью Марины на 30 минут — узнаёт ли себя в пилотном посту, попадает ли план, (2) правки BA Astro §9 tech-rec под Yandex Cloud (вместо CF Pages). После — финализация v1.0 и запуск этапа 2. |
 
 «Сейчас занят» обновляется ролью на старте задачи и снова на её
@@ -57,6 +57,7 @@ Sitka, TL Astro) при каждом обновлении контекста. О
 Последние ~5 событий которые касаются больше чем одной роли. Старые
 переезжают в `OPERATING/journal/` соответствующего overlay.
 
+- 2026-05-28 (вечер): TL Sitka — AVITO architecture audit сдан subagent'ом (`research/avito-parser-architecture-audit-2026-05-28.md`, 464 строки). ЖЁЛТЫЙ светофор, 0 P0, 4 P1 + 5 P2 + 2 NTH. Recommendation: **оставить vendored** с двумя условиями (UPSTREAM.md + CI tests hookup, ~30 минут работы). Диаметрально от inventory (там был fork & own) — потому что avito vendor 10× меньше, 0 vendor edits 34 дня, узкий контракт integration. Параллельно — TASK A2 Worker в работе (закрывает cross-vendor coupling). Owner решает Option 1/2/3.
 - 2026-05-28 (день): **Серия inventory_parser fork (A→B→C→D) ФИНАЛИЗИРОВАНА.** TASK D — PR #94 (CODEOWNERS gate на app/inventory/ shared core + PROJECT_MAP refresh). Итоги серии: -31 482 LOC в репо, +1 working store (Amazon), обе P0 из аудита закрыты, recurring CORE_AUTH drift root-caused, pre-existing flake запинен. Финальный summary с цифрами в `MAILBOX/to-admin.md`.
 - 2026-05-28 (день): TL Sitka закрыл TASK C (P0-2 Amazon timeout). PR #93 → master `4aa26ec`. Главный win — **Amazon работает первый раз с момента vendoring**: prod smoke «sitka jetstream» → status=ok, 4 items, 63s elapsed (раньше всегда failed:store_timeout). Дальше TASK D.
 - 2026-05-28 (ночь): TL Sitka закрыл TASK B (P0-1 substring drop) — PR #91 → master `89a6c25`. Параллельно root-caused recurring CORE_AUTH drift: `deploy/auto-deploy.sh:33` подмешивал `prod.yml` с hardcoded `CORE_AUTH=required`, побеждал `.env=disabled`. Server-only fix через override.yml; PR #92 зеркалит example. Прод-смок 3-словного запроса находит «Blizzard AeroLite Parka». Доклад в `MAILBOX/to-admin.md`. Дальше TASK C (Amazon timeout).
