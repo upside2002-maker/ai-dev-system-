@@ -431,3 +431,35 @@ Option 3 (fork — отвергнут в §7): дороже чем польза.
 **Записка про AVITO задачу из ящика** — могу архивировать после твоего решения по recommendation (Option 1/2/3). Сейчас оставляю живой до явного «да/нет».
 
 ---
+
+## 2026-05-28 (поздний вечер) — TASK A2 closed — от TL Sitka
+
+**TASK A2 закрыт в проде. Cross-vendor coupling между inventory и avito разорван.**
+
+- **PR #95 → master `301e7e3`**, squash --admin merged. CI зелёный с первого раза.
+- **Worker iter1 → Reviewer iter1 ACCEPT** (parity check 15 функций × 38 входов, **0 mismatches** между local copy и upstream — стронгер чем Worker'ское «33 cases»).
+- **Изменения:** `_sitka_catalog.py` 537→994 LOC (+475 net): 15 новых публичных символов + ~150 LOC title-path machinery + ~80 LOC color/size helpers. Renamed internal conflicting names с `_TITLE_*`/`_CANONICAL_*` prefixes. 8 import rewrites — pure search-and-replace, no function-body drift. Новый тест-файл (9 cases).
+- **Тесты:** 9/9 в target; full `make services-test` 292+1 (+9 vs baseline 283+1).
+- **Grep contract:** `grep -rE "^from shared\.product\.sitka_catalog" sitka-services/app/inventory/` → пусто. Acceptance #3 satisfied.
+- **Auto-deploy scope=services** прошёл; CORE_AUTH=disabled держится. Prod smoke: «blizzard» через 4 магазина → 18 hits (rogers 3, 1shot 3, **eurooptic 1**, **als 1**) — все 4 store в `status=ok`.
+
+**Follow-up #15 (backlog):** Worker'ский Conflicts вопрос — `canonical_product_title` + `normalize_title` path dead-imported (~150 LOC machinery), но scope A2 = «расширить до 25 символов». Cleanup → отдельный backlog item, Tier C, не блокирует ничего.
+
+**Серия inventory fork полностью завершена.** 5 PR (A/B/C/D/A2), 5 deploys, 0 regressions:
+- `vendor/inventory_parser/` удалён (-31 482 LOC репо)
+- `app/inventory/` создан и самодостаточен (нет shared.* импортов в inventory код)
+- Оба P0 из аудита закрыты (substring drop + Amazon timeout)
+- Amazon впервые работает с момента vendoring
+- Recurring CORE_AUTH drift root-caused + закрыт (PR #92)
+- Cross-vendor coupling между inventory и avito разорван (A2)
+
+**Открытый вопрос для Owner'а: AVITO recommendation.**
+
+В моей записке от 2026-05-28 (вечер) предложены 3 варианта по результатам avito-аудита:
+- **Option 1:** UPSTREAM.md + CI hookup, ~30 минут. Минимум-чтобы-vendor-был-«trusted-and-verified».
+- **Option 2:** + sync rotation markers (5 LOC, F-DUP-1) + force_refresh параметр. ~1 час.
+- **Option 3:** Fork & own — recommendation §7 отвергает, создаст 3 копии sitka_catalog (хуже текущего).
+
+Жду решения. До этого — Sitka в стабильном состоянии, могу взять любую другую задачу из ящика. Или паузу — пока спорить нечем.
+
+---

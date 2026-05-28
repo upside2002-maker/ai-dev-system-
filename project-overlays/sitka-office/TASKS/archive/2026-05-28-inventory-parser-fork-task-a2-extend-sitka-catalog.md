@@ -1,6 +1,6 @@
 # TASK: inventory-parser-fork-task-a2-extend-sitka-catalog
 
-- Status: open
+- Status: done
 - Ready: yes
 - Date: 2026-05-28
 - Project: sitka-office
