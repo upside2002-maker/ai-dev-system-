@@ -44,7 +44,7 @@ Sitka, TL Astro) при каждом обновлении контекста. О
 ## Открытые блоки
 
 - **Astro:** ждёт **ревью Марины на 30 минут** — узнаёт ли себя в пилотном посту «Транзит Сатурна по 4 дому», попадает ли контент-план. Параллельно BA Astro правит §9 tech-rec под Yandex Cloud (было CF Pages).
-- **Sitka:** **решение по форку принято 2026-05-25** — TL Sitka декомпозирует на 4 TASK'а и запускает по обычному lifecycle.
+- **Sitka:** серия inventory fork (A→B→C→D→A2) **полностью закрыта** в проде (5 PR, Amazon работает впервые, обе P0 закрыты, cross-vendor coupling разорван). По AVITO Owner выбрал **Option 1** 2026-05-28 — TL Sitka берёт минимальную страховку (UPSTREAM.md + CI-hookup, ~30 мин), после чего Sitka свободна под следующую задачу.
 - **Будущее (этап 2 Astro):** Owner должен будет создать аккаунт Yandex Cloud + привязать карту + решить домен. Не сейчас.
 
 Сюда попадает всё что ждёт от кого-то за пределами одной роли:
@@ -57,6 +57,7 @@ Sitka, TL Astro) при каждом обновлении контекста. О
 Последние ~5 событий которые касаются больше чем одной роли. Старые
 переезжают в `OPERATING/journal/` соответствующего overlay.
 
+- 2026-05-28 (поздний вечер, после доклада): **Owner принял решение по AVITO — Option 1** (минимальная страховка: завести `UPSTREAM.md` + подключить vendor-тесты к CI, ~30 мин). Форк (Option 3) закрыт окончательно — рекомендация «оставить vendored» принята. Admin передал задачу TL Sitka (`MAILBOX/to-tl-sitka.md`); F-DUP-1 (rotation markers, риск вырос после TASK C) уходит в backlog как tracked P1. Серия inventory fork + avito-аудит — полностью закрытая глава, Admin закрыл дыру в `OPERATING/journal/2026-05.md` (commit `d8950f2`).
 - 2026-05-28 (поздний вечер): TL Sitka закрыл TASK A2 — PR #95 → master `301e7e3`. Cross-vendor coupling между inventory и avito разорван (8 import-rewrites + 15 новых символов в `_sitka_catalog.py`). Reviewer 0 mismatches на parity check. Серия inventory fork (A→B→C→D→A2, 5 PR) полностью завершена. AVITO audit ждёт Owner'ского решения Option 1/2/3.
 - 2026-05-28 (вечер): TL Sitka — AVITO architecture audit сдан subagent'ом (`research/avito-parser-architecture-audit-2026-05-28.md`, 464 строки). ЖЁЛТЫЙ светофор, 0 P0, 4 P1 + 5 P2 + 2 NTH. Recommendation: **оставить vendored** с двумя условиями (UPSTREAM.md + CI tests hookup, ~30 минут работы). Диаметрально от inventory (там был fork & own) — потому что avito vendor 10× меньше, 0 vendor edits 34 дня, узкий контракт integration. Параллельно — TASK A2 Worker в работе (закрывает cross-vendor coupling). Owner решает Option 1/2/3.
 - 2026-05-28 (день): **Серия inventory_parser fork (A→B→C→D) ФИНАЛИЗИРОВАНА.** TASK D — PR #94 (CODEOWNERS gate на app/inventory/ shared core + PROJECT_MAP refresh). Итоги серии: -31 482 LOC в репо, +1 working store (Amazon), обе P0 из аудита закрыты, recurring CORE_AUTH drift root-caused, pre-existing flake запинен. Финальный summary с цифрами в `MAILBOX/to-admin.md`.
