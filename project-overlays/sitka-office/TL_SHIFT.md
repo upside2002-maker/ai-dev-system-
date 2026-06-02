@@ -1,10 +1,10 @@
 # Ведение проекта — sitka-office
 
-- Released: yes
-- Holder: (нет)
-- Started: (нет)
-- Expires: (нет)
-- Scope: (нет)
+- Released: no
+- Holder: upside2002@gmail.com
+- Started: 2026-06-02 17:48:20
+- Expires: бессрочно
+- Scope: Avito Option 1 (UPSTREAM.md + CI test_market hookup) → потом декомпозиция ТЗ парсера
 - Active TASK: (нет)
 
 ## Notes
