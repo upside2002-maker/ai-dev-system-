@@ -11,6 +11,9 @@
 
 ## Активные TASKS
 
+- [`TASKS/2026-06-02-parser-improvement-p0-1-failsafe-orchestrator.md`](TASKS/2026-06-02-parser-improvement-p0-1-failsafe-orchestrator.md) — `Status: open`, Layer services, Tier B, Mode normal. Закрывает P0-1 из ТЗ: failsafe `run_one` (текущий try/except имеет дыру выше — `cap_seconds = _store_run_timeout(self.registry[store])` валит на KeyError при registry miss). Первый в каскаде parser-improvement, ветка от master.
+- [`TASKS/2026-06-02-parser-improvement-p0-2-variant-level-stock.md`](TASKS/2026-06-02-parser-improvement-p0-2-variant-level-stock.md) — `Status: open` (ждёт P0-1), Layer services, Tier B, **Mode strict** (меняет API контракт). Закрывает P0-2 главную боль ТЗ: variant matrix уже в `ItemResult`, теряется на route-границе → расширить `OfferCandidate` + matcher запрос→variant. Ветка от P0-1.
+- [`TASKS/2026-06-02-parser-improvement-p0-3-env-paths.md`](TASKS/2026-06-02-parser-improvement-p0-3-env-paths.md) — `Status: open` (ждёт P0-2), Layer services, Tier C, Mode normal. Закрывает P0-3 ТЗ: env-driven paths вместо hardcoded `/srv/sitka-qa/`. Маленький, последний в каскаде. Ветка от P0-2.
 - [`TASKS/2026-04-29-dm7-c-backend-widget-prereq.md`](TASKS/2026-04-29-dm7-c-backend-widget-prereq.md) — `Status: open` → DRAFT → Worker → расширить `Api.TransactionResp` полем `trExpenseCategoryId :: Maybe Int64`. **НЕ срочно** — запускать только когда оператор захочет breakdown в виджете. Класс A без `Mode:` — перед запуском нужно дописать `Mode: strict` (или явно понизить класс с обоснованием), иначе `accept-task` откажет; см. STATUS_RU.md.
 
 См. [`TASKS/README.md`](TASKS/README.md) для правил.
