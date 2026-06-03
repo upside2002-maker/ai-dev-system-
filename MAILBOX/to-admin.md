@@ -519,3 +519,30 @@ SITKA_PARSER_PROXIES_FILE=/srv/sitka-qa/config/proxies.txt
 Не архивирую — задача формально не закрыта пока не на проде. После CI разморозки → merge → smoke → архив + final summary с master-SHA.
 
 ---
+
+## 2026-06-02 (поздний вечер) — Локально парсер обновлён, проверено — от TL Sitka
+
+**Что:** по директиве Admin'а от 2026-06-02 (вечер) переключил main checkout `~/Projects/sitka-office` на ветку-вершину каскада `feat/parser-improvement-p0-3-env-paths` (commit `b1c9107`, = master `301e7e3` + P0-1 + P0-2 + P0-3). Прогнал прямой smoke через `.venv/bin/python` против реальных сайтов магазинов с `SITKA_APIFY_TOKENS=dummy`. Сервер и master не тронуты.
+
+**P0-1 failsafe подтверждён:**
+```
+rogers          status=ok      reason=''                        items=20
+basspro         status=failed  reason='unregistered_store'      items=0
+unknown_store   status=failed  reason='unregistered_store'      items=0
+1shot           status=ok      reason=''                        items=10
+```
+4 магазина → 4 результата, два failed без bubble. До P0-1 первый же `basspro` (удалён в TASK A) ронял весь run.
+
+**P0-2 variant-stock подтверждён на ключевом ТЗ-кейсе «Sitka Equinox Guard Pant Lead 36R»:**
+- **eurooptic** «Equinox Guard Pant Lead 50247-PB»: `available_sizes=('42R','44R')`, `unavailable_sizes=('38T','40R')` — 36R вообще нет на сайте Lead-цвета → `status='variant_not_found'`.
+- **lancaster** «SITKA Gear Equinox Guard Pant (Lead)»: `available_sizes=('40R',)`, `unavailable_sizes=('30R','32R','34R','36R','38R','42R')` — 36R явно в unavailable → `status='out_of_stock'`. **До P0-2 парсер сказал бы `in_stock`** (товар на сайте есть). Это и есть bug из ТЗ, теперь честно говорит «нет 36R».
+
+Второй ТЗ-кейс «VentLite GTX Boot 11 Olive Green @ rogers»: размер 11 **сейчас реально в наличии** (`available_sizes=('11',), available_colors=(...'Olive Green'...)`) — товар вернулся в сток с момента написания ТЗ, matcher честно отдаст `in_stock`. Это правильное поведение.
+
+**P0-3 env-paths подтверждён попутно:** `proxy_pool` лениво дефолтнулся на `~/.config/sitka-parser/proxies.txt` (per P0-3 spec), один warning при init, потом silent на последующих вызовах. Hardcoded `/srv/sitka-qa/` локально больше не светится.
+
+**Сервер на `301e7e3`, рассинхрон 0.** Все три фикса лежат локально и в origin как backup. После разморозки CI (Visa 0181) — PR'ы каскадом + auto-deploy с env-vars `SITKA_PARSER_ARTIFACTS_DIR=/srv/sitka-qa/artifacts` + `SITKA_PARSER_PROXIES_FILE=/srv/sitka-qa/config/proxies.txt`.
+
+Записки про AVITO + ТЗ парсера + «поднять локально» уезжают в archive (`MAILBOX/archive/`). Серия parser-improvement формально остаётся в работе до прод-деплоя — финальный summary с master-SHA после смерж'а.
+
+---
