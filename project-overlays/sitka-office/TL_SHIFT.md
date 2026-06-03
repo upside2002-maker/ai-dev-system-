@@ -1,10 +1,10 @@
 # Ведение проекта — sitka-office
 
-- Released: yes
-- Holder: (нет)
-- Started: (нет)
-- Expires: (нет)
-- Scope: (нет)
+- Released: no
+- Holder: upside2002@gmail.com
+- Started: 2026-06-02 21:35:59
+- Expires: бессрочно
+- Scope: поднять полный локальный стек на ветке P0-3 (Variant A)
 - Active TASK: (нет)
 
 ## Notes
