@@ -1,13 +1,19 @@
 # Ведение проекта — sitka-office
 
-- Released: no
-- Holder: upside2002@gmail.com
-- Started: 2026-06-02 19:50:14
-- Expires: бессрочно
-- Scope: локальный smoke улучшенного парсера на ветке P0-3 (директива Admin 2026-06-02 вечер)
+- Released: yes
+- Holder: (нет)
+- Started: (нет)
+- Expires: (нет)
+- Scope: (нет)
 - Active TASK: (нет)
 
 ## Notes
+
+### 2026-06-02 19:54:18 — upside2002@gmail.com
+
+- Зона ведения: локальный smoke улучшенного парсера на ветке P0-3 (директива Admin 2026-06-02 вечер)
+- Начало:       2026-06-02 19:50:14
+- Заметки:      локальный smoke на ветке P0-3 прошёл (Equinox Lead 36R live → variant_not_found/out_of_stock, как ТЗ ожидает); 4 записки в archive; ящик пуст до разморозки CI
 
 ### 2026-06-02 19:30:13 — upside2002@gmail.com
 
