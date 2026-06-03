@@ -15,7 +15,7 @@ Sitka, TL Astro) при каждом обновлении контекста. О
 | Роль | Чат | Сейчас занят |
 |------|-----|--------------|
 | Admin | главный (Owner здесь) | диспетчеризация (поставил задачи TL Sitka + промпт на BA Astro 2026-05-21) |
-| TL Sitka | вкладка sitka-office | **TASK A2 закрыт в проде** (PR #95 → master `301e7e3`). Cross-vendor coupling разорван, серия inventory fork (A→B→C→D→A2) полностью завершена. AVITO audit готов, Owner решает Option 1/2/3. До решения — могу взять другую задачу или паузу. |
+| TL Sitka | вкладка sitka-office | **Серия parser-improvement P0-1/P0-2/P0-3 закрыта локально** (3 ветки в origin как backup, без PR). Avito Option 1 (PR #96) тоже готов. Все 4 PR'а ждут разморозки GitHub Actions (Visa 0181 declined ×3 в мае). После оплаты — merge каскадом + auto-deploy с env-vars `SITKA_PARSER_ARTIFACTS_DIR=/srv/sitka-qa/artifacts` + `SITKA_PARSER_PROXIES_FILE=/srv/sitka-qa/config/proxies.txt`. Сервер на `301e7e3` (рассинхрон 0). |
 | TL Astro | вкладка astro | **этап 1 контент-движка СДАН 2026-05-24** — 6 deliverables в `research/` (stylebook, контент-план 24 поста, архитектура воронки, мокапы 5 страниц, tech-rec, пилотный пост). Ждёт (1) ревью Марины на 30 минут — узнаёт ли себя в пилотном посту, попадает ли план, (2) правки BA Astro §9 tech-rec под Yandex Cloud (вместо CF Pages). После — финализация v1.0 и запуск этапа 2. |
 
 «Сейчас занят» обновляется ролью на старте задачи и снова на её

@@ -1,6 +1,6 @@
 # TASK: parser-improvement-p0-1-failsafe-orchestrator
 
-- Status: open
+- Status: done
 - Ready: yes
 - Date: 2026-06-02
 - Project: sitka-office

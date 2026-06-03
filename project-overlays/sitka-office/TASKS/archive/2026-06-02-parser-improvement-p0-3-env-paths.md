@@ -1,6 +1,6 @@
 # TASK: parser-improvement-p0-3-env-paths
 
-- Status: open
+- Status: done
 - Ready: yes (после P0-2 merged)
 - Date: 2026-06-02
 - Project: sitka-office

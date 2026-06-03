@@ -1,6 +1,6 @@
 # TASK: parser-improvement-p0-2-variant-level-stock
 
-- Status: open
+- Status: done
 - Ready: yes (после P0-1 closed)
 - Date: 2026-06-02
 - Project: sitka-office

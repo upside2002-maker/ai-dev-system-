@@ -463,3 +463,59 @@ Option 3 (fork — отвергнут в §7): дороже чем польза.
 Жду решения. До этого — Sitka в стабильном состоянии, могу взять любую другую задачу из ящика. Или паузу — пока спорить нечем.
 
 ---
+
+## 2026-06-02 (вечер) — ВСЯ серия parser-improvement P0-1/P0-2/P0-3 закрыта локально — от TL Sitka
+
+**ТЗ Owner'а из `docs/PARSER_IMPROVEMENT_TZ.md` отработана целиком. Все три P0 ACCEPTed Reviewer'ом, ничего не падает.**
+
+Avito Option 1 (PR #96) тоже готов параллельно — лежит ждёт CI.
+
+### Что лежит на ветках (не в master — GitHub CI заморожен)
+
+| TASK | Ветка | Commit | Тесты | Mode |
+|---|---|---|---|---|
+| **P0-1 failsafe orchestrator** | `feat/parser-improvement-p0-1-failsafe-orchestrator` (база: master `301e7e3`) | `769b18c` | 6/6 target + 298/1 full | normal |
+| **P0-2 variant-level stock** | `feat/parser-improvement-p0-2-variant-level-stock` (база: P0-1) | `a5364ec` | 16/16 target + 309/1 full | **strict** |
+| **P0-3 env-driven paths** | `feat/parser-improvement-p0-3-env-paths` (база: P0-2) | `b1c9107` | 11/11 target + 320/1 full | normal |
+| Avito Option 1 | `chore/avito-option-1-upstream-and-ci` (PR #96, ждёт CI) | `76ca3b5` | 17 vendor avito + 320/1 full | — |
+
+Все ветки в origin как backup. Каскадная стратегия PR'ов после разморозки CI: PR P0-1 base=master, PR P0-2 base=P0-1, PR P0-3 base=P0-2.
+
+### Что закрыто (по ТЗ)
+
+- **P0-1.** Failsafe оркестратор. Точный root cause из TL grounding: `cap_seconds = _store_run_timeout(self.registry[store])` стоял ПЕРЕД `try:` блоком. KeyError при registry miss валил весь run. Worker переместил вычисление внутрь try + pre-check на unregistered store → `failed_store_run('unregistered_store')`. **Бонус-открытие Worker'а** (вне scope P0-1): `build_registry()` крашится на `AmazonAdapter.__init__() → ApifyRunner()` без `SITKA_APIFY_TOKENS` env. Это adapter-construction issue, отдельно от orchestrator-level failsafe. На проде токены есть, на dev workaround `SITKA_APIFY_TOKENS=dummy`. Завёл backlog item #19 «adapter-construction failsafe в build_registry()», 3 design option'а в Worker HANDOFF.
+- **P0-2.** Главная ценность ТЗ — variant-level stock. **Огромный TL-сюрприз**: variant matrix УЖЕ извлекается всеми 22 адаптерами в `ItemResult.variant_cells`, теряется только на route-границе (F-WIRE-1 из inventory-аудита). Scope значительно меньше изначальной оценки. Worker расширил `OfferCandidate` (9 новых полей), создал `match_variant(parsed_query, variant_cells)` → `(VariantCell | None, variant_status)`, route mapper заполняет. `in_stock` теперь = `(variant_status == "in_stock")` — behavioural change в правильную сторону. Reviewer независимо подтвердил bug на проде: `Sitka Equinox Guard Pant Lead 36R` на eurooptic → `variant_status='out_of_stock'` (раньше `in_stock=True`). 3 из 4 ТЗ-кейсов в проде по-прежнему ловят bug, 2 кейса — товар реально появился в наличии с момента написания ТЗ (matcher честно отдаёт `in_stock`).
+- **P0-3.** Hardcoded `/srv/sitka-qa/` → env-driven через `SITKA_PARSER_ARTIFACTS_DIR` и `SITKA_PARSER_PROXIES_FILE` с дефолтом в `~/.cache/sitka-parser/`. Worker сохранил legacy env vars (`SNAPSHOT_PROXY_LIST`, `SCHEELS_SITKA_CACHE`) как higher-priority overrides — backwards-compat для прода без break-change. Proxies-missing → один warning при init, потом silent (TASK Acceptance требовала не спамить — Reviewer подтвердил 1 warning на 5 вызовов).
+
+### Открытые backlog items (не блокеры)
+
+- **#19 (P1)** — adapter-construction failsafe в `build_registry()` для случая отсутствия Apify token. На проде не проявляется.
+- **#20 (C)** — `variant_url` поле в `OfferCandidate` всегда None потому что `VariantCell` не несёт per-variant deep-link. Wire-ready заглушка; пользы фронту 0 пока не появится UI с deep-link на конкретный variant.
+- **#15, #14, #12** — старые backlog items из аудита и предыдущих TASKs, не блокеры.
+
+### Прод env-vars TL должен добавить на следующий auto-deploy (когда CI оживёт)
+
+```
+SITKA_PARSER_ARTIFACTS_DIR=/srv/sitka-qa/artifacts
+SITKA_PARSER_PROXIES_FILE=/srv/sitka-qa/config/proxies.txt
+```
+
+Без них прод откатится к dev-default `~/.cache/sitka-parser/...` (работает, но потеряет существующий scheels sitka index cache до следующего save). С ними — byte-for-byte идентичное поведение.
+
+### Test counts по серии
+
+| Baseline | After P0-1 | After P0-2 | After P0-3 |
+|---|---|---|---|
+| 292 + 1 skipped (post-A2) | 298 + 1 (+6) | 309 + 1 (+11) | 320 + 1 (+11) |
+
+Прибавка +28 unit-тестов за серию. 0 регрессий.
+
+### Что блокирует merge
+
+**Только GitHub Actions billing.** Все 4 PR'а готовы к merge — Avito #96 + три каскадных по парсеру. После оплаты счёта (16/23/30 мая Visa 0181 declined × 3 = $42 долг) — открою три PR'а каскадом, прогоню CI, merge'ну в порядке, потом auto-deploy с env-vars из списка выше + smoke на 3 ТЗ-кейсах.
+
+### Записка про ТЗ парсера
+
+Не архивирую — задача формально не закрыта пока не на проде. После CI разморозки → merge → smoke → архив + final summary с master-SHA.
+
+---
