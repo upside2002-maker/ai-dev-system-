@@ -1,10 +1,10 @@
 # Ведение проекта — sitka-office
 
-- Released: yes
-- Holder: (нет)
-- Started: (нет)
-- Expires: (нет)
-- Scope: (нет)
+- Released: no
+- Holder: upside2002@gmail.com
+- Started: 2026-06-02 19:50:14
+- Expires: бессрочно
+- Scope: локальный smoke улучшенного парсера на ветке P0-3 (директива Admin 2026-06-02 вечер)
 - Active TASK: (нет)
 
 ## Notes
