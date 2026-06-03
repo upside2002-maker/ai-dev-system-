@@ -1,13 +1,19 @@
 # Ведение проекта — sitka-office
 
-- Released: no
-- Holder: upside2002@gmail.com
-- Started: 2026-06-02 17:48:20
-- Expires: бессрочно
-- Scope: Avito Option 1 (UPSTREAM.md + CI test_market hookup) → потом декомпозиция ТЗ парсера
+- Released: yes
+- Holder: (нет)
+- Started: (нет)
+- Expires: (нет)
+- Scope: (нет)
 - Active TASK: (нет)
 
 ## Notes
+
+### 2026-06-02 19:30:13 — upside2002@gmail.com
+
+- Зона ведения: Avito Option 1 (UPSTREAM.md + CI test_market hookup) → потом декомпозиция ТЗ парсера
+- Начало:       2026-06-02 17:48:20
+- Заметки:      parser-improvement P0-1/P0-2/P0-3 серия закрыта локально; Avito Option 1 PR #96 ждёт CI; всё ждёт разморозки GitHub Actions (неоплаченный счёт Visa 0181)
 
 ### 2026-05-28 17:49:22 — upside2002@gmail.com
 
