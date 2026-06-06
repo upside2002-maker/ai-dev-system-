@@ -1,4 +1,4 @@
-.PHONY: check check-structure check-sitka-overlay check-astro-overlay status context submit-task accept-handoff accept-task reject-task new-task new-handoff take-shift release-shift approve-critical self-check-handoff new-audit-task
+.PHONY: check check-structure check-sitka-overlay check-astro-overlay status context submit-task accept-handoff accept-task reject-task new-task new-handoff take-shift release-shift approve-critical self-check-handoff new-audit-task install-hooks
 
 check: check-structure check-sitka-overlay check-astro-overlay
 
@@ -116,3 +116,12 @@ self-check-handoff:
 # Usage: make new-audit-task SLUG=sitka-office
 new-audit-task:
 	@bash scripts/new-audit-task.sh "$(SLUG)"
+
+# Установить git-хуки репозитория. Запустить один раз на клон.
+# pre-push гоняет `make check` и не даёт отправить код при рассинхроне состояния
+# (снимок CURRENT_STATE.md разъехался с реальным HEAD продукта) — замок на дрейф.
+# Обойти осознанно: git push --no-verify. См. .githooks/pre-push.
+install-hooks:
+	@git config core.hooksPath .githooks
+	@chmod +x .githooks/* 2>/dev/null || true
+	@echo "хуки установлены: core.hooksPath=.githooks (pre-push гоняет make check на каждой отправке)"

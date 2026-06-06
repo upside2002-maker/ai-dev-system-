@@ -1,7 +1,7 @@
 # Sitka Office — Current State
 
 Дата: 2026-05-28
-Snapshot commit: `301e7e3` (`refactor(inventory): TASK A2 — extend _sitka_catalog.py + rewrite 8 imports (#95)`). **Серия inventory fork полностью завершена** (PR #90 A → #91 B → #93 C → #94 D → #95 A2). `app/inventory/` самодостаточен (нет shared.* импортов в inventory), оба P0 из аудита закрыты (substring drop + Amazon timeout), Amazon работает, recurring CORE_AUTH drift закрыт (PR #92). AVITO architecture audit готов (`research/avito-parser-architecture-audit-2026-05-28.md`) — recommendation «оставить vendored»; ждёт Owner'ского решения по Option 1/2/3. Perimeter fix задеплоен 2026-05-11. После него в master: PR #82 (portable `~/Projects/...` пути в `.claude/`), PR #83 (рабочий калькулятор парсера, master `936ccdb`), PR #84 (буфер курса в калькуляторе парсера, master `f048c9b`), PR #85 (расширение CODEOWNERS до 2-tier protection model, master `19ddeef`), PR #86 (wget в Dockerfile core + точечные deploy-команды в DEPLOY.md, master `42be920`; долгосрочный фикс инцидента 2026-05-13), PR #87 (automated deploy через GitHub Actions с scope detection + auto-rollback, master `7b069a7`; включён, протестирован на пустом diff 2026-05-14 01:26Z), PR #88 (зеркалирование server-only override.yml + nginx-server.conf в `deploy/`-каталог + fix time-based regression в ApiSpec dashboard test, master `dbe8c15`), PR #89 (двусловные запросы парсера → broad mode + tests, master `ccac24b`; задеплоен 2026-05-22 через auto-deploy scope=services, smoke зелёный, оператор больше не ловит `Blizzard parka` → 0 hits).
+Snapshot commit: `b1c9107` (`fix(parser): env-driven paths for proxies + artifacts (TASK P0-3)`). **Серия inventory fork полностью завершена** (PR #90 A → #91 B → #93 C → #94 D → #95 A2). `app/inventory/` самодостаточен (нет shared.* импортов в inventory), оба P0 из аудита закрыты (substring drop + Amazon timeout), Amazon работает, recurring CORE_AUTH drift закрыт (PR #92). AVITO architecture audit готов (`research/avito-parser-architecture-audit-2026-05-28.md`) — recommendation «оставить vendored»; ждёт Owner'ского решения по Option 1/2/3. Perimeter fix задеплоен 2026-05-11. После него в master: PR #82 (portable `~/Projects/...` пути в `.claude/`), PR #83 (рабочий калькулятор парсера, master `936ccdb`), PR #84 (буфер курса в калькуляторе парсера, master `f048c9b`), PR #85 (расширение CODEOWNERS до 2-tier protection model, master `19ddeef`), PR #86 (wget в Dockerfile core + точечные deploy-команды в DEPLOY.md, master `42be920`; долгосрочный фикс инцидента 2026-05-13), PR #87 (automated deploy через GitHub Actions с scope detection + auto-rollback, master `7b069a7`; включён, протестирован на пустом diff 2026-05-14 01:26Z), PR #88 (зеркалирование server-only override.yml + nginx-server.conf в `deploy/`-каталог + fix time-based regression в ApiSpec dashboard test, master `dbe8c15`), PR #89 (двусловные запросы парсера → broad mode + tests, master `ccac24b`; задеплоен 2026-05-22 через auto-deploy scope=services, smoke зелёный, оператор больше не ловит `Blizzard parka` → 0 hits).
 Repo: `~/Projects/sitka-office`
 
 ## Phase status
@@ -57,10 +57,10 @@ incoming signal
 
 ## Git snapshot
 
-- HEAD: `dbe8c15` (`chore(deploy): зеркалирование server-only override.yml + nginx-server.conf в репо (#88)`).
+- HEAD: `b1c9107` (`fix(parser): env-driven paths for proxies + artifacts (TASK P0-3)`).
 - Untracked в проде repo: `.claude/worktrees/` (gitignored),
   `sitka-services/.cache/` (локальный кеш).
-- Интервал `39873d2..dbe8c15` = **18 commits** (PR #71-#88; per-PR detail — `OPERATING/journal/2026-04.md` + `2026-05.md`).
+- Интервал `39873d2..b1c9107` = **21 commits** (PR #71-#88 + локальная серия парсера **P0-1/P0-2/P0-3** `769b18c`→`a5364ec`→`b1c9107`, смержена в master 2026-06-02, деплой ждёт разморозки CI; per-PR detail — `OPERATING/journal/`).
 - Snapshot drift: overlay допускает natural lag за активным проектом
   до следующего refresh.
 

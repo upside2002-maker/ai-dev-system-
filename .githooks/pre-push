@@ -1,0 +1,28 @@
+#!/usr/bin/env bash
+# pre-push: ЗАМОК НА РАССИНХРОН.
+# Не даёт отправить ai-dev-system, если состояние overlay'ев (CURRENT_STATE.md
+# snapshot) разъехалось с реальным HEAD продуктовых репозиториев — то есть когда
+# методология начинает врать о состоянии. Превращает «надо не забыть прогнать
+# make check» в замок: проверка обязательна на каждой отправке.
+#
+# Установка (один раз на клон): make install-hooks  (ставит core.hooksPath=.githooks).
+# Осознанно обойти на свой риск: git push --no-verify.
+set -euo pipefail
+
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+
+echo "[pre-push] проверка рассинхрона состояния (make check)…"
+if make -C "${ROOT}" check; then
+  echo "[pre-push] состояние согласовано — отправляю."
+  exit 0
+fi
+
+{
+  echo ""
+  echo "[pre-push] ОТКАЗ: состояние overlay'ев разъехалось с кодом продукта (make check упал)."
+  echo "           Снимок в CURRENT_STATE.md отстал от реального HEAD продуктового репозитория."
+  echo "           Почини: синхронизируй 'Snapshot commit'/'HEAD' с фактическим HEAD и повтори push."
+  echo "           Осознанно обойти (на свой риск, состояние останется рассинхронизированным):"
+  echo "             git push --no-verify"
+} >&2
+exit 1
