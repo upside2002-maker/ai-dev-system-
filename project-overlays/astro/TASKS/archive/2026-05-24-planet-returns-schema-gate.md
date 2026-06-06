@@ -1,6 +1,6 @@
 # TASK: planet-returns-schema-gate
 
-- Status: open
+- Status: done
 - Ready: yes
 - Date: 2026-05-24
 - Project: astro

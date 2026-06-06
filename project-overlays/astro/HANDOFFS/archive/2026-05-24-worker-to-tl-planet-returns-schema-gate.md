@@ -1,6 +1,6 @@
 # HANDOFF: worker → tl — planet-returns-schema-gate
 
-- Status: open (Phase C complete; Reviewer REQUIRED — Tier A schema-gate)
+- Status: closed
 - Date: 2026-05-24 (executed 2026-06-05)
 - Project: astro
 - From: worker
