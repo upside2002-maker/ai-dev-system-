@@ -1,6 +1,6 @@
 # HANDOFF: worker → tl — planet-returns-core-domain (Phase B)
 
-- Status: open (Phase B Core landed; **Reviewer REQUIRED** — Tier A Core math)
+- Status: closed
 - Date: 2026-06-05 (executed; reference env currentDate 2026-06-05)
 - Project: astro
 - From: worker
