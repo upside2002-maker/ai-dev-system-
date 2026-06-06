@@ -1,6 +1,6 @@
 # HANDOFF: worker → tl — planet-returns-ui-pdf (Phase E, FINAL)
 
-- Status: open (Phase E complete; epic A-E done — final visible layer landed)
+- Status: closed
 - Date: 2026-06-05 (executed; reference rendered = render date)
 - Project: astro
 - From: worker
