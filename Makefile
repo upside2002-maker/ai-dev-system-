@@ -7,6 +7,7 @@ check-structure:
 
 check-sitka-overlay:
 	bash scripts/check-overlay-consistency.sh sitka-office
+	bash scripts/check-status-hygiene.sh sitka-office
 
 # Astro overlay currently at maturity=pre-phase0 — only README required.
 # When astro completes Phase 0 (T-F.4 per its README), bump
@@ -15,6 +16,7 @@ check-sitka-overlay:
 # PROJECT_MAP + snapshot match automatically.
 check-astro-overlay:
 	bash scripts/check-overlay-consistency.sh astro
+	bash scripts/check-status-hygiene.sh astro
 
 # Mechanical view of operational state (active TASKs, open HANDOFFs, drift).
 # Informational only — does not fail on drift. Use `make check` for invariants.
