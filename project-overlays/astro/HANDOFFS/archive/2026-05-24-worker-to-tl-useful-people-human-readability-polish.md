@@ -1,6 +1,6 @@
 # HANDOFF: worker → tl — useful-people-human-readability-polish (Stages 1-5 implementation)
 
-- Status: open (Reviewer optional per TASK § Reviewer; user confirmation needed for 5 Worker-drafted phrases per clarification 1 = (a))
+- Status: closed
 - Date: 2026-05-24
 - Project: astro
 - From: worker
