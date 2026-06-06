@@ -14,7 +14,7 @@
 
 `<task-slug>` совпадает с именем файла без даты-префикса и `.md`.
 
-## Header (11 полей, в этом порядке)
+## Header (12 полей, в этом порядке)
 
 - `Status:` — `open` | `in-progress` | `review` | `done` | `rejected` (lifecycle)
 - `Ready:` — `yes` | `no`. `no` = DRAFT / blocked / awaits-prereq, Worker не стартует. Семантика отдельна от `Status`.
@@ -27,6 +27,7 @@
 - `Worker model:` — `Claude Code` | `Codex` | `TBD` (фиксируется до старта Worker)
 - `Mode:` — `light` | `normal` | `strict` | `preview` (объём процесса; ось ортогональна `Risk tier:`). Default по tier'у: C → `light`, B → `normal`, A → `strict`. Tier A без `Mode: strict` отказывается `accept-task` гейтом. Полные правила — `policies/MODES.md`.
 - `Critical approved by:` — email владельца, который подписал задачу как затрагивающую критичный путь. Опциональное; пустое = `(нет)`. Заполняется через `make approve-critical FILE=<task.md>` (только от email с `can_approve_critical: yes` в `policies/USERS.md`). Если `Created by` уже имеет это право — отдельная подпись не нужна, accept-task пропускает.
+- `Reviewer:` — кто провёл **независимое** ревью. Для **Tier A — обязательно**: отдельный ревьюер в отдельной сессии (или ссылка на его HANDOFF); значения `inline` / `self` / `TL` / пусто — отклоняются. Tier A без заполненного независимого `Reviewer:` отказывается `accept-task` гейтом (Correction 011/021). Tier B/C — опционально (по усмотрению TL). Пустое = `(нет)`.
 
 ## Body (5 обязательных секций)
 

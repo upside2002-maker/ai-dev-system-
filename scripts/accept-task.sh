@@ -19,6 +19,8 @@
 #   - Ready != yes (DRAFT/blocked TASK cannot be accepted; raise Ready: yes first)
 #   - Risk tier: A without Mode: strict (see policies/MODES.md — Tier A
 #     requires strict mode; missing Mode field on a Tier A task also refused)
+#   - Risk tier: A without an independent `- Reviewer:` (inline/self/TL rejected —
+#     Correction 011; returns-core incident hardened this from advice to a gate)
 #
 # Does NOT touch OPERATING.md — TL removes the line manually if present.
 # Does NOT support reject-task (rejected status) — separate helper if needed.
@@ -123,6 +125,28 @@ if [[ "${CURRENT_TIER}" == "A" ]]; then
     echo "       См. policies/MODES.md для таблицы соответствия risk tier → mode." >&2
     exit 65
   fi
+
+  # Tier A also requires an INDEPENDENT Reviewer (Correction 011 / ROLE_MODEL).
+  # Инцидент returns-core (2026-06): TL закрыл Tier A inline self-review, когда
+  # Reviewer-субагент упёрся в лимит сессии. Этот гейт делает такое невозможным:
+  # Tier A не доходит до `done` без зафиксированного независимого ревьюера. Поле
+  # `- Reviewer:` должно называть ОТДЕЛЬНОГО ревьюера (отдельная сессия / ссылка
+  # на HANDOFF) — не TL, не inline, не self.
+  # `|| true`: поля `- Reviewer:` может вовсе не быть (старые Tier A задачи) —
+  # пустой grep под `set -o pipefail` не должен ронять скрипт, пусть дойдёт до
+  # понятной ошибки ниже (а не молчаливый exit 1).
+  CURRENT_REVIEWER="$(grep -m1 -E '^- Reviewer:' "${FILE}" 2>/dev/null | sed -E 's/^- Reviewer:[[:space:]]*//' | sed -E 's/[[:space:]]+$//' || true)"
+  REVIEWER_TOKEN="$(printf '%s' "${CURRENT_REVIEWER}" | tr '[:upper:]' '[:lower:]' | awk '{print $1}')"
+  case "${REVIEWER_TOKEN}" in
+    ""|"(нет)"|"(none)"|"none"|"-"|"—"|"todo"|"tbd"|"n/a"|"na"|"self"|"self-review"|"inline"|"tl"|"tl-inline"|"tech-lead"|"techlead")
+      echo "ERROR: Tier A TASK must record an INDEPENDENT Reviewer to accept." >&2
+      echo "       Поле '- Reviewer:' пустое или указывает на self / inline / TL (got: '${CURRENT_REVIEWER:-missing}')." >&2
+      echo "       Tier A (деньги / математика / схема / безопасность) требует ОТДЕЛЬНОГО ревьюера" >&2
+      echo "       в отдельной сессии (Correction 011, policies/ROLE_MODEL.md). Inline self-review запрещён." >&2
+      echo "       После независимого ревью заполни: '- Reviewer: <кто, отдельная сессия / ссылка на HANDOFF>'." >&2
+      exit 65
+      ;;
+  esac
 fi
 
 # Critical-paths gate: если задача затрагивает путь из policies/CRITICAL_PATHS.md
