@@ -1,6 +1,6 @@
 # TASK: returns-belated-independent-review
 
-- Status: open
+- Status: done
 - Ready: yes
 - Date: 2026-06-06
 - Project: astro
@@ -11,6 +11,7 @@
 - Worker model: Claude Code (Reviewer-роль, ОТДЕЛЬНАЯ сессия)
 - Mode: strict
 - Critical approved by: upside2002@gmail.com («го» 2026-06-06)
+- Reviewer: независимый Reviewer-агент (отдельная сессия 2026-06-06) — APPROVE-WITH-FINDINGS; verdict в `HANDOFFS/archive/2026-06-06-reviewer-to-tl-returns-belated-independent-review.md`
 
 ## Problem
 
