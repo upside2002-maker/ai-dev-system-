@@ -1,6 +1,6 @@
 # TASK: proforientation-phase0-method-proof
 
-- Status: open
+- Status: done
 - Ready: yes
 - Date: 2026-06-06
 - Project: astro

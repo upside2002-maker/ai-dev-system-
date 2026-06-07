@@ -1,6 +1,6 @@
 # HANDOFF: worker → tl — proforientation-phase0-method-proof
 
-- Status: open (Phase 0 method-fidelity proof complete; gate for Phase A core)
+- Status: closed
 - Date: 2026-06-06 (analysis executed 2026-06-07)
 - Project: astro
 - From: worker
