@@ -1,6 +1,6 @@
 # TASK: proforientation-phase-a2-schema-gate
 
-- Status: open
+- Status: done
 - Ready: yes
 - Date: 2026-06-06
 - Project: astro
@@ -11,7 +11,7 @@
 - Worker model: Claude Code
 - Mode: strict
 - Critical approved by: upside2002@gmail.com («го» 2026-06-06)
-- Reviewer: (независимый, после self-submit — Correction 021; заполнить при приёмке)
+- Reviewer: независимый Reviewer-агент (отдельная сессия 2026-06-06) — APPROVE-WITH-FINDINGS (R1/R2 trivial doc-нитки → Phase B; R3 info); verdict в `HANDOFFS/archive/2026-06-06-reviewer-to-tl-proforientation-phase-a2.md`
 
 ## Problem
 

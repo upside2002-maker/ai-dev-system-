@@ -1,6 +1,6 @@
 # HANDOFF: worker → tl — proforientation-phase-a2-schema-gate
 
-- Status: open (self-submitted; awaiting independent Reviewer — Tier A, Correction 021)
+- Status: closed
 - Date: 2026-06-06 (executed 2026-06-07)
 - Project: astro
 - From: worker
