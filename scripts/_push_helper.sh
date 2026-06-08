@@ -18,6 +18,7 @@
 #   - origin успешно принял + backup успешно принял → return 0
 #   - origin принял + backup упал по сети  → return 0 (warn, не блокер)
 #   - origin отверг (rejected/non-fast-forward) → return 75
+#   - backup отверг (rejected/non-fast-forward) → return 0 (warn; origin уже принял)
 #   - origin недоступен по сети → return 75 (источник правды нужен живой)
 #   - AIDS_SKIP_PUSH=1 → return 0 без действий (для acceptance-тестов)
 #
@@ -63,13 +64,23 @@ push_both() {
 
     # Push не прошёл — классифицируем ошибку.
     if echo "${push_out}" | grep -qE 'rejected|non-fast-forward'; then
-      # Конфликт с другим участником — всегда фатально, не зависит от порядка.
-      echo "${push_out}" >&2
-      echo "" >&2
-      echo "  ERROR: ${remote} отверг push (кто-то опередил):" >&2
-      echo "    git pull --rebase ${remote} ${branch}" >&2
-      echo "    разреши конфликт если будет, повтори операцию" >&2
-      return 75
+      # Конфликт (кто-то опередил). Фатально ТОЛЬКО для источника правды
+      # (первый remote). Если первый принял, а резервный отверг — источник
+      # правды уже содержит мутацию, это не блокер: иначе помощник врёт о
+      # состоянии («остановлено», хотя origin уже принял — баг ADS-PUSH-1).
+      if [[ "${remote}" == "${first_remote}" ]]; then
+        echo "${push_out}" >&2
+        echo "" >&2
+        echo "  ERROR: ${remote} (источник правды) отверг push (кто-то опередил):" >&2
+        echo "    git pull --rebase ${remote} ${branch}" >&2
+        echo "    разреши конфликт если будет, повтори операцию" >&2
+        return 75
+      else
+        echo "  WARN: ${remote} (резерв) отверг push — источник правды уже принял, не блокер:"
+        echo "${push_out}" | sed 's/^/    /' | head -3
+        echo "    синхронизируй резерв позже: git pull --rebase ${remote} ${branch} && git push ${remote} ${branch}"
+        continue
+      fi
     fi
 
     if echo "${push_out}" | grep -qiE 'could not resolve host|connection refused|network is unreachable|operation timed out|unable to access|could not read'; then

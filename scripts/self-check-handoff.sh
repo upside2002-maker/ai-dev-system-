@@ -90,9 +90,13 @@ if ! grep -qE 'Product repo status[^:]*:.*[a-zA-Zа-яА-Я0-9]' "${FILE}"; then
 fi
 
 # --- Check 3: evidence rule (warning) ---------------------------------------
-# Для каждой строки с PR #NN или YYYY-MM-DD — проверить что на той же строке
-# есть git short hash. Шапку файла (первые 15 строк) пропускаем — там даты в
-# полях шапки и cross-references могут не иметь hash законно.
+# Заявка о git-работе должна ссылаться на git short hash. Строку триггерим, если:
+#   - на ней PR #NN (всегда), либо
+#   - дата YYYY-MM-DD РЯДОМ со словом о git-работе (commit/merge/deploy/push/…).
+# Голую дату (например, прогноз 2048-… в астрологическом HANDOFF) НЕ трогаем —
+# у неё hash'а быть не может. Раньше ловили любую дату → 24 ложных WARN на
+# returns-HANDOFF и привыкание не смотреть на предупреждения (alarm fatigue).
+# Шапку файла (первые 15 строк) пропускаем.
 EVIDENCE_VIOLATIONS=0
 SHOWN=0
 while IFS=: read -r line_num line_content; do
@@ -108,7 +112,11 @@ while IFS=: read -r line_num line_content; do
     echo "         ${line_content}"
     SHOWN=$((SHOWN + 1))
   fi
-done < <(grep -nE 'PR #[0-9]+|[0-9]{4}-[0-9]{2}-[0-9]{2}' "${FILE}" 2>/dev/null || true)
+done < <( {
+  grep -nE 'PR #[0-9]+' "${FILE}"
+  grep -nE '[0-9]{4}-[0-9]{2}-[0-9]{2}' "${FILE}" \
+    | grep -iE 'commit|merg|deploy|push|master|landed|ship|закоммич|смерж|задеплоен|влит|выкат|запушен'
+} 2>/dev/null | sort -t: -k1,1n -u || true )
 
 if (( EVIDENCE_VIOLATIONS > 0 )); then
   if (( EVIDENCE_VIOLATIONS > 3 )); then
@@ -137,6 +145,7 @@ if [[ -n "${USER_FACING_BLOCK}" ]]; then
     ' "${WORDS_FILE}")"
 
     # Убрать из user-facing блока всё в backticks (имена технических объектов — ок).
+    # shellcheck disable=SC2016  # одинарные кавычки намеренно: sed-выражение литеральное
     STRIPPED="$(echo "${USER_FACING_BLOCK}" | sed -E 's/`[^`]*`//g')"
 
     FORBIDDEN_HITS=()
