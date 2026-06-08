@@ -1,6 +1,6 @@
 # TASK: proforientation-phase-a1-core-vocation
 
-- Status: open
+- Status: done
 - Ready: yes
 - Date: 2026-06-06
 - Project: astro
@@ -11,7 +11,7 @@
 - Worker model: Claude Code
 - Mode: strict
 - Critical approved by: upside2002@gmail.com («го» 2026-06-06)
-- Reviewer: (независимый, после self-submit — Correction 021; заполнить при приёмке)
+- Reviewer: независимый Reviewer-агент (отдельная сессия 2026-06-06) — APPROVE-WITH-FINDINGS (F1 low dead-code → A2; F2/F3 info); verdict в `HANDOFFS/archive/2026-06-06-reviewer-to-tl-proforientation-phase-a1.md`
 
 ## Problem
 

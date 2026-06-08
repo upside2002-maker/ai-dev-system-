@@ -1,6 +1,6 @@
 # HANDOFF: worker → tl — proforientation-phase-a1-core-vocation
 
-- Status: ready-for-review
+- Status: closed
 - Date: 2026-06-06 (executed 2026-06-07)
 - Project: astro
 - From: worker
