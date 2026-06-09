@@ -1,6 +1,6 @@
 # HANDOFF: worker → tl — proforientation-phase-b1-rules-orchestration
 
-- Status: review (Phase B1 complete; ready-for-review)
+- Status: closed
 - Date: 2026-06-08
 - Project: astro
 - From: worker
