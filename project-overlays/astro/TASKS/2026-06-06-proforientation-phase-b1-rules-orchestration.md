@@ -1,6 +1,6 @@
 # TASK: proforientation-phase-b1-rules-orchestration
 
-- Status: open
+- Status: review
 - Ready: yes
 - Date: 2026-06-06
 - Project: astro
