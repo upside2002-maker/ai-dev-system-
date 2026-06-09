@@ -1,6 +1,6 @@
 # HANDOFF: worker → tl — proforientation-phase-b2-pdf-ui
 
-- Status: ready-for-review
+- Status: closed
 - Date: 2026-06-08
 - Project: astro
 - From: worker
