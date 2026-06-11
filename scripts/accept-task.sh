@@ -21,6 +21,10 @@
 #     requires strict mode; missing Mode field on a Tier A task also refused)
 #   - Risk tier: A without an independent `- Reviewer:` (inline/self/TL rejected —
 #     Correction 011; returns-core incident hardened this from advice to a gate)
+#   - Risk tier: A without a material Reviewer-HANDOFF in the overlay's HANDOFFS/
+#     (or archive/) — From/Role mode: Reviewer, TASK: this task's basename,
+#     Status != open. Поле Reviewer можно вписать без проверки; артефакт — нельзя
+#     (И-12, инцидент X-1: денежная математика принята без независимого ревью)
 #
 # Does NOT touch OPERATING.md — TL removes the line manually if present.
 # Does NOT support reject-task (rejected status) — separate helper if needed.
@@ -147,6 +151,83 @@ if [[ "${CURRENT_TIER}" == "A" ]]; then
       exit 65
       ;;
   esac
+
+  # Tier A also requires a MATERIAL Reviewer-HANDOFF — не просто заполненное поле
+  # `- Reviewer:`, а реально существующий файл передачи от ревьюера (И-12, X-1).
+  # Инцидент X-1: денежная математика принята с заполненным полем Reviewer, но
+  # без проведённой независимой проверки — поле можно вписать, проверку не делая.
+  # Этот гейт требует артефакт: Reviewer-HANDOFF по этой же задаче, дошедший до
+  # адресата (Status не open).
+  #
+  # Где ищем: project-overlays/<slug>/HANDOFFS/ и его archive/.
+  # Что должно совпасть в шапке HANDOFF:
+  #   - From: содержит роль Reviewer ИЛИ Role mode: Reviewer
+  #     (форматы From в репо разные: 'Reviewer (...)', 'reviewer', 'Codex Reviewer',
+  #      'Worker, branch …' — ловим слово reviewer без привязки к регистру/позиции;
+  #      'Claude Worker' слова reviewer не содержит → корректно не матчится);
+  #   - TASK: ссылается на принимаемый TASK по ИМЕНИ ФАЙЛА (basename), а не пути —
+  #     ссылки в репо встречаются голым slug'ом без .md, полным путём в backticks,
+  #     путём через archive/, markdown-ссылкой и с хвостом '(Status: …)';
+  #   - Status: не open (acknowledged / closed — проверка дошла до адресата).
+  SLUG="$(printf '%s' "${FILE}" | sed -E 's#.*/project-overlays/([^/]+)/TASKS/.*#\1#')"
+  HANDOFFS_DIR="${ROOT_DIR}/project-overlays/${SLUG}/HANDOFFS"
+  TASK_BASE="${BASENAME%.md}"  # имя файла TASK без расширения — ключ сличения
+
+  # Экранируем TASK_BASE для использования в grep -E: точки (а равно любая
+  # ERE-метасимволика) должны стать литералами, иначе '.' матчит любой символ.
+  # Дефисы внутри имён безопасны (мы не кладём TASK_BASE в класс символов).
+  TASK_BASE_ESC="$(printf '%s' "${TASK_BASE}" | sed -E 's/[][(){}.^$*+?|\\]/\\&/g')"
+
+  REVIEWER_HANDOFF=""
+  if [[ -d "${HANDOFFS_DIR}" ]]; then
+    # Кандидаты: *.md в HANDOFFS/ и HANDOFFS/archive/ (maxdepth 2 ловит оба).
+    while IFS= read -r hf; do
+      [[ -z "${hf}" ]] && continue
+      # Шапку читаем из первых 25 строк — поля шапки живут там, тело не трогаем.
+      header="$(head -25 "${hf}")"
+
+      # TASK: должна упоминать basename принимаемой задачи (с .md или без),
+      # сверяем ИМЯ ЦЕЛИКОМ по границам — иначе короткое имя матчит длинное как
+      # подстрока: приёмка 'money' ловила бы Reviewer-HANDOFF чужой 'money-3'.
+      # Граница — отсутствие [[:alnum:]_-] вплотную к имени (с любой стороны),
+      # допускаем необязательный суффикс '.md' и конец строки/markdown-хвост.
+      task_line="$(printf '%s\n' "${header}" | grep -m1 -E '^- TASK:' || true)"
+      printf '%s' "${task_line}" \
+        | grep -qE "(^|[^[:alnum:]_-])${TASK_BASE_ESC}(\.md)?([^[:alnum:]_-]|$)" \
+        || continue
+
+      # Роль Reviewer: в From: или в Role mode: (слово reviewer, без регистра).
+      from_line="$(printf '%s\n' "${header}" | grep -m1 -E '^- From:' || true)"
+      rolemode_line="$(printf '%s\n' "${header}" | grep -m1 -E '^- Role mode:' || true)"
+      if ! printf '%s\n%s\n' "${from_line}" "${rolemode_line}" \
+           | grep -qiwE 'reviewer'; then
+        continue
+      fi
+
+      # Status: не open — проверка дошла до адресата (acknowledged / closed).
+      hf_status="$(printf '%s\n' "${header}" | grep -m1 -E '^- Status:' \
+                     | sed -E 's/^- Status:[[:space:]]*//' | awk '{print tolower($1)}')"
+      [[ "${hf_status}" == "open" ]] && continue
+      [[ -z "${hf_status}" ]] && continue
+
+      REVIEWER_HANDOFF="${hf}"
+      break
+    done < <(find "${HANDOFFS_DIR}" -maxdepth 2 -name '*.md' -type f 2>/dev/null | sort)
+  fi
+
+  if [[ -z "${REVIEWER_HANDOFF}" ]]; then
+    echo "ERROR: Tier A TASK не имеет независимого Reviewer-HANDOFF — приёмка отклонена (И-12, инцидент X-1)." >&2
+    echo "       Поле '- Reviewer:' заполнено, но это лишь обещание: нужен сам артефакт проверки." >&2
+    echo "       Не найден файл передачи в project-overlays/${SLUG}/HANDOFFS/ (или archive/), у которого:" >&2
+    echo "         • From: или Role mode: = Reviewer;" >&2
+    echo "         • TASK: ссылается на '${TASK_BASE}';" >&2
+    echo "         • Status: не open (acknowledged или closed)." >&2
+    echo "       Как исправить: провести независимую проверку отдельной сессией и оформить" >&2
+    echo "       Reviewer-HANDOFF (make new-handoff SLUG=${SLUG} TASK=${FILE#"${ROOT_DIR}/"} FROM=reviewer TO=tl)," >&2
+    echo "       довести его Status до acknowledged/closed, затем повторить приёмку." >&2
+    exit 65
+  fi
+  echo "Info: независимый Reviewer-HANDOFF найден: ${REVIEWER_HANDOFF#"${ROOT_DIR}/"}"
 fi
 
 # Critical-paths gate: если задача затрагивает путь из policies/CRITICAL_PATHS.md

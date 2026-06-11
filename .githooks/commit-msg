@@ -1,0 +1,133 @@
+#!/usr/bin/env bash
+# commit-msg: ЗАМОК НА ПОДПИСЬ КРИТПУТЕЙ (И-11).
+# Если в индексе коммита есть файлы из критичных зон (policies/**, scripts/**,
+# templates/**, corrections/**) — требует в сообщении коммита трейлер
+#   Approved-by: <email>
+# где у email стоит can_approve_critical: yes в policies/USERS.md.
+#
+# Почему commit-msg, а не pre-commit:
+#   pre-commit запускается ДО ввода сообщения — трейлера ещё не существует,
+#   проверить нечего. commit-msg получает файл сообщения первым аргументом ($1)
+#   уже после его составления, но до фиксации коммита — это единственный
+#   штатный хук, где сообщение доступно и коммит ещё можно отклонить.
+#
+# Защита от самоодобрения: список одобряющих читается из HEAD-версии USERS.md
+# (git show HEAD:policies/USERS.md), а НЕ из индекса/рабочей копии — иначе одним
+# коммитом можно было бы и вписать себе право, и самоодобриться.
+#
+# Установка (один раз на клон): make install-hooks (ставит core.hooksPath=.githooks).
+# Осознанно обойти на свой риск: git commit --no-verify.
+set -euo pipefail
+
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+MSG_FILE="${1:?commit-msg: ожидался путь к файлу сообщения коммита}"
+
+# --- какие файлы в индексе попадают в критичные зоны ----------------------
+# Зоны критпутей (совпадают с policies/CRITICAL_PATHS.md, prefix-формы).
+CRITICAL_PREFIXES=("policies/" "scripts/" "templates/" "corrections/")
+
+# Список staged-файлов (имена относительно корня репо). Diff против HEAD;
+# на самом первом коммите HEAD ещё нет — тогда сравниваем с пустым деревом.
+if git -C "${ROOT}" rev-parse --verify -q HEAD >/dev/null; then
+  STAGED="$(git -C "${ROOT}" diff --cached --name-only --diff-filter=ACMR)"
+else
+  STAGED="$(git -C "${ROOT}" diff --cached --name-only --diff-filter=ACMR \
+              "$(git -C "${ROOT}" hash-object -t tree /dev/null)")"
+fi
+
+CRITICAL_HITS=""
+if [[ -n "${STAGED}" ]]; then
+  while IFS= read -r f; do
+    [[ -z "${f}" ]] && continue
+    for prefix in "${CRITICAL_PREFIXES[@]}"; do
+      if [[ "${f}" == "${prefix}"* ]]; then
+        CRITICAL_HITS+="${f}"$'\n'
+        break
+      fi
+    done
+  done <<< "${STAGED}"
+fi
+
+# Нет критичных файлов в индексе — замок не вмешивается.
+if [[ -z "${CRITICAL_HITS}" ]]; then
+  exit 0
+fi
+
+# --- разобрать трейлер Approved-by из сообщения ---------------------------
+# git interpret-trailers --parse выдаёт только блок трейлеров (а не любую
+# строку тела) — берём оттуда email'ы из Approved-by (без учёта регистра ключа).
+APPROVERS_IN_MSG="$(git -C "${ROOT}" interpret-trailers --parse <"${MSG_FILE}" \
+  | grep -iE '^Approved-by:' \
+  | sed -E 's/^[Aa]pproved-by:[[:space:]]*//' \
+  | sed -E 's/[[:space:]]+$//' || true)"
+
+# --- кто имеет право подписи (из HEAD-версии USERS.md) --------------------
+# Намеренно из HEAD, не из индекса/рабочей копии — защита от самоодобрения:
+# нельзя одним коммитом вписать себе право и тут же им подписаться.
+# Исключение — самый первый коммит: HEAD ещё не существует, читать неоткуда.
+# Тогда берём USERS.md из индекса (git show :path). Истории нет — защищать
+# нечего, самоодобрение на первом коммите не угроза. Без этой ветки
+# `git show HEAD:…` на репо без HEAD падал → список одобряющих пустой → блок
+# с ложной причиной (будто email лишён права), даже при валидном трейлере.
+if git -C "${ROOT}" rev-parse --verify -q HEAD >/dev/null; then
+  USERS_REF="HEAD:policies/USERS.md"      # обычный случай: версия из HEAD
+  USERS_SOURCE_HUMAN="HEAD-версии USERS.md"
+else
+  USERS_REF=":policies/USERS.md"          # первый коммит: версия из индекса
+  USERS_SOURCE_HUMAN="USERS.md из индекса (первый коммит, HEAD ещё нет)"
+fi
+
+authorized_can_approve() {
+  local _email="$1"
+  git -C "${ROOT}" show "${USERS_REF}" 2>/dev/null | awk -v want="${_email}" '
+    /^- email:[[:space:]]*/ { sub(/^- email:[[:space:]]*/, ""); cur=$0; next }
+    cur == want && /^- can_approve_critical:[[:space:]]*/ {
+      v=$0; sub(/^- can_approve_critical:[[:space:]]*/, "", v);
+      gsub(/[[:space:]]/, "", v);
+      print v; exit;
+    }
+  '
+}
+
+APPROVED="no"
+APPROVER_EMAIL=""
+while IFS= read -r email; do
+  [[ -z "${email}" ]] && continue
+  if [[ "$(authorized_can_approve "${email}")" == "yes" ]]; then
+    APPROVED="yes"
+    APPROVER_EMAIL="${email}"
+    break
+  fi
+done <<< "${APPROVERS_IN_MSG}"
+
+if [[ "${APPROVED}" == "yes" ]]; then
+  echo "[commit-msg] критпути подписаны: Approved-by: ${APPROVER_EMAIL} — пропускаю."
+  exit 0
+fi
+
+# --- отказ ----------------------------------------------------------------
+{
+  echo ""
+  echo "[commit-msg] ОТКАЗ: коммит трогает критичные файлы, но нет действующей подписи."
+  echo "             Критичные файлы в этом коммите:"
+  while IFS= read -r f; do
+    [[ -z "${f}" ]] && continue
+    echo "               • ${f}"
+  done <<< "${CRITICAL_HITS}"
+  echo ""
+  if [[ -n "${APPROVERS_IN_MSG}" ]]; then
+    echo "             В сообщении есть Approved-by, но ни у кого из них нет права подписи:"
+    while IFS= read -r email; do
+      [[ -z "${email}" ]] && continue
+      echo "               • ${email} (can_approve_critical ≠ yes в ${USERS_SOURCE_HUMAN})"
+    done <<< "${APPROVERS_IN_MSG}"
+  else
+    echo "             В сообщении коммита нет трейлера Approved-by."
+  fi
+  echo ""
+  echo "             Как исправить: добавь в сообщение коммита отдельной строкой в конце трейлер"
+  echo "               Approved-by: <email с can_approve_critical: yes в policies/USERS.md>"
+  echo "             (право проверяется по HEAD-версии USERS.md — вписать себя тем же коммитом нельзя)."
+  echo "             Осознанно обойти на свой риск: git commit --no-verify."
+} >&2
+exit 1

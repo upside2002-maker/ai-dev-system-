@@ -1,4 +1,4 @@
-.PHONY: check check-structure check-sitka-overlay check-astro-overlay status context submit-task accept-handoff accept-task reject-task new-task new-handoff take-shift release-shift approve-critical self-check-handoff new-audit-task install-hooks
+.PHONY: check check-structure check-sitka-overlay check-astro-overlay status snapshot context submit-task accept-handoff accept-task reject-task new-task new-handoff take-shift release-shift approve-critical self-check-handoff new-audit-task install-hooks
 
 check: check-structure check-sitka-overlay check-astro-overlay
 
@@ -24,6 +24,16 @@ check-astro-overlay:
 SLUG ?= sitka-office
 status:
 	@bash scripts/status.sh $(SLUG)
+
+# Канонический снимок продуктового репо из источника (git): короткий HEAD,
+# ветка, дата-время, чистота дерева, последний коммит. Только печать — файлы
+# не правит. Замена строкам снимков, написанным по памяти (дрейф состояния).
+# Путь к репо — как в check-overlay-consistency.sh ($HOME/Projects/<slug>),
+# переопределяется через REPO_PATH. Работает и для maturity=pre-phase0.
+# Usage: make snapshot SLUG=sitka-office
+#        make snapshot SLUG=astro REPO_PATH=/путь/к/репо
+snapshot:
+	@bash scripts/snapshot.sh $(SLUG) $(REPO_PATH)
 
 # Compact context pack on stdout: STATUS_RU + dashboard + last 5 commits +
 # corrections headings + (active) NEXT_ACTIONS head. Polymorphic by overlay
