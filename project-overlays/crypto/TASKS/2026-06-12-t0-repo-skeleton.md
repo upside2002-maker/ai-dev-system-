@@ -1,7 +1,8 @@
 # TASK: t0-repo-skeleton
 
-- Status: review
+- Status: in-progress
 - Ready: yes
+- Rework: ревью 12.06 — REJECT (`HANDOFFS/2026-06-12-t0-repo-skeleton-review.md`); доработка по списку находок, затем контрольное ревью
 - Date: 2026-06-12
 - Project: crypto
 - Layer: infra
