@@ -1,6 +1,6 @@
 # TASK: t0-repo-skeleton
 
-- Status: open
+- Status: review
 - Ready: yes
 - Date: 2026-06-12
 - Project: crypto
@@ -12,6 +12,7 @@
 - Mode: normal
 - Critical approved by: (нет)
 - Reviewer: (обязателен — независимая сессия; схемы и канонизация — фундамент денежного учёта)
+- HANDOFF: `project-overlays/crypto/HANDOFFS/2026-06-12-t0-repo-skeleton-handoff.md`
 
 ## Problem
 
