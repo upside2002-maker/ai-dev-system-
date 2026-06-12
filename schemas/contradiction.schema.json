@@ -1,0 +1,65 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://aida.local/schemas/contradiction.schema.json",
+  "title": "contradiction",
+  "description": "Противоречие (И-14): обе стороны, рабочая версия, что разрешит спор. Лежит в ledger/contradictions.jsonl, пишется только через aida.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "id",
+    "a",
+    "b",
+    "working",
+    "resolves_when",
+    "status",
+    "resolved_by",
+    "recorded_by",
+    "recorded_at"
+  ],
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^C-[0-9]{8}-[0-9]{3}$",
+      "description": "C-YYYYMMDD-NNN; NNN — порядковый за день, уникален в файле."
+    },
+    "a": {
+      "type": "string",
+      "pattern": "^F-[0-9]{8}-[0-9]{3}$",
+      "description": "id факта-стороны A (обязан существовать)."
+    },
+    "b": {
+      "type": "string",
+      "pattern": "^F-[0-9]{8}-[0-9]{3}$",
+      "description": "id факта-стороны B (обязан существовать)."
+    },
+    "working": {
+      "type": "string",
+      "pattern": "^F-[0-9]{8}-[0-9]{3}$",
+      "description": "id рабочей версии; равен a или b."
+    },
+    "resolves_when": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Что разрешит спор."
+    },
+    "status": {
+      "type": "string",
+      "enum": ["open", "resolved"]
+    },
+    "resolved_by": {
+      "description": "id факта/решения, разрешившего спор, либо null.",
+      "oneOf": [
+        { "type": "string", "pattern": "^[FD]-[0-9]{8}-[0-9]{3}$" },
+        { "type": "null" }
+      ]
+    },
+    "recorded_by": {
+      "type": "string",
+      "minLength": 1
+    },
+    "recorded_at": {
+      "type": "string",
+      "description": "Момент записи (ISO-8601)."
+    }
+  }
+}

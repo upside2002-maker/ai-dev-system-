@@ -1,0 +1,102 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://aida.local/schemas/fact.schema.json",
+  "title": "fact",
+  "description": "Факт со источником (И-5). Лежит в ledger/facts.jsonl, пишется только через aida. Изменение состояния — новая строка со ссылкой supersedes (И-14).",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "id",
+    "statement",
+    "scope",
+    "status",
+    "confidence",
+    "source",
+    "checked_at",
+    "expires",
+    "supersedes",
+    "origin",
+    "recorded_by",
+    "recorded_at"
+  ],
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^F-[0-9]{8}-[0-9]{3}$",
+      "description": "F-YYYYMMDD-NNN; NNN — порядковый за день, уникален в файле."
+    },
+    "statement": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Одно предложение, русский."
+    },
+    "scope": {
+      "type": "string",
+      "enum": ["system", "global", "sitka-office", "astro", "aida-voice", "crypto"]
+    },
+    "status": {
+      "type": "string",
+      "enum": ["verified", "accepted", "stale", "superseded"]
+    },
+    "confidence": {
+      "type": "string",
+      "enum": ["low", "medium", "high"]
+    },
+    "source": {
+      "type": "object",
+      "description": "Свидетельство (И-5). Обязателен kind и ref; quote — опционально.",
+      "additionalProperties": false,
+      "required": ["kind", "ref"],
+      "properties": {
+        "kind": {
+          "type": "string",
+          "enum": ["command", "file", "git", "url", "human", "handoff"]
+        },
+        "ref": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Команда / путь / адрес / кто."
+        },
+        "quote": {
+          "type": "string",
+          "description": "Строка-выжимка (вывод команды, цитата строки и т.п.)."
+        }
+      }
+    },
+    "checked_at": {
+      "type": "string",
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$",
+      "description": "YYYY-MM-DD — когда проверено."
+    },
+    "expires": {
+      "description": "Срок годности (И-13): YYYY-MM-DD | event:<описание> | null.",
+      "oneOf": [
+        { "type": "string", "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$" },
+        { "type": "string", "pattern": "^event:.+$" },
+        { "type": "null" }
+      ]
+    },
+    "supersedes": {
+      "description": "id факта, который эта запись заменяет, либо null.",
+      "oneOf": [
+        { "type": "string", "pattern": "^F-[0-9]{8}-[0-9]{3}$" },
+        { "type": "null" }
+      ]
+    },
+    "origin": {
+      "description": "id записи inbox, если факт родился из карантина, либо null.",
+      "oneOf": [
+        { "type": "string", "pattern": "^I-[0-9]{8}-[0-9]{3}$" },
+        { "type": "null" }
+      ]
+    },
+    "recorded_by": {
+      "type": "string",
+      "minLength": 1
+    },
+    "recorded_at": {
+      "type": "string",
+      "description": "Момент записи (ISO-8601)."
+    }
+  }
+}

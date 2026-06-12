@@ -1,6 +1,6 @@
-.PHONY: check check-structure check-sitka-overlay check-astro-overlay status snapshot context submit-task accept-handoff accept-task reject-task new-task new-handoff take-shift release-shift approve-critical self-check-handoff new-audit-task install-hooks
+.PHONY: check check-structure check-sitka-overlay check-astro-overlay ledger-check status snapshot context submit-task accept-handoff accept-task reject-task new-task new-handoff take-shift release-shift approve-critical self-check-handoff new-audit-task install-hooks
 
-check: check-structure check-sitka-overlay check-astro-overlay
+check: check-structure check-sitka-overlay check-astro-overlay ledger-check
 
 check-structure:
 	bash scripts/check-system-structure.sh
@@ -17,6 +17,15 @@ check-sitka-overlay:
 check-astro-overlay:
 	bash scripts/check-overlay-consistency.sh astro
 	bash scripts/check-status-hygiene.sh astro
+
+# Валидатор реестра фактов/решений (ledger/*.jsonl): каждая строка — валидный
+# JSON, обязательные поля и enum'ы на месте, id уникален в файле, у каждого
+# факта есть источник (И-5), ссылки supersedes/origin/a-b-working/promoted_to
+# существуют, working противоречия = a|b. Протухшие факты (И-13) — предупреждение
+# списком, открытые противоречия — информация; ошибки → exit 1 с номерами строк.
+# Пустые/отсутствующие файлы реестра — норма (система только заводится).
+ledger-check:
+	bash scripts/aida check
 
 # Mechanical view of operational state (active TASKs, open HANDOFFs, drift).
 # Informational only — does not fail on drift. Use `make check` for invariants.

@@ -1,0 +1,51 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://aida.local/schemas/inbox.schema.json",
+  "title": "inbox",
+  "description": "Карантин (И-4): сырые заметки/сигналы без источника. Лежит в ledger/inbox.jsonl, пишет любая роль свободно. Продвижение — новой строкой (status: promoted).",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "id",
+    "note",
+    "status",
+    "promoted_to",
+    "recorded_by",
+    "recorded_at"
+  ],
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^I-[0-9]{8}-[0-9]{3}$",
+      "description": "I-YYYYMMDD-NNN; NNN — порядковый за день, уникален в файле."
+    },
+    "note": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Свободный текст."
+    },
+    "context": {
+      "type": "string",
+      "description": "Откуда взялось (опционально)."
+    },
+    "status": {
+      "type": "string",
+      "enum": ["raw", "promoted", "dropped"]
+    },
+    "promoted_to": {
+      "description": "id факта, в который продвинуто, либо null.",
+      "oneOf": [
+        { "type": "string", "pattern": "^F-[0-9]{8}-[0-9]{3}$" },
+        { "type": "null" }
+      ]
+    },
+    "recorded_by": {
+      "type": "string",
+      "minLength": 1
+    },
+    "recorded_at": {
+      "type": "string",
+      "description": "Момент записи (ISO-8601)."
+    }
+  }
+}

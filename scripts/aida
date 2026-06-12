@@ -1,0 +1,66 @@
+#!/usr/bin/env bash
+# aida — единый вход в реестр фактов и решений системы (ядро v0.1, шаг 2).
+#
+# Тонкая обёртка: вся работа с JSONL — в scripts/aida_ledger.py (только
+# стандартная библиотека python3, без pip/jq). Реестр живёт в ledger/*.jsonl,
+# схемы — в schemas/*.schema.json. Записи ТОЛЬКО дописываются (И-14): ни одна
+# существующая строка не правится и не удаляется — изменение состояния всегда
+# новая строка. История — в git.
+#
+# Подкоманды (подробности — `aida <cmd> --help`):
+#   aida inbox "<note>" [--context "..."]        запись в карантин (И-4)
+#   aida fact "<statement>" --scope X --source-kind K --source-ref R [...]
+#                                                новый факт со источником (И-5)
+#   aida promote I-NNN --scope X --source-kind K --source-ref R [--statement ...]
+#                                                факт из карантина (origin + дозапись inbox)
+#   aida accept F-NNN                            повысить verified→accepted
+#   aida stale  F-NNN --reason "..."             пометить факт протухшим (И-13)
+#   aida decision "<text>" --by owner --scope X --decided-at YYYY-MM-DD [...]
+#   aida contradict F-a F-b --working F-a --resolves-when "..."   (И-14)
+#   aida show [facts|decisions|inbox|contradictions] [--scope X] [--status S]
+#   aida check                                   валидатор реестра (§5)
+#
+# Глобальный флаг: --by <кто> (recorded_by; по умолчанию worker). У decision
+# свой обязательный --by из словаря owner|admin|tl-sitka|tl-astro.
+#
+# Exit codes: 0 — успех/реестр валиден; 1 — реестр невалиден (check);
+#             2 — отказ операции (нет источника, битый id, ссылка в никуда …).
+#
+# Usage:
+#   bash scripts/aida <команда> [аргументы]
+#   ./scripts/aida show facts --scope crypto
+
+set -euo pipefail
+
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+PY="${ROOT_DIR}/scripts/aida_ledger.py"
+
+usage() {
+  # Печатаем шапку этого файла (строки-комментарии после shebang) как справку.
+  sed -n '2,38p' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//' >&2
+}
+
+# python3 обязателен — другого рантайма у ядра нет.
+if ! command -v python3 >/dev/null 2>&1; then
+  echo "ОШИБКА: не найден python3 — ядро реестра на нём." >&2
+  echo "       Как исправить: установи python3 (макрепо: уже есть в системе)." >&2
+  exit 127
+fi
+
+if [[ ! -f "${PY}" ]]; then
+  echo "ОШИБКА: не найден ${PY}" >&2
+  echo "       Файл ядра пропал — проверь, что репозиторий цел." >&2
+  exit 66  # EX_NOINPUT
+fi
+
+# Без аргументов — короткая справка и понятный код usage.
+if [[ $# -eq 0 ]]; then
+  echo "ОШИБКА: нужна подкоманда." >&2
+  echo >&2
+  usage
+  exit 64  # EX_USAGE
+fi
+
+# Прокидываем всё как есть: разбор аргументов и осмысленные русские отказы —
+# на стороне python-ядра (там же «как исправить»).
+exec python3 "${PY}" "$@"
