@@ -1,6 +1,6 @@
 # TASK: t3d-decide-gate
 
-- Status: review
+- Status: done
 - Ready: yes
 - Date: 2026-06-13
 - Project: crypto
@@ -11,7 +11,7 @@
 - Worker model: Claude Code (Opus)
 - Mode: strict
 - Critical approved by: (нет)
-- Reviewer: (обязателен — независимая сессия, tier A)
+- Reviewer: многолинзовое (5 линз+верификация) — ACCEPT, 0 крит/1 средн(документация)/1 отклонена; Reviewer-HANDOFF closed
 
 ## Problem
 
