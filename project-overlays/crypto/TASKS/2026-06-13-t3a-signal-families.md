@@ -1,6 +1,6 @@
 # TASK: t3a-signal-families
 
-- Status: open
+- Status: review
 - Ready: yes
 - Date: 2026-06-13
 - Project: crypto
