@@ -1,6 +1,6 @@
 # TASK: t4a-paper-executor
 
-- Status: open
+- Status: review
 - Ready: yes
 - Date: 2026-06-13
 - Project: crypto
@@ -76,20 +76,20 @@
 
 ## Acceptance
 
-- [ ] `make check` зелёный с чистого клона; тесты исполнителя на фикстурах.
-- [ ] TakeProfit: продажа доли → realized_net_profit по факту с издержками;
+- [x] `make check` зелёный с чистого клона; тесты исполнителя на фикстурах.
+- [x] TakeProfit: продажа доли → realized_net_profit по факту с издержками;
   лоты уменьшены пропорционально (средневзвешенная); запись в журнал прибыли
   валидна по схеме (табличный кейс с проверкой до 1e-8).
-- [ ] DistributeProfit: Σ сумм по корзинам = realized_net_profit РОВНО
+- [x] DistributeProfit: Σ сумм по корзинам = realized_net_profit РОВНО
   (доли×realized, остаток крупнейшей доле); запись валидна по схеме.
-- [ ] CreateSaleLock и BuyDipFromBuffer обновляют свои журналы/буфер
+- [x] CreateSaleLock и BuyDipFromBuffer обновляют свои журналы/буфер
   корректно (тесты); BuyDip создаёт лот origin=dip_buy.
-- [ ] Observe/ManualReview не меняют состояние (тест).
-- [ ] Замыкание цикла (интеграционный тест): состояние → решение ядра →
+- [x] Observe/ManualReview не меняют состояние (тест).
+- [x] Замыкание цикла (интеграционный тест): состояние → решение ядра →
   apply_decision → обновлённые журналы СНОВА валидны как вход ядра
   (decision_input по схеме). Прогнать пример с реальным cpds-core, если
   собран; иначе на зафиксированном DecisionOutput.
-- [ ] Денежная арифметика без float (грep Decimal/целые); детерминизм
+- [x] Денежная арифметика без float (грep Decimal/целые); детерминизм
   (повторное применение даёт тот же результат и журналы).
 
 ## Context
