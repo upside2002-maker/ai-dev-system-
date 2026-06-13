@@ -156,3 +156,87 @@ cat ../golden/decision_input/valid.1.json | "$BIN"   # full, [Observe], дене
    на мусоре даёт Left, который Gate трактует как observe_only. Ревью: проверить,
    что нестандартный, но валидный JSON (напр. экспоненты, escape-последовательности
    в ключах) обрабатывается ожидаемо или явно отвергается.
+
+## Доработка по ревью 12.06 (вердикт REJECT → закрыто)
+
+Ревью (`HANDOFFS/2026-06-12-t0-repo-skeleton-review.md`) дало REJECT по одной
+КРИТИЧЕСКОЙ находке и трём СРЕДНИМ. Все закрыты. Корпус из 35 (на диске 36) злых
+образцов ревьюера забран из `/tmp/evil/` и вшит в репо. `make check` зелёный с
+чистого клона — проверено клоном во временный каталог.
+
+Находка → что сделано → каким тестом закрыто → коммит:
+
+1. **КРИТИЧЕСКАЯ — кросс-хэш расходился на дубле ключей.** Дубликат ключа в
+   объекте теперь **отвергается ошибкой на разборе обеими сторонами**: Python —
+   `object_pairs_hook` в `loads_strict` (`canonical.py`); Haskell — проверка
+   уникальности ключей в `pObject` (`Json.hs`). После запрета `lookupKey`
+   однозначен. Закрыто: Python `test_duplicate_keys_rejected[_nested]`, Haskell
+   `parser rejects {duplicate,triple,nested} keys`, и кросс-проверкой всего злого
+   корпуса (`dup_keys`, `dup_keys3` → BOTH-REJECT). Коммит `e095ec8`.
+
+2. **СРЕДНЯЯ — строгость парсеров (ведущие нули, сырые управляющие).** Haskell
+   `pNumber` переписан по грамматике JSON (ведущий ноль `007` и ведущий `+`
+   отвергаются); `pString` отвергает сырой управляющий символ < 0x20. Теперь
+   класс «валидного JSON» совпадает с Python. Закрыто: Python
+   `test_leading_zero_int_rejected`, `test_raw_control_char_in_string_rejected`;
+   Haskell `parser rejects leading-zero int`, `... raw control char`,
+   `... leading plus`; alignment-прогон всего корпуса (`int_leading_zero`,
+   `control_tab_raw`, `plus_number` → BOTH-REJECT, расхождений 0). Коммит `e095ec8`.
+
+3. **СРЕДНЯЯ — схема не требовала estimated_net_profit у денежных атомов.** В
+   `decision_output.schema.json` добавлена условная обязательность (`if/then`):
+   у `TakeProfit`, `DistributeProfit`, `BuyDipFromBuffer`, `MoveBufferToTerminal`
+   поле `estimated_net_profit` обязательно. Негативный образец
+   `golden/decision_output/invalid.2.no_profit.json` (TakeProfit без прогноза) —
+   обязан отклоняться. Закрыто: `test_invalid_samples_rejected` гоняет его как
+   invalid; в манифесте у decision_output два невалидных образца. Коммит `af4e268`.
+
+4. **СРЕДНЯЯ — money-паттерн не фиксировал точность.** Канонический формат
+   денежной строки зафиксирован во ВСЕХ схемах: ровно 8 знаков после точки, целая
+   часть без ведущих нулей. Деньги (знаковые) `^-?(0|[1-9][0-9]*)\.[0-9]{8}$`,
+   доли/веса/количества (беззнаковые) `^(0|[1-9][0-9]*)\.[0-9]{8}$`. Все golden-
+   образцы переформатированы под канон; закреплённые кросс-хэши пересчитаны;
+   набор `cross_hash` расширен с 3 до 8 (добавлены денежные журналы и
+   decision_output). Закреплено в `docs/CONTRACTS.md`. Закрыто: кросс-хэш на 8
+   денежных образцах (Python == Haskell), Python `test_money_string_extra_
+   decimals_distinct_hash` (доказывает мотив: «1.5» ≠ «1.50000000» по хэшу),
+   валидация всех golden по обновлённым схемам. Коммит `af4e268`.
+
+5. **Корпус злых образцов.** 36 образцов ревьюера (`/tmp/evil/samples/`) вшиты в
+   `golden/evil/samples/` с сохранением сырых байт (BOM, сырой TAB, битый UTF-8) +
+   `golden/evil/manifest.json` (19 valid с закреплённым хэшем, 17 invalid).
+   `scripts/evil_cross.sh` (подключён в `make check` как `evil-cross`) на каждом
+   валидном образце сверяет кросс-хэш Python == Haskell == закреплённого, на каждом
+   невалидном — согласованный отказ обоих. Дублируется в pytest
+   (`test_evil_corpus.py`). Итог прогона: расхождений между языками 0. Коммит
+   `ebef2ec`.
+
+6. **docs/CONTRACTS.md дополнен.** Разделы: «Дубликаты ключей запрещены»,
+   «Строгость парсеров выровнена» (+ссылка на `golden/evil/`), «Канонический
+   формат денег» (8 знаков, паттерны, «1.5» ≠ «1.50000000»), обязательность
+   `estimated_net_profit` у атомов прибыли. README: шаг `evil-cross` и
+   `golden/evil/` в карте репо. Коммит `e56c06e` (+ README в `af4e268`/`e56c06e`).
+
+### Новые закреплённые кросс-хэши (Python == Haskell, после канонизации денег)
+
+- market_snapshot/valid.1: `d95daf3860e2784c3a6ee9c2c1f9878a521b4622c73f92338e3cf77a7ab5c03b`
+- decision_input/valid.1: `25818ab642de0eb53a40c60ca699eed652dcaabbe25de27c0d7f321617a65a77`
+- profile_config/valid.1: `1ef263a173bfabf203dbc256688f0fdad47ae44f2652d3a0bea51ccc45c08ef3`
+- realized_profit_journal/valid.1: `6a57386d11796e6a9974461199d0ccc0575eb8f10efd87e6dc225d2159f8b2c9`
+- distribution_journal/valid.1: `44a02ad3a122ef3905682b64ed3244470ff9b5deed456d629942d2b4d7e6b29b`
+- sale_lock_journal/valid.1: `0c5b9f332308c79856c2f73814f6717ac97b21dfea251dc1f9f874d8f1082309`
+- lot_journal/valid.1: `031230de4043f168308f7c9b999e4f6e5b0e8681e29e7126bbd1baf885a2bcf6`
+- decision_output/valid.2: `0e65760c02263c541c6232e8ad8cab72b45b31bc40df244c3002a73ea175b518`
+
+### Прогон make check с чистого клона (доработка)
+
+`git clone` во временный каталог + `make check` → EXIT=0, финальная строка
+`=== make check: ВСЁ ЗЕЛЁНОЕ ===`. Состав: 78 Python-тестов, 19 Haskell-тестов,
+8 кросс-хэшей совпали, злой корпус (19 valid кросс-хэш совпал / 17 invalid оба
+отвергли) без расхождений, приёмка CLI пройдена. Холодный прогон ~30 с.
+
+Коммиты доработки (ветка master, поверх прежних трёх):
+- `e095ec8` запрет дублей ключей + строгость парсеров (Json.hs, canonical.py, Spec.hs)
+- `ebef2ec` злой корпус golden/evil/ + evil_cross.sh + test_evil_corpus.py + Makefile
+- `af4e268` обязательный прогноз у атомов прибыли + канонический формат денег (схемы, golden, тесты)
+- `e56c06e` CONTRACTS и README по находкам
