@@ -1,7 +1,8 @@
 # TASK: t1-data-collectors
 
-- Status: review
+- Status: in-progress
 - Ready: yes
+- Rework: ревью 12.06 — ДОРАБОТКА (`HANDOFFS/2026-06-12-t1-data-collectors-review.md`); 3 узких блокера (Б1 утечка ключа FRED, Б2 наблюдаемость деградации, Б3 свежесть данных), операционный долг вынесен в `KNOWN_LIMITATIONS.md` (не блокер Т-1)
 - Date: 2026-06-12
 - Project: crypto
 - Layer: services
