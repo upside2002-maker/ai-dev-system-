@@ -2,7 +2,7 @@
 
 - Status: review
 - Ready: yes
-- Rework: ревью 12.06 — REJECT (`HANDOFFS/2026-06-12-t0-repo-skeleton-review.md`); доработка по списку находок ЗАКРЫТА (все 6 пунктов), ждёт контрольного ревью
+- Rework: контрольное ревью №2 (`HANDOFFS/2026-06-12-t0-repo-skeleton-review2.md`) — REJECT по НОВОЙ критической (склейка суррогатных пар в pString); доработка №2 ЗАКРЫТА, ждёт контрольного ревью №3
 - Date: 2026-06-12
 - Project: crypto
 - Layer: infra
