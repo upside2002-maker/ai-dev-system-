@@ -1,6 +1,6 @@
 # TASK: t0-repo-skeleton
 
-- Status: review
+- Status: done
 - Ready: yes
 - Rework: контрольное ревью №2 (`HANDOFFS/2026-06-12-t0-repo-skeleton-review2.md`) — REJECT по НОВОЙ критической (склейка суррогатных пар в pString); доработка №2 ЗАКРЫТА, ждёт контрольного ревью №3
 - Date: 2026-06-12
@@ -12,7 +12,7 @@
 - Worker model: Claude Code (Opus)
 - Mode: normal
 - Critical approved by: (нет)
-- Reviewer: (обязателен — независимая сессия; схемы и канонизация — фундамент денежного учёта)
+- Reviewer: независимые сессии Опус — REJECT (review), REJECT (review2), ACCEPT (review3); отчёты в HANDOFFS/
 - HANDOFF: `project-overlays/crypto/HANDOFFS/2026-06-12-t0-repo-skeleton-handoff.md`
 
 ## Problem
