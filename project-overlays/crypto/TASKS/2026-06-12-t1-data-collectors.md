@@ -1,8 +1,8 @@
 # TASK: t1-data-collectors
 
-- Status: in-progress
+- Status: review
 - Ready: yes
-- Rework: ревью 12.06 — ДОРАБОТКА (`HANDOFFS/2026-06-12-t1-data-collectors-review.md`); 3 узких блокера (Б1 утечка ключа FRED, Б2 наблюдаемость деградации, Б3 свежесть данных), операционный долг вынесен в `KNOWN_LIMITATIONS.md` (не блокер Т-1)
+- Rework: ревью 12.06 — ДОРАБОТКА (`HANDOFFS/2026-06-12-t1-data-collectors-review.md`); 3 узких блокера ЗАКРЫТЫ (Б1 утечка ключа FRED — маскировка query + обёртка fetch_gold; Б2 наблюдаемость деградации — единый `_degrade` + `source:<имя>` в data_quality; Б3 свежесть данных — `max_staleness_days` подключён, `asset:`/`family:` stale). Тесты + чистый клон `make check` зелёный — см. секцию «Доработка по ревью 12.06 (Б1–Б3)» в HANDOFF. Операционный долг в `KNOWN_LIMITATIONS.md` не трогался
 - Date: 2026-06-12
 - Project: crypto
 - Layer: services
