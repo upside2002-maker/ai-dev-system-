@@ -1,0 +1,547 @@
+#!/usr/bin/env bash
+# aida-brief — единый слой регидратации состояния хозяйства (ТЗ §2.2).
+#
+# ОДНА точка, которую все лица секретаря зовут одинаково, чтобы восстановить
+# одинаковое состояние из ИСТОЧНИКОВ (не из памяти модели, не из прозы):
+#   (а) реестр-ядро    — активные решения + не-stale факты с источником +
+#                        открытые противоречия + счётчик сырого карантина
+#                        (через scripts/aida show …);
+#   (б) live-снимок git — короткий HEAD/ветка/чистота по каждому проекту
+#                        (через scripts/snapshot.sh; недоступный/не-git репо —
+#                        строка «снимок недоступен», НЕ падение);
+#   (в) задачи/передачи — активные TASKS/HANDOFFS (через scripts/status.sh);
+#   (г) почта          — непрочитанные записки MAILBOX/to-*.md.
+#
+# Собирается ЖИВО на КАЖДЫЙ вызов (никакого кэша — ТЗ §2.4): точка интеграции
+# зовёт слой на каждый вопрос, иначе лицо отдаст закэшированное (рассинхрон И-13).
+#
+# Два формата (флаг):
+#   --for-agent  (по умолчанию) — полно, с id и источниками, для сессии Claude Code;
+#   --for-owner                 — операторский язык, источник коротко в скобках,
+#                                 без техжаргона, для голоса/телефона.
+#
+# ДЕГРАДАЦИЯ (И-3, ТЗ §5): если источник недоступен — ЧЕСТНАЯ строка
+# «состояние не прочитал: <что именно>». НИКОГДА не пустой вывод и не выдумка —
+# на этом слое стоят ВСЕ лица секретаря.
+#
+# Реестр читается из ledger/ (переопределяется AIDA_LEDGER_DIR — для тестов на
+# временной копии). Только bash + python3 stdlib (без pip/jq).
+#
+# Exit codes:
+#   0  — экран собран (в т.ч. с честными строками деградации внутри);
+#   64 — usage error (неизвестный флаг / неизвестный slug в --scope).
+#
+# Usage:
+#   bash scripts/aida-brief [--for-agent | --for-owner] [--scope <slug>]
+#
+# Примеры:
+#   bash scripts/aida-brief                      # полный экран для агента
+#   bash scripts/aida-brief --for-owner          # операторский экран для голоса
+#   bash scripts/aida-brief --scope crypto       # только проект crypto
+
+set -euo pipefail
+
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+AIDA="${ROOT_DIR}/scripts/aida"
+SNAPSHOT="${ROOT_DIR}/scripts/snapshot.sh"
+STATUS="${ROOT_DIR}/scripts/status.sh"
+MAILBOX_DIR="${ROOT_DIR}/MAILBOX"
+
+# Slug → путь продукт-репо. По умолчанию snapshot.sh ищет $HOME/Projects/<slug>,
+# но crypto живёт в crypto-platform, а aida-voice — в aida-voice-bridge и БЕЗ git.
+# Пустое значение = «git-снимок для этого slug не берём» (репо вне git).
+repo_path_for() {
+  case "$1" in
+    crypto)     printf '%s' "${HOME}/Projects/crypto-platform" ;;
+    aida-voice) printf '%s' "" ;;  # продукт-репо не под git (ТЗ §2)
+    *)          printf '%s' "${HOME}/Projects/$1" ;;
+  esac
+}
+
+# Все проекты хозяйства (порядок фиксирован для читаемого экрана).
+ALL_SLUGS=(sitka-office astro crypto aida-voice)
+
+FORMAT="agent"
+SCOPE=""
+
+usage() {
+  sed -n '2,46p' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//' >&2
+}
+
+# --- разбор аргументов -------------------------------------------------------
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --for-agent) FORMAT="agent"; shift ;;
+    --for-owner) FORMAT="owner"; shift ;;
+    --scope)
+      SCOPE="${2:-}"
+      if [[ -z "${SCOPE}" ]]; then
+        echo "ОШИБКА: --scope требует слаг проекта." >&2
+        usage
+        exit 64
+      fi
+      shift 2
+      ;;
+    -h|--help) usage; exit 0 ;;
+    *)
+      echo "ОШИБКА: неизвестный аргумент '$1'." >&2
+      usage
+      exit 64
+      ;;
+  esac
+done
+
+# Если задан --scope — он должен быть одним из известных слагов.
+if [[ -n "${SCOPE}" ]]; then
+  known=0
+  for s in "${ALL_SLUGS[@]}"; do
+    [[ "${s}" == "${SCOPE}" ]] && known=1
+  done
+  if [[ "${known}" -eq 0 ]]; then
+    echo "ОШИБКА: неизвестный slug '${SCOPE}'. Известны: ${ALL_SLUGS[*]}." >&2
+    exit 64
+  fi
+  SLUGS=("${SCOPE}")
+else
+  SLUGS=("${ALL_SLUGS[@]}")
+fi
+
+# python3 нужен реестру; без него реестр-блок честно деградирует, а не врёт.
+HAVE_PY=1
+command -v python3 >/dev/null 2>&1 || HAVE_PY=0
+
+# --- доступность реестра (И-3): отличаем «пусто» от «недоступно» -------------
+# КОРЕНЬ F1: aida_ledger.read_records трактует ОТСУТСТВУЮЩИЙ файл как пустой
+# список. Поэтому `aida show` на пропавшем реестре выходит с кодом 0 и печатает
+# бодрый ноль («решений нет»), НЕОТЛИЧИМО от реально пустого хозяйства. Лицо
+# скажет владельцу «решений нет», когда память ПРОПАЛА — запрещено (ТЗ §5, И-3).
+#
+# Поэтому ДО доверия нулевому экрану проверяем доступность реестра сами:
+#   реестр ДОСТУПЕН  ⇔ каталог существует И присутствуют ВСЕ ожидаемые файлы
+#                      *.jsonl, которые слой читает (пустые файлы — легитимно);
+#   реестр НЕДОСТУПЕН ⇔ каталога нет ИЛИ хоть одного из ожидаемых файлов нет.
+# Каталог реестра определяем ТАК ЖЕ, как ядро (scripts/aida_ledger.py):
+# по AIDA_LEDGER_DIR, иначе дефолт ledger/ в корне репо.
+LEDGER_DIR="${AIDA_LEDGER_DIR:-${ROOT_DIR}/ledger}"
+
+# Файлы, которые слой реально читает через `aida show` (facts/decisions/
+# contradictions/inbox). Отсутствие любого = реестр недоступен.
+LEDGER_FILES=(facts.jsonl decisions.jsonl contradictions.jsonl inbox.jsonl)
+
+# Печатает 'ok' если реестр доступен, иначе 'missing'. Пустой stdout не
+# используем как сигнал — только явные токены, чтобы set -e/подстановка не съели.
+ledger_reachable() {
+  if [[ ! -d "${LEDGER_DIR}" ]]; then
+    printf 'missing'
+    return
+  fi
+  local f
+  for f in "${LEDGER_FILES[@]}"; do
+    if [[ ! -f "${LEDGER_DIR}/${f}" ]]; then
+      printf 'missing'
+      return
+    fi
+  done
+  printf 'ok'
+}
+
+LEDGER_STATE="$(ledger_reachable)"
+
+# --- helper: запустить aida show и вернуть тело без служебной шапки ----------
+# Печатает stdout+stderr; код выхода у вызывающего через $?.
+aida_show() {
+  bash "${AIDA}" show "$@" 2>&1
+}
+
+# --- helper: непрочитанные записки одного ящика -----------------------------
+# «Непрочитанное» = записки, оставшиеся в живом to-*.md (обработанные уезжают в
+# archive/ — MAILBOX/README.md). Каждая записка по формату MAILBOX/README.md
+# начинается заголовком '## <ГГГГ-ММ-ДД …> — от <автор>'. Подзаголовки внутри
+# записки ('## Следующий шаг' и т.п.) даты не имеют — их НЕ считаем за записки.
+MAILBOX_HEADER_RE='^## [0-9]{4}-[0-9]{2}-[0-9]{2}'
+
+mailbox_unread_count() {
+  local file="$1"
+  [[ -f "${file}" ]] || { printf '0'; return; }
+  grep -cE "${MAILBOX_HEADER_RE}" "${file}" 2>/dev/null || printf '0'
+}
+
+# Заголовки непрочитанных записок — для агента.
+mailbox_unread_titles() {
+  local file="$1"
+  [[ -f "${file}" ]] || return 0
+  grep -E "${MAILBOX_HEADER_RE}" "${file}" 2>/dev/null | sed 's/^## /    • /' || true
+}
+
+# =============================================================================
+#  СБОР ИСТОЧНИКОВ (общий для обоих форматов; формат решает только подачу)
+# =============================================================================
+
+# --- (а) реестр-ядро --------------------------------------------------------
+emit_ledger_agent() {
+  if [[ "${HAVE_PY}" -eq 0 ]]; then
+    echo "состояние не прочитал: реестр-ядро (нет python3 — без него ledger не читается)"
+    return
+  fi
+
+  # И-3 (F1): реестр недоступен (каталог/файлы отсутствуют) — НЕ нулевой экран.
+  # Иначе нулевой ответ `aida show` (read_records: нет файла → пустой список)
+  # выглядел бы как реально пустое хозяйство. Честная строка, как для битого JSON.
+  if [[ "${LEDGER_STATE}" != "ok" ]]; then
+    echo "состояние не прочитал: реестр недоступен (каталог/файлы отсутствуют)"
+    return
+  fi
+
+  local out rc
+
+  echo "## Решения (активные)"
+  rc=0; out="$(aida_show decisions --status active)" || rc=$?
+  if [[ "${rc}" -ne 0 ]]; then
+    echo "состояние не прочитал: активные решения (aida show decisions упал, код ${rc})"
+  else
+    printf '%s\n' "${out}" | grep -v '^=== ' || true
+  fi
+  echo
+
+  echo "## Факты (не-stale, с источником)"
+  rc=0; out="$(aida_show facts)" || rc=$?
+  if [[ "${rc}" -ne 0 ]]; then
+    echo "состояние не прочитал: факты (aida show facts упал, код ${rc})"
+  else
+    # Не-stale: выкидываем факты со статусом stale в маркере [scope/stale/conf].
+    # Маркер блока факта печатается строкой, начинающейся с 'F-'.
+    printf '%s\n' "${out}" | filter_nonstale_facts || true
+  fi
+  echo
+
+  echo "## Противоречия (открытые)"
+  rc=0; out="$(aida_show contradictions --status open)" || rc=$?
+  if [[ "${rc}" -ne 0 ]]; then
+    echo "состояние не прочитал: противоречия (aida show contradictions упал, код ${rc})"
+  else
+    printf '%s\n' "${out}" | grep -v '^=== ' || true
+  fi
+  echo
+
+  echo "## Карантин (сырое, ждёт продвижения)"
+  rc=0; out="$(aida_show inbox --status raw)" || rc=$?
+  if [[ "${rc}" -ne 0 ]]; then
+    echo "состояние не прочитал: счётчик карантина (aida show inbox упал, код ${rc})"
+  else
+    local n
+    n="$(printf '%s\n' "${out}" | grep -c '^I-' || true)"
+    echo "  сырых записок в карантине: ${n}"
+  fi
+}
+
+# Фильтр не-stale фактов: построчный конечный автомат на python (stdlib).
+# Вход (stdin) — вывод `aida show facts`; выход — то же, но блоки фактов со
+# статусом stale (маркер [.../stale/...]) выкинуты целиком (с их строками-
+# продолжениями). Программа передаётся через -c, чтобы stdin остался под данные.
+filter_nonstale_facts() {
+  python3 -c '
+import re, sys
+head = re.compile(r"^F-\d{8}-\d{3}\s")           # начало блока факта
+marker = re.compile(r"^F-\S+\s+\[[^/]+/([^/]+)/") # [scope/status/conf]
+skip = False
+for line in sys.stdin:
+    raw = line.rstrip("\n")
+    if raw.startswith("=== "):
+        continue
+    if head.match(raw):
+        m = marker.match(raw)
+        status = m.group(1) if m else ""
+        skip = (status == "stale")
+        if skip:
+            continue
+        sys.stdout.write(line)
+        continue
+    # строки-продолжения блока (отступ) пропускаем вместе с выкинутым фактом
+    if skip and raw.startswith("  "):
+        continue
+    skip = False
+    sys.stdout.write(line)
+'
+}
+
+emit_ledger_owner() {
+  if [[ "${HAVE_PY}" -eq 0 ]]; then
+    echo "Состояние не прочитал: реестр-ядро недоступен."
+    return
+  fi
+
+  # И-3 (F1): реестр недоступен — честная строка, НЕ бодрый ноль («решений нет»).
+  # На голос/телефон уходит то же признание, что и в --for-agent (ТЗ §5).
+  if [[ "${LEDGER_STATE}" != "ok" ]]; then
+    echo "Состояние не прочитал: реестр недоступен (каталог/файлы отсутствуют)."
+    return
+  fi
+
+  local out rc n
+
+  # Решения. В операторском канале НЕ зачитываем сырые тексты решений —
+  # они написаны на рабочем языке (часто с техникой) и в голос/телефон не идут
+  # (память feedback_operator_language, ТЗ §2.2). Даём счётчик + по одному
+  # короткому ориентиру: какой проект, кто решил, когда. Полные формулировки —
+  # в --for-agent.
+  rc=0; out="$(aida_show decisions --status active)" || rc=$?
+  if [[ "${rc}" -ne 0 ]]; then
+    echo "Состояние не прочитал: список решений."
+  else
+    n="$(printf '%s\n' "${out}" | grep -c '^D-' || true)"
+    echo "Действующих решений: ${n}. По проектам:"
+    printf '%s\n' "${out}" | owner_decisions || true
+  fi
+  echo
+
+  # Противоречия — что с чем спорит и по какой версии работаем.
+  rc=0; out="$(aida_show contradictions --status open)" || rc=$?
+  if [[ "${rc}" -ne 0 ]]; then
+    echo "Состояние не прочитал: список расхождений."
+  else
+    n="$(printf '%s\n' "${out}" | grep -c '^C-' || true)"
+    if [[ "${n}" -eq 0 ]]; then
+      echo "Расхождений в знаниях нет."
+    else
+      echo "Расхождения в знаниях: ${n}."
+    fi
+  fi
+  echo
+
+  # Карантин — сколько сырого ждёт разбора.
+  rc=0; out="$(aida_show inbox --status raw)" || rc=$?
+  if [[ "${rc}" -ne 0 ]]; then
+    echo "Состояние не прочитал: заметки в разборе."
+  else
+    n="$(printf '%s\n' "${out}" | grep -c '^I-' || true)"
+    echo "Заметок ждёт разбора: ${n}."
+  fi
+}
+
+# Операторская подача решений: БЕЗ сырого тела решения (там рабочий язык/техника
+# — в голос не идёт). Только ориентир: проект на простом русском, кто и когда
+# решил. Программа через -c — stdin остаётся под данные `aida show decisions`.
+owner_decisions() {
+  python3 -c '
+import re, sys
+ru = {"sitka-office": "Ситка (склад)", "astro": "Астро (Марина)",
+      "crypto": "Крипта", "aida-voice": "Голос", "system": "система",
+      "global": "общее"}
+who = {"owner": "хозяин", "admin": "помощник",
+       "tl-sitka": "ведущий Ситки", "tl-astro": "ведущий Астро"}
+head = re.compile(r"^D-\S+\s+\[([^/]+)/[^]]+\]\s+(\S+),\s+(\S+)")
+for line in sys.stdin:
+    m = head.match(line.rstrip("\n"))
+    if not m:
+        continue
+    scope, by, date = m.group(1), m.group(2), m.group(3)
+    # F2 (defense-in-depth): на валидном реестре scope/by всегда в словаре. Но
+    # если незамаплено — в голос/телефон НЕ льём сырой токен (рабочий язык),
+    # даём безопасную заглушку. Недостижимо на валидном реестре, но дёшево.
+    scope_ru = ru.get(scope, "проект")
+    by_ru = who.get(by, "кто-то из команды")
+    print("  • {}: решил {}, {}".format(scope_ru, by_ru, date))
+'
+}
+
+# --- (б) live-снимок git ----------------------------------------------------
+emit_snapshot_agent() {
+  local slug="$1" repo out rc
+  repo="$(repo_path_for "${slug}")"
+  if [[ -z "${repo}" ]]; then
+    echo "  снимок недоступен: ${slug} — продукт-репо не под git (история системой не ведётся)"
+    return
+  fi
+  out="$(bash "${SNAPSHOT}" "${slug}" "${repo}" 2>&1)"; rc=$?
+  if [[ "${rc}" -ne 0 ]]; then
+    echo "  снимок недоступен: ${slug} (репозиторий не найден или не git)"
+  else
+    printf '%s\n' "${out}" | sed 's/^/  /'
+  fi
+}
+
+emit_snapshot_owner() {
+  local slug="$1" repo out rc proj
+  proj="$(owner_project_name "${slug}")"
+  repo="$(repo_path_for "${slug}")"
+  if [[ -z "${repo}" ]]; then
+    echo "  ${proj}: снимок недоступен (проект пока без контроля версий)."
+    return
+  fi
+  out="$(bash "${SNAPSHOT}" "${slug}" "${repo}" 2>&1)"; rc=$?
+  if [[ "${rc}" -ne 0 ]]; then
+    echo "  ${proj}: снимок недоступен."
+  else
+    # Каноническую строку git-снимка переводим в операторский вид: без слов
+    # HEAD/ветка — только «версия», свежесть и чисто/есть несохранённое.
+    printf '%s\n' "${out}" | owner_snapshot_line "${proj}" || true
+  fi
+}
+
+# Простое имя проекта для оператора.
+owner_project_name() {
+  case "$1" in
+    sitka-office) printf '%s' "Ситка (склад)" ;;
+    astro)        printf '%s' "Астро (Марина)" ;;
+    crypto)       printf '%s' "Крипта" ;;
+    aida-voice)   printf '%s' "Голос" ;;
+    *)            printf '%s' "$1" ;;
+  esac
+}
+
+# Перевод канонической строки снимка в операторскую: «<проект>: версия abc1234,
+# обновлено <дата>, всё сохранено / есть N несохранённых».
+owner_snapshot_line() {
+  local proj="$1"
+  PROJ="${proj}" python3 -c '
+import os, re, sys
+proj = os.environ["PROJ"]
+first = sys.stdin.readline().rstrip("\n")
+# формат: "<slug>: HEAD <sha> (<branch>), <YYYY-MM-DD HH:MM TZ>, дерево: <cleanliness>"
+m = re.search(r"HEAD\s+(\S+)\s+\([^)]*\),\s+(\d{4}-\d{2}-\d{2})[^,]*,\s+дерево:\s+(.+)$", first)
+if not m:
+    print("  {}: снимок есть, но строку не разобрал.".format(proj))
+    sys.exit(0)
+sha, date, clean = m.group(1), m.group(2), m.group(3).strip()
+if clean == "чисто":
+    state = "всё сохранено"
+else:
+    # "N неучтённых / M изменённых" -> простыми словами
+    nums = re.findall(r"(\d+)", clean)
+    total = sum(int(x) for x in nums) if nums else 0
+    state = "есть {} несохранённых файлов".format(total) if total else "есть несохранённое"
+print("  {}: версия {}, обновлено {}, {} (проверено сейчас).".format(proj, sha, date, state))
+'
+}
+
+# --- (в) активные задачи/передачи -------------------------------------------
+# status.sh иногда выходит ненулём (информационный скрипт), но при этом успевает
+# напечатать секции ACTIVE TASKS / OPEN HANDOFFS. Деградация (ТЗ §5): из такого
+# прогона ВЫЧИТЫВАЕМ частичные данные, а «не прочитал» говорим только когда вывод
+# реально пуст. Код выхода не роняет нас — `|| true` под set -e.
+emit_status_agent() {
+  local slug="$1" out
+  out="$(bash "${STATUS}" "${slug}" 2>&1 || true)"
+  if [[ -z "${out}" ]]; then
+    echo "  состояние не прочитал: задачи/передачи ${slug} (status.sh ничего не вернул)"
+    return
+  fi
+  printf '%s\n' "${out}" | awk '
+    /^ACTIVE TASKS:/      {p=1}
+    /^OPEN HANDOFFS:/     {p=1}
+    /^RECENTLY ARCHIVED/  {p=0}
+    /^DRIFT CHECK:/       {p=0}
+    p {print "  " $0}
+  '
+}
+
+emit_status_owner() {
+  local slug="$1" out tasks handoffs proj
+  proj="$(owner_project_name "${slug}")"
+  out="$(bash "${STATUS}" "${slug}" 2>&1 || true)"
+  if [[ -z "${out}" ]]; then
+    echo "  ${proj}: состояние задач не прочитал."
+    return
+  fi
+  # Считаем активные задачи и открытые передачи по строкам-маркерам status.sh.
+  tasks="$(printf '%s\n' "${out}" | awk '
+    /^ACTIVE TASKS:/{p=1; next}
+    /^OPEN HANDOFFS:/{p=0}
+    p && /^  \[/{c++}
+    END{print c+0}')"
+  handoffs="$(printf '%s\n' "${out}" | awk '
+    /^OPEN HANDOFFS:/{p=1; next}
+    /^RECENTLY ARCHIVED/{p=0}
+    p && /^  \[/{c++}
+    END{print c+0}')"
+  echo "  ${proj}: в работе задач — ${tasks}, передач на руках — ${handoffs}."
+}
+
+# --- (г) непрочитанная почта ------------------------------------------------
+emit_mailbox_agent() {
+  local f total=0 n
+  if [[ ! -d "${MAILBOX_DIR}" ]]; then
+    echo "  состояние не прочитал: MAILBOX (каталог отсутствует)"
+    return
+  fi
+  for f in "${MAILBOX_DIR}"/to-*.md; do
+    [[ -e "${f}" ]] || continue
+    n="$(mailbox_unread_count "${f}")"
+    total=$((total + n))
+    echo "  $(basename "${f}"): ${n} непрочитанных"
+    [[ "${n}" -gt 0 ]] && mailbox_unread_titles "${f}"
+  done
+  echo "  всего непрочитанных записок: ${total}"
+}
+
+emit_mailbox_owner() {
+  local f total=0 n
+  if [[ ! -d "${MAILBOX_DIR}" ]]; then
+    echo "  Почту не прочитал: ящик недоступен."
+    return
+  fi
+  for f in "${MAILBOX_DIR}"/to-*.md; do
+    [[ -e "${f}" ]] || continue
+    n="$(mailbox_unread_count "${f}")"
+    total=$((total + n))
+  done
+  echo "  Непрочитанных записок в почте: ${total}."
+}
+
+# =============================================================================
+#  СБОРКА ЭКРАНА
+# =============================================================================
+NOW="$(date '+%Y-%m-%d %H:%M %Z')"
+
+if [[ "${FORMAT}" == "agent" ]]; then
+  echo "================ AIDA-BRIEF (для агента) — ${NOW} ================"
+  echo "Живой срез на ЭТОТ вызов (без кэша). Источник истины — ledger + git."
+  echo
+
+  echo "=== РЕЕСТР-ЯДРО ==="
+  emit_ledger_agent
+  echo
+
+  echo "=== LIVE-СНИМКИ ПРОЕКТОВ (git) ==="
+  for slug in "${SLUGS[@]}"; do
+    echo "[${slug}]"
+    emit_snapshot_agent "${slug}"
+  done
+  echo
+
+  echo "=== АКТИВНЫЕ ЗАДАЧИ / ПЕРЕДАЧИ ==="
+  for slug in "${SLUGS[@]}"; do
+    echo "[${slug}]"
+    emit_status_agent "${slug}"
+  done
+  echo
+
+  echo "=== ПОЧТА (непрочитанное) ==="
+  emit_mailbox_agent
+  echo
+  echo "================ конец AIDA-BRIEF ================"
+else
+  # --for-owner: операторский язык, без техжаргона; источник коротко в скобках.
+  echo "Сводка по хозяйству на ${NOW}."
+  echo "Это живой срез из общей памяти и из проектов прямо сейчас."
+  echo
+
+  emit_ledger_owner
+  echo
+
+  echo "Где сейчас проекты:"
+  for slug in "${SLUGS[@]}"; do
+    emit_snapshot_owner "${slug}"
+  done
+  echo
+
+  echo "Что в работе:"
+  for slug in "${SLUGS[@]}"; do
+    emit_status_owner "${slug}"
+  done
+  echo
+
+  emit_mailbox_owner
+  echo
+  echo "Если строка говорит «состояние не прочитал» — значит источник сейчас не отвечает, я не придумываю за него."
+fi

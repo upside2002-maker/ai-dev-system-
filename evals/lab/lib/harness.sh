@@ -265,6 +265,16 @@ run_aida_check() {
   AIDA_LEDGER_DIR="${dir}" bash "${REPO_ROOT}/scripts/aida" check 2>&1
 }
 
+# run_aida_brief <ledger-dir> [args...] — прогнать ЖИВОЙ scripts/aida-brief.
+# Реестр читается из переданного каталога (AIDA_LEDGER_DIR), поэтому тест на
+# деградации подсовывает СВОЙ temp-каталог и живой ledger/ не трогает. Снимки
+# git / задачи / почта читаются read-only из живого репо (мутаций нет). Печатает
+# stdout+stderr; код выхода — у caller'а через $?.
+run_aida_brief() {
+  local dir="$1"; shift
+  AIDA_LEDGER_DIR="${dir}" bash "${REPO_ROOT}/scripts/aida-brief" "$@" 2>&1
+}
+
 # --- стоп-хук русского языка ru_guard.py -------------------------------------
 # ru_guard читает на stdin JSON {"transcript_path": "<файл.jsonl>"} и при
 # нарушении печатает на stdout {"decision": "block", "reason": "..."} (exit 0
