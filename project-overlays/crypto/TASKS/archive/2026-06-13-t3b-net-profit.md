@@ -1,6 +1,6 @@
 # TASK: t3b-net-profit
 
-- Status: review
+- Status: done
 - Ready: yes
 - Date: 2026-06-13
 - Project: crypto
@@ -11,7 +11,7 @@
 - Worker model: Claude Code (Opus)
 - Mode: strict
 - Critical approved by: (нет)
-- Reviewer: (обязателен — независимая сессия, tier A)
+- Reviewer: многолинзовое (5 линз+верификация, рабочий контур) — ACCEPT, 0 находок; Reviewer-HANDOFF closed
 
 ## Problem
 
