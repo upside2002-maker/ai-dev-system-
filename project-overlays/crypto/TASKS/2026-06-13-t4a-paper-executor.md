@@ -1,17 +1,18 @@
 # TASK: t4a-paper-executor
 
-- Status: review
+- Status: in-progress
 - Ready: yes
 - Date: 2026-06-13
 - Project: crypto
-- Layer: services
-- Risk tier: B
+- Layer: mixed
+- Risk tier: A
 - Owner: Project Tech Lead
 - Created by: upside2002@gmail.com
 - Worker model: Claude Code (Opus)
-- Mode: normal
+- Mode: strict
 - Critical approved by: (нет)
-- Reviewer: (обязателен — независимая сессия)
+- Reviewer: (обязателен — независимая сессия, tier A)
+- Rework: ревью 13.06 — REJECT, КРИТИЧЕСКАЯ (`HANDOFFS/2026-06-13-t4a-paper-executor-review.md`): дыра в КОНТРАКТЕ (position_pct опционален у денежных атомов → исполнитель падает на схемно-валидном входе). Чиним в корне: периметр расширен (схема + ядро-перепроверка + исполнитель), риск поднят B→A strict. См. блок «Доработка по ревью» ниже.
 
 ## Problem
 
@@ -107,3 +108,36 @@
   эталоны купи-и-держи, переоценка, дневной отчёт. Сюда НЕ тащить.
 - estimated (прогноз ядра) ≠ realized (факт полигона по цене исполнения с
   издержками) — это и есть смысл разведения из Т-3b/d.
+
+---
+
+## Доработка по ревью 13.06 (контракт position_pct) — расширенный периметр
+
+Дыра: `position_pct` опционален в схеме у атомов, двигающих позицию/буфер;
+исполнитель читает его напрямую → KeyError на схемно-валидном входе.
+Ядро на практике всегда кладёт position_pct у этих атомов (проверено), но
+контракт нечестен — чиним в корне.
+
+**Расширение Files (только для доработки):**
+- modify: schemas/decision_output.schema.json — `position_pct` условно-
+  обязателен для **TakeProfit, CreateSaleLock, BuyDipFromBuffer,
+  MoveBufferToTerminal** (симметрично estimated_net_profit, но СВОЁ
+  множество атомов — DistributeProfit БЕЗ position_pct, у него
+  distribution_plan; Observe/ManualReview — без). Аккуратно: estimated и
+  position имеют РАЗНЫЕ множества обязательности.
+- проверить core/ (Render/golden): выход ядра валиден по ужесточённой схеме;
+  golden decision_output обновить ЕСЛИ нужно; логику ядра (Cpds/Gate/Signal/
+  Profit/Reentry) НЕ менять.
+- modify: platform/.../paper/executor.py — оборонительно: отсутствие
+  position_pct там, где обязан → явная ошибка исполнения, НЕ KeyError.
+
+**Расширенная приёмка доработки:**
+- [ ] Схема: денежный атом, двигающий позицию/буфер, БЕЗ position_pct →
+  невалиден (негативный тест); DistributeProfit без position_pct → валиден.
+- [ ] make check зелёный с чистого клона: ВСЁ ядро цело (signal/profit/
+  reentry/decide/core), кросс-хэш Python==Haskell, злой корпус, выход ядра
+  валиден по ужесточённой схеме, golden целы/обновлены.
+- [ ] Исполнитель: атом без обязательного position_pct → явная ошибка, не
+  KeyError (тест).
+- [ ] Прежние 7 пунктов Т-4a по-прежнему зелёные (регресс).
+- [ ] Замыкание цикла на живом ядре по-прежнему работает.
