@@ -1,6 +1,6 @@
 # TASK: t3d-decide-gate
 
-- Status: open
+- Status: review
 - Ready: yes
 - Date: 2026-06-13
 - Project: crypto
@@ -88,25 +88,25 @@
 
 ## Acceptance
 
-- [ ] `make check` зелёный с чистого клона; DecideSpec добавлен; прежние
+- [x] `make check` зелёный с чистого клона; DecideSpec добавлен; прежние
   сьюты (signal/profit/reentry/core) целы; кросс-хэш и злой корпус целы.
-- [ ] РЕГРЕСС (главный, §9.5 инв.3): `critical_ok=false` → выход
+- [x] РЕГРЕСС (главный, §9.5 инв.3): `critical_ok=false` → выход
   `observe_only`, только Observe, денежных атомов НЕТ, предупреждение на
   месте (тест на снимке без valuation — как сейчас в каркасе).
-- [ ] Перегрев при `critical_ok=true` и `net ≥ min_net_profit` → actions
+- [x] Перегрев при `critical_ok=true` и `net ≥ min_net_profit` → actions
   `[TakeProfit, DistributeProfit, CreateSaleLock]` в этом порядке; Σ
   distribution_plan = estimated_net_profit (интеграционный тест).
-- [ ] Перегрев, но `net < min_net_profit` → Observe (фиксировать невыгодно),
+- [x] Перегрев, но `net < min_net_profit` → Observe (фиксировать невыгодно),
   денежных атомов нет (тест).
-- [ ] Капитуляция + canReenter разрешает → `BuyDipFromBuffer`; капитуляция +
+- [x] Капитуляция + canReenter разрешает → `BuyDipFromBuffer`; капитуляция +
   активная блокировка дороже → Observe (перезаход заблокирован) (тест).
-- [ ] Доля действия > `max_unconfirmed_action_pct` → `human_review_required`
+- [x] Доля действия > `max_unconfirmed_action_pct` → `human_review_required`
   + ManualReview; транш > 5% → ManualReview в любом профиле (тест на трёх
   профилях).
-- [ ] Выход cpds-core валиден по decision_output.schema.json на наборе
+- [x] Выход cpds-core валиден по decision_output.schema.json на наборе
   входов (перегрев/капитуляция/нейтрально/плохие данные); `echo '{}'` и
   `critical_ok=false` по-прежнему observe_only (CLI-приёмка цела).
-- [ ] В новом коде нет Double/Float (grep); детерминизм; предусловие price>0
+- [x] В новом коде нет Double/Float (grep); детерминизм; предусловие price>0
   задокументировано в Reentry.hs.
 
 ## Context
