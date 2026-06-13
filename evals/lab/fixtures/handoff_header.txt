@@ -1,0 +1,18 @@
+# HANDOFF: lab-fixture
+
+- Date: 2026-06-12
+- From: Worker (lab fixture)
+- To: Tech Lead
+- Agent runtime: Claude Code
+- Model: Opus
+- Role mode: Worker
+- TASK: lab-fixture-task
+- Status: closed
+- Product repo status: committed
+
+## Тело
+
+Строка-наполнитель, чтобы шапка занимала больше 15 строк и проверяемая
+строка ниже попала под правило evidence (скрипт пропускает первые 15 строк).
+Ещё строка наполнителя.
+Ещё одна строка наполнителя для гарантии паддинга шапки.

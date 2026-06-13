@@ -1,6 +1,6 @@
-.PHONY: check check-structure check-sitka-overlay check-astro-overlay ledger-check status snapshot context submit-task accept-handoff accept-task reject-task new-task new-handoff take-shift release-shift approve-critical self-check-handoff new-audit-task install-hooks
+.PHONY: check check-structure check-sitka-overlay check-astro-overlay ledger-check lab status snapshot context submit-task accept-handoff accept-task reject-task new-task new-handoff take-shift release-shift approve-critical self-check-handoff new-audit-task install-hooks
 
-check: check-structure check-sitka-overlay check-astro-overlay ledger-check
+check: check-structure check-sitka-overlay check-astro-overlay ledger-check lab
 
 check-structure:
 	bash scripts/check-system-structure.sh
@@ -26,6 +26,16 @@ check-astro-overlay:
 # Пустые/отсутствующие файлы реестра — норма (система только заводится).
 ledger-check:
 	bash scripts/aida check
+
+# Лаборатория проверок ворот (evals/lab/**): красные тесты доказывают, что
+# программные ворота реально блокируют нарушение инварианта; pass-тесты ловят
+# ложные срабатывания; контракт-тесты проверяют, что упомянутые в методологии
+# пути существуют (нет фантомных ссылок). Все мутирующие тесты работают на
+# временных копиях (mktemp -d) — живой репозиторий не трогается.
+# Только bash + python3 stdlib + git. Подробности — evals/lab/run.sh.
+# Usage: make lab
+lab:
+	bash evals/lab/run.sh
 
 # Mechanical view of operational state (active TASKs, open HANDOFFs, drift).
 # Informational only — does not fail on drift. Use `make check` for invariants.

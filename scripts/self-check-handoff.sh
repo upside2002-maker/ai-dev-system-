@@ -64,6 +64,48 @@ fi
 ERRORS=0
 WARNINGS=0
 
+# --- helper: строки с датой рядом со словом о git-работе ---------------------
+# Печатает строки вида `lineno:content` (формат grep -n) для тех строк файла,
+# где есть YYYY-MM-DD И рядом слово о git-работе (commit/merge/выкат/задеплоен/…).
+#
+# Регистр складываем НЕ через `grep -i`: в пустой локали (скрипт зовут под
+# `env -i LC_ALL=C`) grep -i НЕ сворачивает регистр кириллицы — «ВЫКАТ»
+# заглавными проскальзывал мимо ключа «выкат» (это была лазейка). python3
+# `.lower()` складывает кириллицу независимо от локали. Решение о совпадении
+# принимаем по lower(строки), а печатаем ВСЕГДА исходную строку — регистр в
+# отчёте не теряется. Латинские ключи покрывает тот же .lower().
+#
+# Без python3 — запасной grep с классами на первую букву (полностью-заглавную
+# кириллицу так не закрыть, но без python3 лаборатория и так SKIP-ает зависимые
+# тесты, а критпуть на машинах разработки python3 имеет всегда).
+_git_word_date_lines() {
+  local file="$1"
+  if command -v python3 >/dev/null 2>&1; then
+    grep -nE '[0-9]{4}-[0-9]{2}-[0-9]{2}' "${file}" | python3 "${PY_GITWORD}"
+  else
+    grep -nE '[0-9]{4}-[0-9]{2}-[0-9]{2}' "${file}" \
+      | grep -iE 'commit|merg|deploy|push|master|landed|ship|releas|[Дд]еплой|[Зз]акоммич|[Сс]мерж|[Зз]адеплоен|[Вв]ыкат|[Вв]лит|[Зз]апушен|[Рр]елиз|[Оо]публик|[Оо]тгру|[Сс]лил|[Вв]ыло[жг]|[Вв]недр|[Ии]нтегрир'
+  fi
+}
+
+# python3-фильтр пишем во временный файл (heredoc): держать многострочный
+# `python3 -c` с круглыми скобками внутри process-substitution `<( … )` нельзя —
+# скобки python-литерала ломают парность скобок подстановки в bash.
+PY_GITWORD="$(mktemp)"
+trap 'rm -f "${PY_GITWORD}"' EXIT
+cat > "${PY_GITWORD}" <<'PYEOF'
+import sys
+# Ключи git-работы строчными. lower() кириллицы локале-независим (в т.ч. под C).
+KEYS = ("commit", "merg", "deploy", "push", "master", "landed", "ship",
+        "releas", "деплой", "закоммич", "смерж", "задеплоен", "выкат",
+        "влит", "запушен", "релиз", "опублик", "отгру", "слил",
+        "вылож", "вылог", "внедр", "интегрир")
+for line in sys.stdin:
+    low = line.lower()
+    if any(k in low for k in KEYS):
+        sys.stdout.write(line)
+PYEOF
+
 # Section header for output readability.
 echo "Самопроверка передачи: ${FILE#"${ROOT_DIR}/"}"
 
@@ -102,8 +144,16 @@ SHOWN=0
 while IFS=: read -r line_num line_content; do
   # Skip header (first 15 lines) and metadata-only lines.
   (( line_num <= 15 )) && continue
-  # Skip lines that contain a short hash already.
-  if echo "${line_content}" | grep -qE '\b[a-f0-9]{7,}\b'; then
+  # Skip lines that contain a real git short hash already.
+  # ВАЖНО: настоящий short hash должен содержать хотя бы одну hex-БУКВУ (a-f).
+  # Прежний '\b[a-f0-9]{7,}\b' матчил и ЧИСТО ДЕСЯТИЧНОЕ 7+-значное число
+  # ('Выкат 2026-06-10 1234567' гасило WARN фальшивым «хешем»). Требуем 7..40
+  # hex-символов, среди которых есть хотя бы один a-f — десятичная дата/счётчик
+  # больше не маскируется под хеш. (Полностью-цифровой git-хеш теоретически
+  # возможен, но как доказательство git-работы он неотличим от любого числа —
+  # ради этого правила-предупреждения требуем явный hex.)
+  if echo "${line_content}" | grep -oiE '\b[0-9a-f]{7,40}\b' \
+       | grep -qiE '[a-f]'; then
     continue
   fi
   EVIDENCE_VIOLATIONS=$((EVIDENCE_VIOLATIONS + 1))
@@ -114,13 +164,8 @@ while IFS=: read -r line_num line_content; do
   fi
 done < <( {
   grep -nE 'PR #[0-9]+' "${FILE}"
-  # Контекст git-работы рядом с датой. ASCII-ключи ловит -i и в C-локали; а вот
-  # кириллицу grep -i в пустой локали (env -i) НЕ складывает по регистру —
-  # «Выкат» с заглавной проходил бы мимо «выкат». Поэтому первую букву каждого
-  # кириллического ключа задаём явным классом [Зз] и т.п. — это не зависит от
-  # локали и ловит и строчный, и заглавный вариант (Выкат/Влит/Смержен/…).
-  grep -nE '[0-9]{4}-[0-9]{2}-[0-9]{2}' "${FILE}" \
-    | grep -iE 'commit|merg|deploy|push|master|landed|ship|[Дд]еплой|[Зз]акоммич|[Сс]мерж|[Зз]адеплоен|[Вв]ыкат|[Вв]лит|[Зз]апушен'
+  # Строки с датой, рядом с которыми есть git-слово (см. _git_word_date_lines).
+  _git_word_date_lines "${FILE}"
 } 2>/dev/null | sort -t: -k1,1n -u || true )
 
 if (( EVIDENCE_VIOLATIONS > 0 )); then
@@ -131,10 +176,54 @@ if (( EVIDENCE_VIOLATIONS > 0 )); then
 fi
 
 # --- Check 4: user-facing forbidden words (warning) -------------------------
+# Экстрактор зоны устойчив к двум обходам форматирования маркера:
+#   (1) внутренние пробелы в маркере: '<!--   user-facing   -->' — регэксп
+#       допускает [[:space:]]* вокруг ключевого слова, литеральное совпадение
+#       больше не требуется;
+#   (2) текст на одной строке с маркером: '<!-- user-facing --> accept … '
+#       и '… commit <!-- /user-facing -->' — не делаем next, а вырезаем сам
+#       маркер из строки и печатаем остаток, чтобы запрещённые слова, прижатые
+#       к маркеру, попадали в зону, а не утекали молча.
+# Открывающий и закрывающий маркеры различаем по наличию слэша перед 'user-facing'.
 USER_FACING_BLOCK="$(awk '
-  /<!-- user-facing -->/ { flag=1; next }
-  /<!-- \/user-facing -->/ { flag=0; next }
-  flag { print }
+  {
+    line = $0
+    is_open  = (line ~ /<!--[[:space:]]*user-facing[[:space:]]*-->/)
+    is_close = (line ~ /<!--[[:space:]]*\/user-facing[[:space:]]*-->/)
+
+    # Оба маркера на одной строке: текст МЕЖДУ ними — это зона целиком.
+    # Пример: открытие-маркер, текст, закрытие-маркер в одной строке.
+    if (is_open && is_close) {
+      mid = line
+      sub(/.*<!--[[:space:]]*user-facing[[:space:]]*-->/, "", mid)
+      sub(/<!--[[:space:]]*\/user-facing[[:space:]]*-->.*/, "", mid)
+      if (mid ~ /[^[:space:]]/) print mid
+      flag = 0
+      next
+    }
+
+    if (is_close) {
+      # текст ДО закрывающего маркера ещё в зоне, если зона открыта
+      if (flag) {
+        pre = line
+        sub(/<!--[[:space:]]*\/user-facing[[:space:]]*-->.*/, "", pre)
+        if (pre ~ /[^[:space:]]/) print pre
+      }
+      flag = 0
+      next
+    }
+
+    if (is_open) {
+      # текст ПОСЛЕ открывающего маркера на той же строке — уже в зоне
+      post = line
+      sub(/.*<!--[[:space:]]*user-facing[[:space:]]*-->/, "", post)
+      if (post ~ /[^[:space:]]/) print post
+      flag = 1
+      next
+    }
+
+    if (flag) print line
+  }
 ' "${FILE}")"
 
 if [[ -n "${USER_FACING_BLOCK}" ]]; then

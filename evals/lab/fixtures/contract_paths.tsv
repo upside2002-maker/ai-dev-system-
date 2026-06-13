@@ -1,0 +1,108 @@
+# Контракт-пути: каждый путь, упомянутый в методологии, должен существовать.
+# Формат TSV: <scope>\t<path>\t<source-doc>
+#   scope = intra   — путь резолвится против корня ai-dev-system;
+#   scope = crossrepo:<slug> — путь резолвится против $HOME/Projects/<slug>
+#                               (продуктовый репо), НЕ против ai-dev-system.
+# Комментарии (#) и пустые строки игнорируются.
+#
+# Список — объединение путей из карт ворот (accept-task, commit-msg, self-check,
+# critical-paths, modes, operator-language) ПЛЮС хуки сессии (.claude/hooks/**),
+# хартии (charters/**), промпты (prompts/**) и чек-лист ревью — без дублей.
+# Перекрёстные ссылки между картами НЕ дублируют красные тесты — контракт лишь
+# проверяет, что файлы ворот существуют на диске.
+#
+# Цифру охвата НЕ хардкодим в тексте: check_paths.py печатает фактическое число
+# строк («OK: N путей на месте») — оно не дрейфует от ручной правки фикстуры.
+#
+# Дата сверки на живом репо: 2026-06-12 (0 missing на intra-путях).
+
+# --- Корневая методология (CRITICAL_PATHS.md, точечные пути) ----------------
+intra	ROLE_MODEL.md	policies/CRITICAL_PATHS.md
+intra	CLAUDE_GLOBAL.md	policies/CRITICAL_PATHS.md
+intra	START_HERE.md	policies/CRITICAL_PATHS.md
+intra	README.md	policies/CRITICAL_PATHS.md
+intra	Makefile	policies/CRITICAL_PATHS.md
+intra	guides/LAYER_RESPONSIBILITIES.md	policies/CRITICAL_PATHS.md
+
+# --- Политики (policies/**) -------------------------------------------------
+intra	policies/AIDA_INVARIANTS.md	policies/CRITICAL_PATHS.md
+intra	policies/AUDIT.md	policies/CRITICAL_PATHS.md
+intra	policies/CRITICAL_PATHS.md	policies/CRITICAL_PATHS.md
+intra	policies/MODES.md	scripts/accept-task.sh
+intra	policies/OPERATOR_LANGUAGE.md	scripts/self-check-handoff.sh
+intra	policies/REMOTES.md	policies/CRITICAL_PATHS.md
+intra	policies/SESSIONS.md	policies/CRITICAL_PATHS.md
+intra	policies/SHIFTS.md	scripts/take-shift.sh
+intra	policies/USERS.md	scripts/accept-task.sh
+
+# --- Скрипты ворот и инфраструктуры (scripts/**) ----------------------------
+intra	scripts/accept-task.sh	Makefile
+intra	scripts/accept-handoff.sh	Makefile
+intra	scripts/approve-critical.sh	Makefile
+intra	scripts/check-overlay-consistency.sh	Makefile
+intra	scripts/check-status-hygiene.sh	Makefile
+intra	scripts/check-system-structure.sh	Makefile
+intra	scripts/context-pack.sh	Makefile
+intra	scripts/new-audit-task.sh	Makefile
+intra	scripts/new-handoff.sh	Makefile
+intra	scripts/new-task.sh	Makefile
+intra	scripts/reject-task.sh	Makefile
+intra	scripts/release-shift.sh	Makefile
+intra	scripts/self-check-handoff.sh	Makefile
+intra	scripts/snapshot.sh	Makefile
+intra	scripts/status.sh	Makefile
+intra	scripts/submit-task.sh	Makefile
+intra	scripts/take-shift.sh	Makefile
+intra	scripts/aida	Makefile
+intra	scripts/aida_ledger.py	scripts/aida
+intra	scripts/_push_helper.sh	scripts/take-shift.sh
+
+# --- Замки (git-хуки) -------------------------------------------------------
+intra	.githooks/commit-msg	Makefile
+intra	.githooks/pre-push	Makefile
+
+# --- Хуки Claude Code (.claude/hooks/**) ------------------------------------
+# Блокирующие и проверочные хуки сессии. ru_guard покрыт red/pass-тестами
+# (evals/lab/tests/ru_guard); все три обязаны существовать на диске.
+intra	.claude/hooks/mission_lock.py	AIDA_LAB_TZ_ADDENDUM
+intra	.claude/hooks/role_guard.py	AIDA_LAB_TZ_ADDENDUM
+intra	.claude/hooks/ru_guard.py	AIDA_LAB_TZ_ADDENDUM
+
+# --- Шаблоны (templates/**) -------------------------------------------------
+intra	templates/TASKS_TEMPLATE.md	scripts/new-task.sh
+intra	templates/HANDOFFS_TEMPLATE.md	scripts/self-check-handoff.sh
+intra	templates/STATUS_RU_TEMPLATE.md	policies/CRITICAL_PATHS.md
+intra	templates/AUDIT_TASK_TEMPLATE.md	scripts/new-audit-task.sh
+intra	templates/reference-snippets/	guides/LAYER_RESPONSIBILITIES.md
+intra	templates/reference-snippets/haskell-handler-patterns.md	guides/LAYER_RESPONSIBILITIES.md
+intra	templates/reference-snippets/haskell-pricing-engine.md	guides/LAYER_RESPONSIBILITIES.md
+intra	templates/reference-snippets/haskell-state-machine.md	guides/LAYER_RESPONSIBILITIES.md
+intra	charters/_TEMPLATE.md	AIDA_LAB_TZ_ADDENDUM
+intra	charters/voice-dispatcher.md	AIDA_LAB_TZ_ADDENDUM
+intra	prompts/task-splitting.md	AIDA_LAB_TZ_ADDENDUM
+intra	evals/review-checklist.md	AIDA_LAB_TZ_ADDENDUM
+
+# --- Поправки (corrections/**) ----------------------------------------------
+intra	corrections/global-corrections.md	policies/OPERATOR_LANGUAGE.md
+
+# --- Реестр фактов/решений: схемы (scripts/aida_ledger.py) ------------------
+intra	schemas/fact.schema.json	scripts/aida_ledger.py
+intra	schemas/decision.schema.json	scripts/aida_ledger.py
+intra	schemas/contradiction.schema.json	scripts/aida_ledger.py
+intra	schemas/inbox.schema.json	scripts/aida_ledger.py
+
+# --- Документы методологии (docs/**) ----------------------------------------
+intra	docs/AIDA_LEDGER_TZ.md	scripts/aida_ledger.py
+intra	docs/AIDA_LOCKS_TZ.md	policies/SHIFTS.md
+intra	docs/ONBOARDING_LEAD_DEVELOPER.md	START_HERE.md
+
+# --- Overlay README (упоминаются в методологии оверлеев) ---------------------
+intra	project-overlays/sitka-office/README.md	scripts/check-overlay-consistency.sh
+intra	project-overlays/astro/README.md	scripts/check-overlay-consistency.sh
+
+# --- Cross-repo: пути продуктового репо sitka-office ------------------------
+# Упомянуты в методологии С КОНТЕКСТОМ «в sitka-office» — резолвятся против
+# $HOME/Projects/sitka-office, НЕ против ai-dev-system. Наивный резолв против
+# ai-dev-system дал бы ложный phantom (в overlay этих файлов нет).
+crossrepo:sitka-office	.claude/risk-tiers.md	policies/MODES.md
+crossrepo:sitka-office	.claude/agents/sitka-reviewer.md	ROLE_MODEL.md

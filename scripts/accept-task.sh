@@ -117,7 +117,13 @@ fi
 # Tier B/C — Mode optional (missing field tolerated; legacy tasks pre-2026-05-08
 # do not have Mode at all). Tier A without Mode=strict — refusal regardless of
 # whether Mode is missing or set to a non-strict value. See policies/MODES.md.
-CURRENT_TIER="$(grep -m1 -E '^- Risk tier:' "${FILE}" | sed -E 's/^- Risk tier:[[:space:]]*//' | awk '{print $1}')"
+#
+# Регистр tier нормализуем к ВЕРХНЕМУ перед сравнением (инцидент X-1, регистр):
+# new-task.sh пишет поле как есть, без линта регистра. Без нормализации строчная
+# '- Risk tier: a' считалась бы НЕ-Tier-A и разом пропускала все три ворота Tier A
+# (Mode strict + независимый Reviewer + Reviewer-HANDOFF). Денежная Tier A с
+# 'a'+normal+self прошла бы приёмку. tr приводит 'a'/'A'/'A (high)' → 'A …'.
+CURRENT_TIER="$(grep -m1 -E '^- Risk tier:' "${FILE}" | sed -E 's/^- Risk tier:[[:space:]]*//' | awk '{print toupper($1)}')"
 if [[ "${CURRENT_TIER}" == "A" ]]; then
   CURRENT_MODE="$(grep -m1 -E '^- Mode:' "${FILE}" | sed -E 's/^- Mode:[[:space:]]*//' | awk '{print $1}')"
   if [[ "${CURRENT_MODE}" != "strict" ]]; then
@@ -205,8 +211,13 @@ if [[ "${CURRENT_TIER}" == "A" ]]; then
       fi
 
       # Status: не open — проверка дошла до адресата (acknowledged / closed).
+      # '|| true': если у кандидата-HANDOFF нет строки '- Status:', grep -m1 даёт
+      # ненулевой код; под `set -e` + pipefail это аварийно роняло весь скрипт с
+      # пустым RC=1 вместо документированного RC=65 с объяснением. Кандидат без
+      # Status просто пропускаем (hf_status пустой → continue ниже). Соседние
+      # *_line уже имеют '|| true' — приводим эту строку к тому же контракту.
       hf_status="$(printf '%s\n' "${header}" | grep -m1 -E '^- Status:' \
-                     | sed -E 's/^- Status:[[:space:]]*//' | awk '{print tolower($1)}')"
+                     | sed -E 's/^- Status:[[:space:]]*//' | awk '{print tolower($1)}' || true)"
       [[ "${hf_status}" == "open" ]] && continue
       [[ -z "${hf_status}" ]] && continue
 
