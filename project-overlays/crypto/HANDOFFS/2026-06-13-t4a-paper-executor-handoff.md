@@ -9,7 +9,8 @@
 - Model: Opus
 - Role mode: Worker
 - TASK: project-overlays/crypto/TASKS/2026-06-13-t4a-paper-executor.md
-- Risk tier: B, mode normal
+- Risk tier: B (исходно) → A strict (доработка по ревью 13.06, расширенный
+  периметр: трогаем КОНТРАКТ-схему)
 
 ## Summary
 
@@ -206,3 +207,107 @@ FAILED test_distribute_tie_goes_to_first_in_order
 - **Р-4 (estimated≠realized расхождение):** на табличном кейсе realized=757.28
   при estimated=760 (разница = fees 2.72). Это ОЖИДАЕМО и есть смысл разведения
   §9.3 — не дефект. Ревью стоит убедиться, что нигде факт не подменён прогнозом.
+
+---
+
+## Доработка по ревью 13.06 (контракт position_pct)
+
+Ревью (`HANDOFFS/2026-06-13-t4a-paper-executor-review.md`, REJECT, 1 критическая,
+вердикт Admin'а: доработка с расширением периметра, риск B→A strict). Дыра на
+стыке: схема `decision_output` делала `position_pct` опциональным у атомов,
+двигающих позицию/буфер, а исполнитель читал его напрямую → KeyError на
+схемно-валидном входе. Ядро на практике всегда кладёт `position_pct` у этих
+атомов (проверено по `core/src/Cpds.hs`), поэтому на боевом конвейере падение не
+стреляло — но контракт был нечестен. Починено в КОРНЕ (контракт), плюс страховка
+в исполнителе. Три части:
+
+### 1. Схема — `schemas/decision_output.schema.json`
+
+`action` переведён с одиночного `if/then` на `allOf` с ДВУМЯ независимыми
+`if/then`:
+
+- **`estimated_net_profit`** — обязателен для **TakeProfit, DistributeProfit,
+  BuyDipFromBuffer, MoveBufferToTerminal** (как было — НЕ тронуто).
+- **`position_pct`** (новое) — условно-обязателен для **TakeProfit,
+  CreateSaleLock, BuyDipFromBuffer, MoveBufferToTerminal**.
+
+Множества РАЗНЫЕ и это намеренно: `estimated` включает DistributeProfit и НЕ
+включает CreateSaleLock; `position` — наоборот. **DistributeProfit без
+position_pct остаётся валидным** (у него `distribution_plan`, не доля позиции).
+Observe/ManualReview — без обоих. Описания в схеме (action / position_pct)
+обновлены, чтобы контракт был самодокументирован.
+
+### 2. Ядро — НЕ трогали логику, golden НЕ менялись
+
+Логика ядра (Cpds/Gate/Signal/Profit/Reentry) и Haskell-код — без изменений.
+Выход ядра остаётся валиден по ужесточённой схеме: ядро уже кладёт `position_pct`
+у TakeProfit/CreateSaleLock/BuyDipFromBuffer (см. `Cpds.hs`:
+`takeProfitTriple`/`capitulation`), а DistributeProfit у него `position_pct =
+Nothing` — что схема и разрешает.
+
+**Существующие golden НЕ менялись** — все остались валидны/невалидны как были:
+- `valid.1.json` (observe_only, только Observe) — ни одно правило не триггерит;
+- `valid.2.json` (тройка, **входит в cross_hash**) — TakeProfit и CreateSaleLock
+  уже несут position_pct → валиден БЕЗ правки → **закреплённый кросс-хэш не
+  поехал** (байты файла не тронуты);
+- `invalid.2.no_profit.json` — остался невалиден (TakeProfit без
+  estimated_net_profit).
+
+**Добавлены два golden** (зарегистрированы в `golden/manifest.json`, в cross_hash
+НЕ добавлялись — пинов хэшей не трогали):
+- `invalid.3.no_position_pct.json` — CreateSaleLock без position_pct → схема
+  отвергает (негативный кейс контракта);
+- `valid.3.buy_dip.json` — BuyDipFromBuffer с position_pct → валиден.
+
+### 3. Исполнитель — `platform/cpds_platform/paper/executor.py`
+
+Добавлен `_require_position_pct(action)` — единая страховка ПОВЕРХ контракта:
+отсутствие `position_pct` у атома, где он обязан, → явная `ExecutorError` с
+понятным сообщением, а не голый `KeyError`. Применён в трёх местах прямого
+чтения:
+- `_exec_take_profit` (был `action["position_pct"]`, executor.py:222);
+- `_exec_buy_dip` (был `action["position_pct"]`, executor.py:528);
+- `_exec_create_lock` (fallback без предшествующей продажи раньше МОЛЧА
+  подставлял 0 → блокировка с qty 0; теперь — явная ошибка).
+
+### Негативные тесты (`platform/tests/test_paper_executor.py`)
+
+- `test_take_profit_missing_position_pct_explicit_error` — TakeProfit без доли →
+  ExecutorError (не KeyError);
+- `test_buy_dip_missing_position_pct_explicit_error` — то же для BuyDip;
+- `test_create_sale_lock_missing_position_pct_no_prior_sale_explicit_error` —
+  CreateSaleLock без доли и без продажи → ExecutorError, а не тихий qty 0;
+- `test_schema_rejects_money_atom_without_position_pct` — контрактный тест:
+  CreateSaleLock без position_pct невалиден; DistributeProfit без position_pct
+  валиден; DistributeProfit без estimated_net_profit по-прежнему невалиден
+  (не сломали существующую обязательность).
+
+### make check (чистый клон /tmp) и регресс
+
+Прогнан `make check` в свежем клоне `/tmp/cp-t4a-verify` (HEAD = `9c611fd`,
+Haskell собран офлайн с нуля). **Итог: «ВСЁ ЗЕЛЁНОЕ», exit 0.** По кускам:
+
+- **Ядро (Haskell):** core 27, profit 36, signal 44, **decide 43**, reentry 50 —
+  все PASS. (decide-сьют проверяет: TakeProfit/BuyDip несут position_pct,
+  DistributeProfit несёт distribution_plan — то самое, что схема теперь требует.)
+- **Python (pytest):** 186 passed (включая golden-валидацию с 2 новыми
+  образцами и 4 новых теста защиты/контракта полигона).
+- **Кросс-хэш Python==Haskell:** все 8 образцов совпали (включая
+  `decision_output/valid.2.json` — закреплённый хэш не поехал).
+- **Злой корпус:** 24 валидных (кросс-хэш совпал), 17 невалидных (оба отвергли) —
+  расхождений нет.
+- **Приёмка CLI:** пройдена.
+- Выход ядра валиден по ужесточённой схеме (замыкание цикла на реальном
+  cpds-core зелёное).
+
+Регресс — прежние 7 пунктов Т-4a целы (все исходные тесты полигона зелёные);
+кросс-хэш Python==Haskell цел; злой корпус цел; golden валидация цела; замыкание
+цикла на реальном ядре работает (ветка `used_core=True`).
+
+### Коммит
+
+- `9c611fd` fix(contract): position_pct условно-обязателен у денежных атомов
+  позиции/буфера — схема (allOf 2×if/then) + 2 golden + защита исполнителя +
+  негативные тесты.
+- branch `feat/t-2-onchain-valuation` (поверх T-4a-коммитов; те же 3cfc357 /
+  ca14982).

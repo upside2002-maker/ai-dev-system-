@@ -1,6 +1,6 @@
 # TASK: t4a-paper-executor
 
-- Status: in-progress
+- Status: review
 - Ready: yes
 - Date: 2026-06-13
 - Project: crypto
@@ -132,12 +132,15 @@
   position_pct там, где обязан → явная ошибка исполнения, НЕ KeyError.
 
 **Расширенная приёмка доработки:**
-- [ ] Схема: денежный атом, двигающий позицию/буфер, БЕЗ position_pct →
-  невалиден (негативный тест); DistributeProfit без position_pct → валиден.
-- [ ] make check зелёный с чистого клона: ВСЁ ядро цело (signal/profit/
-  reentry/decide/core), кросс-хэш Python==Haskell, злой корпус, выход ядра
-  валиден по ужесточённой схеме, golden целы/обновлены.
-- [ ] Исполнитель: атом без обязательного position_pct → явная ошибка, не
-  KeyError (тест).
-- [ ] Прежние 7 пунктов Т-4a по-прежнему зелёные (регресс).
-- [ ] Замыкание цикла на живом ядре по-прежнему работает.
+- [x] Схема: денежный атом, двигающий позицию/буфер, БЕЗ position_pct →
+  невалиден (негативный тест golden `invalid.3.no_position_pct` +
+  `test_schema_rejects_money_atom_without_position_pct`); DistributeProfit без
+  position_pct → валиден (`valid.2` + тот же тест).
+- [x] make check зелёный с чистого клона `/tmp/cp-t4a-verify` (exit 0): ВСЁ ядро
+  цело (core 27/profit 36/signal 44/decide 43/reentry 50), кросс-хэш
+  Python==Haskell 8/8, злой корпус 24/17, выход ядра валиден по ужесточённой
+  схеме, golden целы (закреплённые хэши не тронуты) + 2 добавлены.
+- [x] Исполнитель: атом без обязательного position_pct → явная ExecutorError, не
+  KeyError (`test_take_profit_/buy_dip_/create_sale_lock_missing_position_pct_*`).
+- [x] Прежние 7 пунктов Т-4a по-прежнему зелёные (регресс; Python 186 passed).
+- [x] Замыкание цикла на живом ядре по-прежнему работает (ветка used_core=True).
