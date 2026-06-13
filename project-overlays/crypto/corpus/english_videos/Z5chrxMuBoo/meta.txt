@@ -1,0 +1,10 @@
+TITLE: Valuation in Four Lessons | Aswath Damodaran | Talks at Google
+CHANNEL: Talks at Google
+DATE: 20150217
+DURATION: 1:01:30
+URL: https://www.youtube.com/watch?v=Z5chrxMuBoo
+--- DESCRIPTION ---
+The tools and practice of valuation is intimidating to most laymen, who assume that they do not have the skills and the capability to value companies. In this talk, I propose to lay out four simple propositions about valuation. The first is that valuation is not an extension of accounting, insofar as it is not about recording the past but forecasting the future. The second is that valuation is not just modeling, where people put numbers into Excel spreadsheets and pump out values. A good valuation requires a narrative that binds the numbers together. The third is that valuing an asset or business is very different from pricing that asset or business, a difference that is often blurred in practice. The fourth is that luck plays a disproportionate role in whether you make money off your valuations. Put differently, you can do everything right and still walk away with nothing or worse at the end.
+
+About the Author
+I view myself, first and foremost, as a teacher. I do teach valuation and corporate finance not only to MBAs at Stern but to anyone who will listen (on iTunes U, online and on YouTube). I love to write books, teaching material and blog posts. After 30 years of teaching finance, I still find it fascinating as an interplay of economics, psychology and number crunching.

@@ -1,0 +1,12 @@
+TITLE: A "Fairly Highly Valued" (Stock) Market: The Fed Chair Opines but should anyone listen?
+CHANNEL: Aswath Damodaran
+DATE: 20251006
+DURATION: 32:16
+URL: https://www.youtube.com/watch?v=0faNl-maR5o
+--- DESCRIPTION ---
+Last week, Jerome Powell called US equities "fairly highly valued", squishy words but words that were viewed as a warning about overpriced US equities . That brought back memories of Alan Greenspan talking about "irrational exuberance" in stocks in the 1990s, though many forget that his warning came in 1996 and the dot-com correction did not happen until five years later. In this session, I start by tracing the performance of stock and bond markets through the first three quarters of 2025, and note the disconnect between the economic news stories, mostly doom and gloom, and market performance. I then look at the metrics investors use to time markets, from pricing performance to PE ratios (in their many forms) to earnings yields (compared to treasury rates) to intrinsic value, and note that those indicators all point in the direction of a "richly priced" US equity market. However, even if you believe that this rich pricing translates to overpricing, I examine why acting on that overpricing is difficult to do, even before you consider taxes and transactions costs. Ultimately, market timing remains the impossible dream, drawing investors in with its allure of profits but leaving them with little to show at the end.
+Slides: https://pages.stern.nyu.edu/~adamodar/pdfiles/blog/MktTiming2025.pdf
+Blog Post: https://aswathdamodaran.blogspot.com/2025/10/a-fairly-highly-valued-market-fed-chair.html
+CAPE Backtesting spreadsheet: https://pages.stern.nyu.edu/~adamodar/pc/blog/ShilleCAPEBacktest.xlsx
+Intrinsic value of S&P 500 on September 30, 2025: https://pages.stern.nyu.edu/~adamodar/pc/blog/IntrinsicValueS&P500Sept25.xlsx
+Historical implied equity risk premiums: https://pages.stern.nyu.edu/~adamodar/pc/datasets/histimpl.xlsx

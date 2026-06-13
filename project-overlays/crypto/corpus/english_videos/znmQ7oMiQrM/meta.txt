@@ -1,0 +1,7 @@
+TITLE: Session 1: Introduction to Valuation
+CHANNEL: Aswath Damodaran
+DATE: 20140825
+DURATION: 16:14
+URL: https://www.youtube.com/watch?v=znmQ7oMiQrM
+--- DESCRIPTION ---
+Lays out the rationale for doing valuation as well as the issues of bias, complexity and uncertainty that bedevil it.

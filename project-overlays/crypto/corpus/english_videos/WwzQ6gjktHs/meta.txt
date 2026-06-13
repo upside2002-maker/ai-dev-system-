@@ -1,0 +1,51 @@
+TITLE: Bitcoin: An Improved Social Risk Metric
+CHANNEL: Benjamin Cowen
+DATE: 20260331
+DURATION: 7:31
+URL: https://www.youtube.com/watch?v=WwzQ6gjktHs
+--- DESCRIPTION ---
+Social sentiment has always been a key piece of the crypto cycle, but measuring it properly is the hard part.
+
+In this video, we introduce an improved Social Risk Metric for Bitcoin, designed to better capture the rise and fall of retail participation across cycles. Rather than relying on a single data source, this updated framework combines multiple signals to provide a more complete view of speculative behavior.
+
+We’ve expanded the metric to include:
+
+Google Trends data to track broad public interest
+Coinbase app rankings as a proxy for onboarding and retail inflows
+Followers, subscribers, and view activity across major crypto-focused accounts on platforms like Twitter and YouTube
+
+By integrating these datasets, the goal is to reduce noise and avoid over-reliance on any one signal, creating a more robust indicator of when speculation is overheating or fading.
+
+We walk through how this improved metric behaves across prior cycles, how it compares to earlier versions, and what it’s currently signaling about Bitcoin and the broader crypto market. One of the key takeaways is how sustained uptrends in social interest historically align with major altcoin cycles, and what it means when that trend is absent.
+
+This is not about calling exact tops or bottoms, but about understanding the underlying participation dynamics that tend to define them.
+
+Into The Cryptoverse Premium SALE:
+https://intothecryptoverse.com
+
+For inquiries:
+https://www.benjamincowen.com/
+
+Into The Cryptoverse Newsletter:
+https://newsletter.intothecryptoverse.com/
+
+LIFETIME OPTION:
+https://intothecryptoverse.com/product/subscription-to-the-premium-list-lifetime/
+
+Alternative Option:
+https://www.patreon.com/intothecryptoverse
+
+Merch:
+https://store.intothecryptoverse.com/
+
+
+Disclaimer: The information presented within this video is NOT financial advice.
+
+Telegram: https://t.me/intocryptoverse
+Twitter: https://twitter.com/intocryptoverse
+TikTok: tiktok.com/@benjamincowencrypto
+Instagram: https://www.instagram.com/bjcowen/
+Discord: https://discord.gg/UGwc6eR
+Facebook: https://www.facebook.com/groups/intothecryptoverse
+Reddit: https://www.reddit.com/r/intothecryptoverse/
+Website: https://intothecryptoverse.com/

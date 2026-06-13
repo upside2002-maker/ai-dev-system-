@@ -1,0 +1,29 @@
+{
+  "_meta": {
+    "purpose": "Курируемый шорт-лист качественных англоязычных авторов по трейдингу/макро/экономике для сбора. Отбор: верифицируемая экспертиза (управляющие, профессора, экс-ФРС/трейдеры), доказательный подход, анти-хайп, минимум продаж курсов. Редактируй перед утром — discovery-фаза найдёт каналы и лучшие видео по этому списку.",
+    "selection_criteria": "credentialed OR track-record; evidence/data-driven; не обещает иксов; не продаёт сигналы/курсы как основной продукт; объясняет механику, а не эмоции",
+    "excluded_deliberately": [
+      "Meet Kevin / Graham Stephan / Andrei Jikh — финансовый эдьютейнмент, не аналитика",
+      "Day-trading guru-каналы с обещанием доходности и продажей курсов/сигналов",
+      "Raoul Pal сольные крипто-коллы — хайповые (интервью Real Vision как площадка — ок выборочно)",
+      "ICT/Smart-Money-новоделы без верифицируемого трек-рекорда"
+    ]
+  },
+  "authors": [
+    {"name": "Patrick Boyle", "domain": "markets/quant/econ", "why": "экс-управляющий хедж-фондом, преподаёт в Cass; сухо, антихайп, разбор механики рынков и фейлов", "priority": 1},
+    {"name": "Aswath Damodaran", "domain": "valuation/equities", "why": "профессор NYU Stern, «декан оценки»; академический эталон оценки компаний", "priority": 1},
+    {"name": "Ben Felix (Rational Reminder)", "domain": "evidence-based investing", "why": "PM, ссылается на академические работы; антимаркетинговый, про факторы/портфели", "priority": 1},
+    {"name": "Lyn Alden", "domain": "macro/liquidity", "why": "уважаемый макро-исследователь, инженерный бэкграунд; ликвидность, фискал, энергия", "priority": 1},
+    {"name": "Joseph Wang (Fed Guy)", "domain": "monetary plumbing", "why": "экс-трейдер ФРБ Нью-Йорка; устройство монетарной системы из первых рук", "priority": 1},
+    {"name": "Aswath Damodaran lectures", "domain": "corporate finance", "why": "полные лекционные курсы по оценке/корпфину — фундаментальный референс", "priority": 2},
+    {"name": "Money & Macro (Joeri Schasfoort)", "domain": "macro/econ", "why": "PhD-экономист, строгие объяснители макрособытий", "priority": 2},
+    {"name": "Jeff Snider (Eurodollar University)", "domain": "monetary/eurodollar", "why": "глубокий разбор долларовой системы и кривых; строго по данным", "priority": 2},
+    {"name": "Mike Green", "domain": "market structure/passive flows", "why": "квант-PM; пассивные потоки и микроструктура рынка", "priority": 2},
+    {"name": "tastylive (Tom Sosnoff)", "domain": "options", "why": "опционная механика по статистике/вероятностям; релевантно опционному слою платформы", "priority": 2},
+    {"name": "Benjamin Cowen", "domain": "crypto/quant", "why": "данные/циклы по крипте, антипамп внутри домена; релевантно crypto-platform", "priority": 2},
+    {"name": "Odd Lots (Bloomberg)", "domain": "macro/markets interviews", "why": "Weisenthal & Alloway; высокосигнальные интервью с практиками", "priority": 3},
+    {"name": "Forward Guidance / Monetary Matters (Jack Farley)", "domain": "macro interviews", "why": "длинные интервью с институциональными макро-практиками", "priority": 3},
+    {"name": "Macro Voices (Erik Townsend)", "domain": "institutional macro", "why": "институциональный макро, сырьё, энергия", "priority": 3},
+    {"name": "Hidden Forces (Demetri Kofinas)", "domain": "macro/systems", "why": "строгие системные разговоры о рынках и экономике", "priority": 3}
+  ]
+}

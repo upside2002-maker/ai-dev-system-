@@ -1,0 +1,34 @@
+TITLE: How to Build a Short Strangle From Scratch. Strike Selection, Buying Power and Everything Else
+CHANNEL: tastylive
+DATE: 20260609
+DURATION: 9:12
+URL: https://www.youtube.com/watch?v=tTaijtlQL1s
+--- DESCRIPTION ---
+The short strangle is one of the most powerful strategies in premium selling because it does not require you to pick a direction. You sell a put below the stock and a call above it, collect credit on both sides, and let time and volatility do the work. Jim Schultz builds one live on Starbucks from scratch, covering every number from strike selection to buying power to account size requirements.
+
+The setup uses the 16 delta on both sides in the July cycle at 39 days. Starbucks at $95 makes it accessible for most account sizes. You need at least $20,000 to trade an undefined risk position like this responsibly. Managing winners comes at 50 percent of max profit. Managing losers on a short strangle is coming in the next episode.
+
+📊 tastylive: https://www.tastylive.com/
+📰 Get Tom's pre-market analysis every morning: https://www.tastylive.com/newsletters
+📘 FREE Options Strategy Guide: https://tinyurl.com/bp9ms763
+📱 Follow tastylive on X: https://x.com/tastyliveshow
+
+Chapters
+0:00 Why the short strangle works without picking direction
+1:30 The gotcha: undefined risk explained
+2:30 Setting up the trade: expiration and IV rank
+4:00 Strike selection at 16 delta on both sides
+5:30 Credit, max profit, and buying power breakdown
+7:00 Account size: why you need at least $20,000
+8:00 Managing winners at 50 percent of max profit
+9:00 Teaser: managing losers is the next episode
+
+#ShortStrangle #OptionsTrading #JimSchultz #tastylive #CalculatedRisk #PremiumSelling #Starbucks #OptionsEducation
+
+tastylive is a real financial network, producing hours of live programming every day. Follow along as our experts navigate the markets, provide actionable trading insights, and teach you how to trade. With over 120 original segments, and over 25 personalities, we'll help you take your trading to the next level, whether you are new to trading or a seasoned veteran.
+
+tastylive content is created, produced, and provided solely by tastylive, Inc. ("tastylive") and is for informational and educational purposes only. It is not, nor is it intended to be, trading or investment advice or a recommendation that any security, futures contract, digital asset, other product, transaction, or investment strategy is suitable for any person. Trading securities, futures products, and digital assets involve risk and may result in a loss greater than the original amount invested. Investment information provided may not be appropriate for all investors and is provided without respect to individual investor financial sophistication, financial situation, investing time horizon or risk tolerance. Options, futures, and futures options are not suitable for all investors. Prior to trading securities, options, futures, or futures options, please read all applicable risk disclosures, including, but not limited to, the Characteristics and Risks of Standardized Options Disclosure and the Futures and Exchange Traded Options Risk Disclosure Statement found at https://tastytrade.com/disclosures/.
+
+Past performance is not indicative of future results. Performance is not presented net of all commissions, fees, and expenses. Multi-leg option strategies incur higher transaction costs than single leg trades as they involve multiple commission charges. Examples provided are for illustrative, informational, and educational purposes only and are not intended to be reflective of results you can expect to achieve. Supporting documentation for any claims, including claims made on behalf of options programs), comparisons, statistics, or other technical data, if applicable, will be supplied upon request.
+
+tastylive, through its content, financial programming or otherwise, does not provide investment or financial advice or make investment recommendations. tastylive is not a licensed financial adviser, registered investment adviser, or a registered broker-dealer.

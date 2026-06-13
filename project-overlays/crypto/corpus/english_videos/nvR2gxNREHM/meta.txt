@@ -1,0 +1,11 @@
+TITLE: Data Update 1 for 2026: The Push and Pull of Data
+CHANNEL: Aswath Damodaran
+DATE: 20260109
+DURATION: 29:34
+URL: https://www.youtube.com/watch?v=nvR2gxNREHM
+--- DESCRIPTION ---
+I am not fond of abstract mathematics, but I do love numbers, and at the start of every year since the 1990s, I have played Moneyball with the data for the previous year on individual companies. I take the data from financial filings from companies and from the markets that they trade in, and compute industry averages for the variables that I find myself needing in my corporate financial,, valuation and investing analyses.  Since there is little in this data that I will gain from keeping it for myself, I have shared this data with anyone who wants it. In this session, I start with an assessment of why, in the golden age of data (with more data available and accessible than ever before), we feel more off balance than we used to. I then describe my data universe, which includes the 48,156 companies that were publicly traded and had a market price available at the start of 2026, as well as how I approach estimation and who the data might be most useful to. 
+Blog post: https://aswathdamodaran.blogspot.com/2026/01/data-update-1-for-2026-push-and-pull-of.html
+My webpage: damodaran.com
+Current data: https://pages.stern.nyu.edu/~adamodar/New_Home_Page/datacurrent.html 
+Archived data: https://pages.stern.nyu.edu/~adamodar/New_Home_Page/dataarchived.html

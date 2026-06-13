@@ -1,0 +1,33 @@
+TITLE: Options Delta: What They Don't Teach You In Finance Class
+CHANNEL: tastylive
+DATE: 20260607
+DURATION: 21:11
+URL: https://www.youtube.com/watch?v=hInlXkUYerc
+--- DESCRIPTION ---
+Delta is the most versatile Greek in options trading and also the most misunderstood. Finance classes teach it one way. Actual traders use it two other ways far more often. Jim Schultz breaks down all three in episode 8 of Where Do I Start.
+
+At trade entry, delta is a probability estimate telling you the approximate chance that a strike expires in the money. Over the life of a position, delta is a share equivalent telling you how much directional exposure you are actually carrying. The textbook definition, how much the option price moves per dollar in the stock, is the one traders use least. All three are explained with live examples on Apple in the tastytrade platform, including how delta changes as time passes and as options move in and out of the money.
+
+📊 tastylive: https://www.tastylive.com/
+📰 Get Tom's pre-market analysis every morning: https://www.tastylive.com/newsletters
+📘 FREE Options Strategy Guide: https://tinyurl.com/bp9ms763
+📱 Follow tastylive on X: https://x.com/tastyliveshow
+
+Chapters
+0:00 Why delta is the most important Greek
+1:00 Use one: option price move explained
+3:00 Use two: delta as a probability estimate
+5:00 Use three: delta as share equivalent
+8:00 Live Apple options chain walkthrough
+11:00 OTM deltas shrink over time, ITM deltas grow
+15:00 What classrooms teach vs what traders actually use
+
+#OptionsDelta #OptionsGreeks #OptionsTrading #JimSchultz #tastylive #WhereDoIStart #OptionsForBeginners #OptionsEducation
+
+tastylive is a real financial network, producing hours of live programming every day. Follow along as our experts navigate the markets, provide actionable trading insights, and teach you how to trade. With over 120 original segments, and over 25 personalities, we'll help you take your trading to the next level, whether you are new to trading or a seasoned veteran.
+
+tastylive content is created, produced, and provided solely by tastylive, Inc. ("tastylive") and is for informational and educational purposes only. It is not, nor is it intended to be, trading or investment advice or a recommendation that any security, futures contract, digital asset, other product, transaction, or investment strategy is suitable for any person. Trading securities, futures products, and digital assets involve risk and may result in a loss greater than the original amount invested. Investment information provided may not be appropriate for all investors and is provided without respect to individual investor financial sophistication, financial situation, investing time horizon or risk tolerance. Options, futures, and futures options are not suitable for all investors. Prior to trading securities, options, futures, or futures options, please read all applicable risk disclosures, including, but not limited to, the Characteristics and Risks of Standardized Options Disclosure and the Futures and Exchange Traded Options Risk Disclosure Statement found at https://tastytrade.com/disclosures/.
+
+Past performance is not indicative of future results. Performance is not presented net of all commissions, fees, and expenses. Multi-leg option strategies incur higher transaction costs than single leg trades as they involve multiple commission charges. Examples provided are for illustrative, informational, and educational purposes only and are not intended to be reflective of results you can expect to achieve. Supporting documentation for any claims, including claims made on behalf of options programs), comparisons, statistics, or other technical data, if applicable, will be supplied upon request.
+
+tastylive, through its content, financial programming or otherwise, does not provide investment or financial advice or make investment recommendations. tastylive is not a licensed financial adviser, registered investment adviser, or a registered broker-dealer.

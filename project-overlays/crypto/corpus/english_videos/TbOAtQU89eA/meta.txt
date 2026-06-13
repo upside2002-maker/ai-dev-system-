@@ -1,0 +1,9 @@
+TITLE: AI Disruption: Doomsday Scenario or Fizzle?
+CHANNEL: Aswath Damodaran
+DATE: 20260304
+DURATION: 28:50
+URL: https://www.youtube.com/watch?v=TbOAtQU89eA
+--- DESCRIPTION ---
+The AI story has captured attention for the last three years, driving markets and encroaching on our personal lives. For much of that period, that story has been told by AI advocates, who, not surprisingly, have emphasized its good side. In the last few months, there has been some push back on that story, taking the form of negative market reactions to large AI investments by tech companies and in the last week, an outsized market reaction to a doomsday scenario from Citrini, where AI works so quickly and so well at displacing workers that it causes an economic crisis. In reaction, we saw at least a dozen entities release their own scenarios, many with more benign outcomes for the economy. In this session, I provide a framework built around the magnitude and speed of the AI disruption that can be used to assess how possible/plausible/probable each of these scenarios is, and more critically, one that you can use to develop your own, and I close with a postscript that is personal on what you (if you are a target for AI replacement) can do to keep your bot at bay!
+Slides: https://pages.stern.nyu.edu/~adamodar/pdfiles/blog/AIScenarios.pdf
+Blog Post: https://bit.ly/4rMUhy9

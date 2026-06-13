@@ -1,0 +1,9 @@
+TITLE: Data Update 3 for 2026: The Trust Deficit - From Bonds to Gold to Bitcoin!
+CHANNEL: Aswath Damodaran
+DATE: 20260127
+DURATION: 23:41
+URL: https://www.youtube.com/watch?v=Jq55_yR_wJ4
+--- DESCRIPTION ---
+In this session, I start by looking at four news stories in 2025 that shook our trust in US institutions - the tariffs announced at the end of the first quarter, the ratings downgrade for the US two weeks later, the lengthy government shutdown in October/November and the yearlong questions about who would run the Fed. That loss of trust though played out different in different markets. The US bond market, treasuries and corporates, did not skip a step and seemed to take the loss of trust in stride. The currency markets were more shaken, with the dollar losing strength almost across the board. The gold and silver markets were spooked, with price surging, as fear drove at least a subset of investors to move out of financial assets. It is telling that Bitcoin struggled, behaving like equities for a portion of the year, a collectible for some and not quite doing well on either front.
+Slides: https://pages.stern.nyu.edu/~adamodar/pdfiles/blog/DataUpdate3for2026.pdf
+Blog Post:

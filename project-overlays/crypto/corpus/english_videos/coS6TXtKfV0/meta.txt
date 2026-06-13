@@ -1,0 +1,11 @@
+TITLE: Session 5 (of 42): Valuation - The Basics
+CHANNEL: Aswath Damodaran
+DATE: 20260324
+DURATION: 23:59
+URL: https://www.youtube.com/watch?v=coS6TXtKfV0
+--- DESCRIPTION ---
+Can you invest in something without knowing its value? While many people do, it strikes us as imprudent. In this session, we look at the basics of valuation, by laying out the ingredients of an intrinsic valuation model: cash flows, discount rates and growth. In particular, we note the importance of being consistent in your assumptions and note that higher growth can add value or destroy value. In the last part of the session, we look at relative valuation, where we value an asset by looking at how the market is pricing similar assets, and note the importance of controlling for cash flows, growth and risk, when using multiples.
+Playlist for class (Intro + 42 sessions): https://youtube.com/playlist?list=PLUkh9m2BorqnZGADa8cTzeJblmrZY_SqP&si=zI2pk17pJeld4nWR
+Slides: https://www.stern.nyu.edu/~adamodar/pdfiles/invphilslides25/session5.pdf
+Post-class test: https://www.stern.nyu.edu/~adamodar/pdfiles/invphilcertificate/postclass/session5test.pdf
+Post-class solution: https://www.stern.nyu.edu/~adamodar/pdfiles/invphilcertificate/postclass/session5soln.pdf

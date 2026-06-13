@@ -1,0 +1,44 @@
+TITLE: This 8-Minute Video Will Fix How You Think About Break-Even Points Forever.
+CHANNEL: tastylive
+DATE: 20260604
+DURATION: 8:42
+URL: https://www.youtube.com/watch?v=1ZweG8PRGmU
+--- DESCRIPTION ---
+You sold a strangle. The stock moved to your break-even point. You're losing money. That makes no sense or does it?
+
+Jim Schultz unpacks one of the most common points of confusion for options traders: the break-even point on any P&L graph only applies at expiration. Before expiration, the break-even is a moving target. And the reason is extrinsic value.
+
+When a stock moves toward one of your short strikes, that strike gets closer to at the money — and ATM options carry the highest extrinsic value on the entire chain. So the extrinsic value in the option you sold starts building up. That works directly against you. You want extrinsic value to go down. When it goes up, the delta effect of the move overwhelms whatever theta you've collected so far, and you lose money before you ever reach your "break-even."
+
+Losing money temporarily near your strike early in the trade is not an error. It's just how options are priced.
+
+📊 tastylive: https://www.tastylive.com/
+📰 Get Tom's pre-market analysis every morning: https://www.tastylive.com/newsletters
+📘 FREE Options Strategy Guide: https://tinyurl.com/bp9ms763
+📱 Follow tastylive on X: https://x.com/tastyliveshow
+
+Chapters
+0:00 The Break-Even Confusion
+0:57 Why Break-Even Only Works at Expiration
+1:55 Extrinsic Value Builds When Stock Moves
+3:32 Tesla Live Example on Platform
+5:35 ATM Strike Has Highest Extrinsic Value
+6:43 What the P&L Curve Actually Shows
+7:38 Key Takeaway
+
+#optionstrading #breakeven #strangle #extrinsicvalue #calculatedrisk #tastylive #optionseducation #shortpremium #howtotradeoptions #optionsforbeginners
+
+Disclaimer
+tastylive is a real financial network, producing hours of live programming every day. Follow along as our experts navigate the markets, provide actionable trading insights, and teach you how to trade. With over 120 original segments, and over 25 personalities, we'll help you take your trading to the next level, whether you are new to trading or a seasoned veteran.
+
+tastylive content is created, produced, and provided solely by tastylive, Inc. ("tastylive") and is for informational and educational purposes only. It is not, nor is it intended to be, trading or investment advice or a recommendation that any security, futures contract, digital asset, other product, transaction, or investment strategy is suitable for any person.
+
+Trading securities, futures products, and digital assets involve risk and may result in a loss greater than the original amount invested. Investment information provided may not be appropriate for all investors and is provided without respect to individual investor financial sophistication, financial situation, investing time horizon or risk tolerance. Options, futures, and futures options are not suitable for all investors.
+
+Prior to trading securities, options, futures, or futures options, please read all applicable risk disclosures, including, but not limited to, the Characteristics and Risks of Standardized Options Disclosure and the Futures and Exchange Traded Options Risk Disclosure Statement found at https://tastytrade.com/disclosures/.
+
+Past performance is not indicative of future results. Performance is not presented net of all commissions, fees, and expenses. Multi-leg option strategies incur higher transaction costs than single leg trades as they involve multiple commission charges.
+
+Examples provided are for illustrative, informational, and educational purposes only and are not intended to be reflective of results you can expect to achieve. Supporting documentation for any claims, including claims made on behalf of options programs), comparisons, statistics, or other technical data, if applicable, will be supplied upon request.
+
+tastylive, through its content, financial programming or otherwise, does not provide investment or financial advice or make investment recommendations. tastylive is not a licensed financial adviser, registered investment adviser, or a registered broker-dealer.

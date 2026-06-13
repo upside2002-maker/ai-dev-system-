@@ -1,0 +1,47 @@
+TITLE: Bitcoin: A Beautiful Chart
+CHANNEL: Benjamin Cowen
+DATE: 20260610
+DURATION: 8:04
+URL: https://www.youtube.com/watch?v=vxnpP3EOl-8
+--- DESCRIPTION ---
+This chart shows the percentage of existing coins whose price was lower than the current price
+
+the last time they moved on-chain. Currently only data for Bitcoin is available. There are also options to
+
+switch to the percentage of existing coins whose price was higher than the current price the last time they moved
+
+on-chain, and an option to view both.
+
+Usage
+Putting in a new all time high implies that 100% of supply is being held in profit. When multiple all time highs are put in, the percentage of supply in profit could stay near 100% for a while.
+
+One of the most clear patterns is that historically the crossing of supply in profit and loss has been a necessary condition for the market cycle bottom to occur.
+
+By applying a moving average one can also identify overheated areas when the moving average starts to reach values close to 100%. For example, the 50D SMA reaching values of 97% or above has historically been a fairly decent indicator for predicting a (short term) pullback. This does not mean that pullbacks can't happen anytime else of course. On the other hand, during bear markets, the bottom tends to occur near values of 40-50 percent of supply being held in profit.
+
+Into The Cryptoverse Premium SALE:
+https://intothecryptoverse.com
+
+For inquiries and to subscribe to the monthly newsletter (free):
+https://www.benjamincowen.com/
+
+Into The Cryptoverse Newsletter:
+https://newsletter.intothecryptoverse.com/
+
+Alternative Option:
+https://www.patreon.com/intothecryptoverse
+
+Merch:
+https://store.intothecryptoverse.com/
+
+
+Disclaimer: The information presented within this video is NOT financial advice.
+
+Telegram: https://t.me/intocryptoverse
+Twitter: https://twitter.com/benjamincowen
+TikTok: tiktok.com/@benjamincowencrypto
+Instagram: https://www.instagram.com/bjcowen/
+Discord: https://discord.gg/UGwc6eR
+Facebook: https://www.facebook.com/groups/intothecryptoverse
+Reddit: https://www.reddit.com/r/intothecryptoverse/
+Website: https://intothecryptoverse.com/

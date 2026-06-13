@@ -1,0 +1,9 @@
+TITLE: Data Update 5 for 2026: Risk and Hurdle Rates - The 2026 Edition!
+CHANNEL: Aswath Damodaran
+DATE: 20260205
+DURATION: 32:13
+URL: https://www.youtube.com/watch?v=r06tnztEOys
+--- DESCRIPTION ---
+In this session, I move from markets to companies, looking specifically at differences in risk across companies and how these differences play out in hurdle rates, an essential ingredient in both corporate finance and valuation. I start by using the Chinese symbol for risk, a combination of the symbols for danger and opportunity, and introduce a range of risk measures, price and earnings based. Within each one, I look at the distribution across sectors, and then convert the risk measures into costs of equity and capital for companies. If there are messages here, it is that hurdle rates are opportunity costs (not wishes or desires) and that the range across companies remains tight, making spending too much time on getting them estimated is a misuse of your time.
+Slides: https://pages.stern.nyu.edu/~adamodar/pdfiles/blog/DataUpdate5for2026.pdf
+Blog Post:

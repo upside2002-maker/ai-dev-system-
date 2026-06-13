@@ -1,0 +1,11 @@
+TITLE: Session 1 (of 42): Introduction to Investment Philosophies
+CHANNEL: Aswath Damodaran
+DATE: 20260324
+DURATION: 19:19
+URL: https://www.youtube.com/watch?v=5NuOTAVw6K4
+--- DESCRIPTION ---
+In this session, we look at what an investment philosophy is, why you need one to be a successful investor and how best to tailor a philosophy to fit you (in terms of risk aversion, time horizon and tax status).
+Playlist for class (Intro + 42 sessions): https://youtube.com/playlist?list=PLUkh9m2BorqnZGADa8cTzeJblmrZY_SqP&si=zI2pk17pJeld4nWR
+Slides: https://www.stern.nyu.edu/~adamodar/pdfiles/invphilslides25/session1.pdf
+Post-class test: https://www.stern.nyu.edu/~adamodar/pdfiles/invphilcertificate/postclass/session1test.pdf
+Post-class solution: https://www.stern.nyu.edu/~adamodar/pdfiles/invphilcertificate/postclass/session1soln.pdf
