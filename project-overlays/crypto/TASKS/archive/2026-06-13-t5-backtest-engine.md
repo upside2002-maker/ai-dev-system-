@@ -1,6 +1,6 @@
 # TASK: t5-backtest-engine
 
-- Status: review
+- Status: done
 - Ready: yes
 - Date: 2026-06-13
 - Project: crypto
