@@ -4,10 +4,12 @@
 # отсутствуют слова из стоп-списка policies/OPERATOR_LANGUAGE.md (выборка самых
 # вредных — commit/branch/push/HEAD/container/healthcheck/bcrypt/curl/tier/…).
 #
-# Тонкость: реестр живой, но тексты решений (на рабочем языке) в операторский
-# канал НЕ зачитываются — слой даёт счётчики и простые ориентиры. Эта проверка
-# и стережёт то, что подача осталась операторской, даже если в ledger налили
-# техжаргона. Запуск read-only; ничего не мутируется.
+# Тонкость: реестр здоров (фикстура), но тексты решений (на рабочем языке) в
+# операторский канал НЕ зачитываются — слой даёт счётчики и простые ориентиры.
+# Эта проверка и стережёт то, что подача осталась операторской, даже если в
+# ledger налили техжаргона. Реестр ФИКСТУРНЫЙ (AIDA_LEDGER_DIR), обход живых
+# проектов и почты ОТКЛЮЧЁН (офлайн-режим) — быстро и детерминированно. Живой
+# ledger/ не мутируется.
 set -uo pipefail
 # shellcheck source=evals/lab/lib/harness.sh
 source "$(dirname "${BASH_SOURCE[0]}")/../../lib/harness.sh"
@@ -15,7 +17,11 @@ echo "TEST brief-owner-no-jargon PASS --for-owner -> без техжаргона
 
 if ! has_python3; then echo "python3 недоступен"; exit 77; fi
 
-OUT="$(bash "${REPO_ROOT}/scripts/aida-brief" --for-owner 2>&1)"; RC=$?
+LED="$(make_tmp_ledger)"
+trap 'rm -rf "$LED"' EXIT
+seed_fixture_ledger "$LED"
+
+OUT="$(run_aida_brief "$LED" --for-owner)"; RC=$?
 
 rc=0
 assert_exit 0 "$RC" || rc=1

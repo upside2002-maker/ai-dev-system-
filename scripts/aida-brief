@@ -31,6 +31,16 @@
 #   0  — экран собран (в т.ч. с честными строками деградации внутри);
 #   64 — usage error (неизвестный флаг / неизвестный slug в --scope).
 #
+# Офлайн-режим для тестов (AIDA_BRIEF_NO_PROJECTS=1):
+#   Пропускает ЖИВОЙ обход проектов (git-снимки sitka/astro/crypto через
+#   snapshot.sh + status.sh) и почту (MAILBOX) — именно они ходят по живым
+#   репозиториям и ящику и дают зависание на 180с. Заголовки секций остаются
+#   на месте (структура экрана неизменна), а вместо живого обхода печатается
+#   честная строка «обход проектов отключён (офлайн-режим теста)». Реестр-ядро
+#   при этом читается ПОЛНОСТЬЮ (через AIDA_LEDGER_DIR на фикстуру), поэтому
+#   логика честной деградации И-3 (пусто-vs-недоступно) проверяется как раньше,
+#   но за секунды и без живых репозиториев. В обычной работе флаг не ставят.
+#
 # Usage:
 #   bash scripts/aida-brief [--for-agent | --for-owner] [--scope <slug>]
 #
@@ -63,6 +73,15 @@ ALL_SLUGS=(sitka-office astro crypto aida-voice)
 
 FORMAT="agent"
 SCOPE=""
+
+# Офлайн-режим теста: пропустить живой обход проектов (git-снимки + статус) и
+# почту. Только для детерминированных быстрых тестов; в обычной работе не ставят.
+# Любое непустое значение, кроме '0', включает режим.
+NO_PROJECTS=0
+case "${AIDA_BRIEF_NO_PROJECTS:-0}" in
+  ""|0) NO_PROJECTS=0 ;;
+  *)    NO_PROJECTS=1 ;;
+esac
 
 usage() {
   sed -n '2,46p' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//' >&2
@@ -503,21 +522,33 @@ if [[ "${FORMAT}" == "agent" ]]; then
   echo
 
   echo "=== LIVE-СНИМКИ ПРОЕКТОВ (git) ==="
-  for slug in "${SLUGS[@]}"; do
-    echo "[${slug}]"
-    emit_snapshot_agent "${slug}"
-  done
+  if [[ "${NO_PROJECTS}" -eq 1 ]]; then
+    echo "  обход проектов отключён (офлайн-режим теста)"
+  else
+    for slug in "${SLUGS[@]}"; do
+      echo "[${slug}]"
+      emit_snapshot_agent "${slug}"
+    done
+  fi
   echo
 
   echo "=== АКТИВНЫЕ ЗАДАЧИ / ПЕРЕДАЧИ ==="
-  for slug in "${SLUGS[@]}"; do
-    echo "[${slug}]"
-    emit_status_agent "${slug}"
-  done
+  if [[ "${NO_PROJECTS}" -eq 1 ]]; then
+    echo "  обход проектов отключён (офлайн-режим теста)"
+  else
+    for slug in "${SLUGS[@]}"; do
+      echo "[${slug}]"
+      emit_status_agent "${slug}"
+    done
+  fi
   echo
 
   echo "=== ПОЧТА (непрочитанное) ==="
-  emit_mailbox_agent
+  if [[ "${NO_PROJECTS}" -eq 1 ]]; then
+    echo "  почта отключена (офлайн-режим теста)"
+  else
+    emit_mailbox_agent
+  fi
   echo
   echo "================ конец AIDA-BRIEF ================"
 else
@@ -530,18 +561,30 @@ else
   echo
 
   echo "Где сейчас проекты:"
-  for slug in "${SLUGS[@]}"; do
-    emit_snapshot_owner "${slug}"
-  done
+  if [[ "${NO_PROJECTS}" -eq 1 ]]; then
+    echo "  Обход проектов сейчас отключён."
+  else
+    for slug in "${SLUGS[@]}"; do
+      emit_snapshot_owner "${slug}"
+    done
+  fi
   echo
 
   echo "Что в работе:"
-  for slug in "${SLUGS[@]}"; do
-    emit_status_owner "${slug}"
-  done
+  if [[ "${NO_PROJECTS}" -eq 1 ]]; then
+    echo "  Обход проектов сейчас отключён."
+  else
+    for slug in "${SLUGS[@]}"; do
+      emit_status_owner "${slug}"
+    done
+  fi
   echo
 
-  emit_mailbox_owner
+  if [[ "${NO_PROJECTS}" -eq 1 ]]; then
+    echo "  Почта сейчас не проверяется."
+  else
+    emit_mailbox_owner
+  fi
   echo
   echo "Если строка говорит «состояние не прочитал» — значит источник сейчас не отвечает, я не придумываю за него."
 fi

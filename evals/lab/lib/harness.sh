@@ -265,14 +265,33 @@ run_aida_check() {
   AIDA_LEDGER_DIR="${dir}" bash "${REPO_ROOT}/scripts/aida" check 2>&1
 }
 
-# run_aida_brief <ledger-dir> [args...] — прогнать ЖИВОЙ scripts/aida-brief.
-# Реестр читается из переданного каталога (AIDA_LEDGER_DIR), поэтому тест на
-# деградации подсовывает СВОЙ temp-каталог и живой ledger/ не трогает. Снимки
-# git / задачи / почта читаются read-only из живого репо (мутаций нет). Печатает
-# stdout+stderr; код выхода — у caller'а через $?.
+# run_aida_brief <ledger-dir> [args...] — прогнать ЖИВОЙ scripts/aida-brief в
+# ОФЛАЙН-режиме (AIDA_BRIEF_NO_PROJECTS=1): реестр-ядро читается из переданного
+# каталога (AIDA_LEDGER_DIR на фикстуру), а живой обход проектов (git-снимки
+# sitka/astro/crypto) и почта ПРОПУСКАЮТСЯ. Так тест детерминирован и быстр (без
+# хождения по живым репозиториям и ящику — раньше отсюда зависание на 180с), но
+# логика честной деградации И-3 (пусто-vs-недоступно реестра) проверяется в
+# точности как раньше. Живой ledger/ не тронут. Печатает stdout+stderr; код
+# выхода — у caller'а через $?.
 run_aida_brief() {
   local dir="$1"; shift
-  AIDA_LEDGER_DIR="${dir}" bash "${REPO_ROOT}/scripts/aida-brief" "$@" 2>&1
+  AIDA_LEDGER_DIR="${dir}" AIDA_BRIEF_NO_PROJECTS=1 \
+    bash "${REPO_ROOT}/scripts/aida-brief" "$@" 2>&1
+}
+
+# seed_fixture_ledger <dir> — заполнить каталог реестра минимальной ВАЛИДНОЙ
+# фикстурой: одно активное решение (D-…), один не-stale факт с источником,
+# пустые contradictions/inbox. Достаточно, чтобы `aida show` отдал непустой
+# экран с записью решения (PASS-тесты про непустоту и операторскую подачу). Все
+# поля синтетические, привязок к живым проектам нет. Живой ledger/ не задействован.
+seed_fixture_ledger() {
+  local dir="$1"
+  ledger_write "${dir}" decisions.jsonl \
+    '{"basis":["фикстура лаборатории"],"decided_at":"2026-06-13","decided_by":"owner","decision":"Фикстурное активное решение для теста слоя регидратации.","id":"D-20260613-001","recorded_at":"2026-06-13T10:00:00-05:00","recorded_by":"owner","review_when":"никогда (фикстура)","scope":"crypto","status":"active","supersedes":null}'
+  ledger_write "${dir}" facts.jsonl \
+    '{"checked_at":"2026-06-13","confidence":"high","expires":null,"id":"F-20260613-001","origin":null,"recorded_at":"2026-06-13T10:00:00-05:00","recorded_by":"owner","scope":"crypto","source":{"kind":"command","quote":"фикстурный источник факта","ref":"lab fixture"},"statement":"Фикстурный не-stale факт с источником.","status":"verified","supersedes":null}'
+  : > "${dir}/contradictions.jsonl"
+  : > "${dir}/inbox.jsonl"
 }
 
 # --- стоп-хук русского языка ru_guard.py -------------------------------------
