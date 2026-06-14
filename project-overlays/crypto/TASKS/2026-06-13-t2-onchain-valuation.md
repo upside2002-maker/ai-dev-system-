@@ -12,7 +12,7 @@
 - Worker branch: feat/t-2-onchain (изолировано от Т-4a по решению Owner: развести)
 - Mode: normal
 - Critical approved by: (нет)
-- Reviewer: 5-линзовое — REJECT (`HANDOFFS/2026-06-13-t2-onchain-valuation-review.md`); доработка Б1-Б3 (граница детектора, наблюдаемость = рецидив Т-1, документирование) — ЗАКРЫТЫ коммитом a3085d6, хэндофф `HANDOFFS/2026-06-13-t2-onchain-valuation-handoff.md`; на повторное ревью
+- Reviewer: 5-линзовое REJECT → доработка Б1-Б3 → контрольное (1й прогон ложный REJECT на устаревшем клоне, отклонён) → перезапуск с sanity-gate ACCEPT; своды review/review2
 
 ## Problem
 
