@@ -331,6 +331,56 @@ run_ru_guard() {
     | python3 "${REPO_ROOT}/.claude/hooks/ru_guard.py" 2>&1
 }
 
+# --- ядро правды aida_kernel.py ---------------------------------------------
+# Ядро выносит ВЕРДИКТ по claim (JSON) детерминированным кодом против доверенного
+# источника (анти-ведро: модель выбирает адаптер из белого списка, не подаёт
+# команду). Тесты гоняют ЖИВОЙ scripts/aida-kernel, но источники подменяют на
+# ВРЕМЕННЫЕ через переменные окружения — живой ledger/, реестр возможностей и
+# журнал ошибок не трогаются:
+#   AIDA_LEDGER_DIR        — временный каталог реестра (структурная память);
+#   AIDA_CAPABILITIES_FILE — файл реестра возможностей (берём ЖИВОЙ из репо —
+#                            это часть поставки ядра, не мутируется чтением);
+#   AIDA_MODEL_ERRORS_FILE — временный журнал пойманной лжи (gate дозаписывает).
+# Код выхода ядра кодирует вердикт машинно: 0 passed, 3 unverified, 4 stop.
+
+# kernel_caps_file — путь к ЖИВОМУ реестру возможностей репо (источник для
+# адаптера capability.exists и capability-ворот). Только чтение.
+kernel_caps_file() {
+  printf '%s' "${REPO_ROOT}/PROJECTS/capabilities.json"
+}
+
+# run_aida_kernel <subcmd> <ledger-dir> <errors-file> [args...] — прогнать ЖИВОЙ
+# scripts/aida-kernel с временными источниками. claim подаётся caller'ом на stdin.
+# Печатает stdout+stderr; код выхода (вердикт) у caller'а через $?.
+run_aida_kernel() {
+  local subcmd="$1" led="$2" errf="$3"; shift 3
+  AIDA_LEDGER_DIR="${led}" \
+  AIDA_CAPABILITIES_FILE="$(kernel_caps_file)" \
+  AIDA_MODEL_ERRORS_FILE="${errf}" \
+    bash "${REPO_ROOT}/scripts/aida-kernel" "${subcmd}" --json "$@" 2>&1
+}
+
+# seed_memory_fact <ledger-dir> <key> <value> [valid_until] — дозаписать факт
+# структурной памяти (через ЖИВОЙ aida_ledger) во временный реестр. valid_until
+# опционально (временная опора). Используется тестами контекст/память/источник.
+seed_memory_fact() {
+  local led="$1" key="$2" value="$3" valid_until="${4:-}"
+  # valid_until опционально. Под `set -u` пустой массив "${arr[@]}" в старом bash
+  # (macOS bash 3.2) роняет «unbound variable», поэтому ветвим вызов, а не
+  # раскрываем потенциально пустой массив.
+  if [[ -n "${valid_until}" ]]; then
+    AIDA_LEDGER_DIR="${led}" python3 "${REPO_ROOT}/scripts/aida_ledger.py" \
+      fact "память: ${key}=${value}" \
+      --scope system --source-kind human --source-ref owner \
+      --key "${key}" --value "${value}" --valid-until "${valid_until}" >/dev/null 2>&1
+  else
+    AIDA_LEDGER_DIR="${led}" python3 "${REPO_ROOT}/scripts/aida_ledger.py" \
+      fact "память: ${key}=${value}" \
+      --scope system --source-kind human --source-ref owner \
+      --key "${key}" --value "${value}" >/dev/null 2>&1
+  fi
+}
+
 # Захват вывода и кода выхода в тестах делается inline, без хелпера:
 #   OUT="$(bash some.sh arg 2>&1)"; RC=$?
 # (через $() протащить и stdout, и rc одним хелпером нельзя — subshell.)

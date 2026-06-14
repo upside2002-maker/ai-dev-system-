@@ -63,6 +63,9 @@ ID_RE = {
 }
 DATE_RE = re.compile(r"^[0-9]{4}-[0-9]{2}-[0-9]{2}$")
 EXPIRES_RE = re.compile(r"^(?:[0-9]{4}-[0-9]{2}-[0-9]{2}|event:.+)$")
+# valid_until (структурная память ядра правды, D-20260614-003) — тот же формат,
+# что expires (И-13): дата | event:… | null. Переиспользуем EXPIRES_RE.
+VALID_UNTIL_RE = EXPIRES_RE
 ANY_ID_RE = re.compile(r"^[FDIC]-[0-9]{8}-[0-9]{3}$")
 
 
@@ -269,6 +272,54 @@ def _build_source(args):
     return source
 
 
+def norm_value(value):
+    """Каноническая строка значения для МЕХАНИЧЕСКОГО сравнения по key.
+
+    Структурная память сравнивает значения как строки после нормализации, чтобы
+    противоречие памяти ловилось одинаково независимо от типа записи (число 200
+    и строка "200" — одно значение; True/"true"/"yes" — одно; регистр/пробелы по
+    краям не значат). Это детерминированная функция, без модели.
+    """
+    if value is None:
+        return "null"
+    if isinstance(value, bool):
+        return "true" if value else "false"
+    if isinstance(value, (int, float)):
+        # 200 и 200.0 → одна строка; целое печатаем без .0
+        if isinstance(value, float) and value.is_integer():
+            value = int(value)
+        return str(value)
+    s = str(value).strip().lower()
+    if s in ("true", "yes", "on", "вкл", "да"):
+        return "true"
+    if s in ("false", "no", "off", "выкл", "нет"):
+        return "false"
+    return s
+
+
+def _coerce_value_arg(raw):
+    """--value приходит строкой из CLI; приводим к int/float/bool/None, чтобы в
+    реестре значение легло осмысленным типом (а не всегда строкой). Сравнение всё
+    равно идёт через norm_value, но хранение типизированным — честнее."""
+    if raw is None:
+        return None
+    s = raw.strip()
+    low = s.lower()
+    if low == "null":
+        return None
+    if low in ("true", "false"):
+        return low == "true"
+    # целое/дробное?
+    try:
+        if re.match(r"^-?[0-9]+$", s):
+            return int(s)
+        if re.match(r"^-?[0-9]+\.[0-9]+$", s):
+            return float(s)
+    except ValueError:
+        pass
+    return s
+
+
 def _validate_fact_fields(args):
     require(
         args.scope in SCOPES,
@@ -287,6 +338,22 @@ def _validate_fact_fields(args):
             EXPIRES_RE.match(args.expires),
             "недопустимый --expires '{}'. Формат: YYYY-MM-DD | event:<описание>.".format(
                 args.expires
+            ),
+        )
+    # Структурная память (опционально): key/value/valid_until.
+    key = getattr(args, "key", None)
+    if key is not None:
+        require(
+            bool(key.strip()),
+            "--key задан, но пустой. Либо непустой машинный ключ, либо вовсе не "
+            "указывай (key опционален).",
+        )
+    valid_until = getattr(args, "valid_until", None)
+    if valid_until is not None:
+        require(
+            VALID_UNTIL_RE.match(valid_until),
+            "недопустимый --valid-until '{}'. Формат: YYYY-MM-DD | event:<описание>.".format(
+                valid_until
             ),
         )
 
@@ -333,6 +400,14 @@ def _write_fact(args, statement, origin=None):
             "recorded_by": args.by,
             "recorded_at": now_iso(),
         }
+        # Структурная память (опционально): добавляем поля ТОЛЬКО когда заданы,
+        # чтобы факты без структурного ключа писались как раньше (обратная
+        # совместимость — старые строки и новые без key идентичны по форме).
+        key = getattr(args, "key", None)
+        if key is not None:
+            rec["key"] = key.strip()
+            rec["value"] = _coerce_value_arg(getattr(args, "value", None))
+            rec["valid_until"] = getattr(args, "valid_until", None)
         append_record("facts", rec)
     return rid
 
@@ -768,6 +843,20 @@ def run_check():
         if org is not None and org not in inbox_ids:
             errors.append("{}:{}: origin '{}' указывает в никуда (нет такой "
                           "inbox-записи)".format(FILES["facts"], lineno, org))
+        # Структурная память (опционально): key — непустая строка; valid_until —
+        # дата|event:|null. Поля опциональны (старые факты их не несут), но если
+        # заданы — должны быть валидны.
+        if "key" in rec:
+            k = rec.get("key")
+            if not isinstance(k, str) or not k.strip():
+                errors.append("{}:{}: key задан, но не непустая строка".format(
+                    FILES["facts"], lineno))
+        if "valid_until" in rec:
+            vu = rec.get("valid_until")
+            if vu is not None and not VALID_UNTIL_RE.match(str(vu)):
+                errors.append("{}:{}: valid_until '{}' не формата "
+                              "YYYY-MM-DD|event:…|null".format(
+                                  FILES["facts"], lineno, vu))
 
     # ---- decisions -------------------------------------------------------
     ids_seen = {}
@@ -835,6 +924,31 @@ def run_check():
                 errors.append("{}:{}: resolved_by '{}' указывает в никуда (ни факт, "
                               "ни решение)".format(FILES["contradictions"], lineno, rbv))
 
+    # ---- структурная память: противоречие по key (ОШИБКА; ядро правды) ---
+    # МЕХАНИЧЕСКИ, без модели: среди АКТУАЛЬНЫХ фактов (последняя запись на id,
+    # не заменённых, не stale/superseded) два с одним key, но разным
+    # нормализованным value — противоречие памяти. Один key = одно текущее знание.
+    fact_superseded = _superseded_ids([r for _, r in raw["facts"]])
+    active_by_key = {}  # key -> list of (id, norm_value, raw_value)
+    for rec in _latest_by_id([r for _, r in raw["facts"]]):
+        if rec.get("id") in fact_superseded:
+            continue
+        if rec.get("status") in ("stale", "superseded"):
+            continue
+        k = rec.get("key")
+        if not isinstance(k, str) or not k.strip():
+            continue
+        active_by_key.setdefault(k.strip(), []).append(
+            (rec.get("id"), norm_value(rec.get("value")), rec.get("value")))
+    for k, rows in active_by_key.items():
+        distinct = {nv for _, nv, _ in rows}
+        if len(distinct) > 1:
+            ids = ", ".join("{}={!r}".format(rid, rv) for rid, _, rv in rows)
+            errors.append(
+                "противоречие памяти по key '{}': активные факты несут разные "
+                "значения ({}). Один key — одно текущее знание: оставь актуальное, "
+                "остальные пометь stale/supersede.".format(k, ids))
+
     # ---- §5.5 просроченные факты (ПРЕДУПРЕЖДЕНИЕ, не отказ; И-13) ---------
     # Считаем по актуальному состоянию (последняя запись на id).
     for rec in _latest_by_id([r for _, r in raw["facts"]]):
@@ -896,6 +1010,14 @@ def build_parser():
         sp.add_argument("--confidence", default="medium")
         sp.add_argument("--expires", default=None)
         sp.add_argument("--checked-at", dest="checked_at", default=None)
+        # Структурная память (опционально, ядро правды): машинный ключ/значение и
+        # срок годности ОПОРЫ. Без --key факт пишется как раньше.
+        sp.add_argument("--key", default=None,
+                        help="машинный ключ структурной памяти (опционально)")
+        sp.add_argument("--value", default=None,
+                        help="машинное значение по ключу (строка/число/true|false|null)")
+        sp.add_argument("--valid-until", dest="valid_until", default=None,
+                        help="срок годности опоры: YYYY-MM-DD | event:<...> (опционально)")
 
     s = sub.add_parser("fact", help="новый факт со источником")
     s.add_argument("statement")
