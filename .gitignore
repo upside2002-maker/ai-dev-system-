@@ -17,3 +17,6 @@ __pycache__/
 # но сами posts сохраняем только локально).
 project-overlays/*/RESEARCH/_corpus/
 project-overlays/*/research/_corpus/
+
+# файл-замок журнала (fcntl.flock) — рантайм, не версионируем
+ledger/.aida.lock
