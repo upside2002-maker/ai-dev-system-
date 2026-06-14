@@ -1,6 +1,6 @@
 # TASK: k2-contour2-analytics-review
 
-- Status: review
+- Status: done
 - Ready: yes
 - Date: 2026-06-14
 - Project: crypto
@@ -12,7 +12,7 @@
 - Worker branch: влито в master (a8865c2 → merge 7b25258)
 - Mode: normal
 - Critical approved by: (нет)
-- Reviewer: (обязателен — независимая сессия)
+- Reviewer: 4-линзовое с sanity-gate — 0 находок; REJECT был ЛОЖНЫЙ (сборка Haskell в клоне линзы, dist-newstyle; ядро не тронуто, И-8 firewall 8/8). Admin сверил make check на master — зелёный. ACCEPT
 
 ## Problem
 

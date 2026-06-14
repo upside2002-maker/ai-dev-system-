@@ -1,6 +1,6 @@
 # TASK: k-macro-foundation-review
 
-- Status: review
+- Status: done
 - Ready: yes
 - Date: 2026-06-14
 - Project: crypto
@@ -12,7 +12,7 @@
 - Worker branch: влито в master (7258f36)
 - Mode: normal
 - Critical approved by: (нет)
-- Reviewer: (обязателен — независимая сессия)
+- Reviewer: 4-линзовое с sanity-gate — ACCEPT, 0 находок (граница чиста, point-in-time ALFRED-ревизий защищён, целочисленная арифметика, секретов нет)
 
 ## Problem
 
