@@ -1,6 +1,6 @@
 # TASK: t6-reports-voice
 
-- Status: review
+- Status: done
 - Ready: yes
 - Date: 2026-06-13
 - Project: crypto
@@ -12,7 +12,7 @@
 - Worker branch: feat/t-6-reports (от master; параллельно с Т-5)
 - Mode: normal
 - Critical approved by: (нет)
-- Reviewer: (обязателен — независимая сессия)
+- Reviewer: 3-линзовое с sanity-gate — ACCEPT, 0 находок (операторский язык чист, Я-4 вшита, отчёт не врёт)
 
 ## Problem
 
