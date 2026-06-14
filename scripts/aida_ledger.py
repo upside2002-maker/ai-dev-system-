@@ -35,6 +35,11 @@ FILES = {
     "facts": "facts.jsonl",
     "decisions": "decisions.jsonl",
     "contradictions": "contradictions.jsonl",
+    # Ворота дел v0.1 (второй столб строгого ядра, D-20260614-006): журнал
+    # ДЕЙСТВИЙ. Строки одного A-id: requested → executed|failed. Пишется ТОЛЬКО
+    # через защищённый адаптер (cmd_action) теми же примитивами журнала
+    # (allocate_and_append/append_record/ledger_lock) — не свой движок.
+    "actions": "actions.jsonl",
 }
 
 # Префикс id по файлу.
@@ -43,7 +48,25 @@ PREFIX = {
     "facts": "F",
     "decisions": "D",
     "contradictions": "C",
+    "actions": "A",
 }
+
+# --- ворота дел: наблюдаемая зона и белый список адаптеров записи -----------
+# Наблюдаемая зона — каталог МИРА, который сверка-с-миром (run_check) сравнивает
+# с журналом действий. Маркеры кладёт сюда только адаптер marker.write. Любой
+# маркер тут БЕЗ соответствующей executed-заявки = ИНЦИДЕНТ (ловля «сказал А —
+# сделал Б» и прямой записи мимо ядра). Лежит ВНУТРИ ledger/, но это не *.jsonl —
+# валидатор реестра как реестр его не читает, только сверка-с-миром.
+OBSERVED_SUBDIR = "observed"
+# Белый список адаптеров записи (анти-ведро): модель ВЫБИРАЕТ адаптер из набора,
+# произвольную команду не подаёт. v0.1 — один реальный адаптер.
+ACTION_KINDS = {"marker.write"}
+ACTION_PHASES = {"requested", "executed", "failed"}
+# Префиксы критпутей: цель в этих зонах защищённому адаптеру записи ЗАПРЕЩЕНА
+# (денежный/системный контур — поздний слой; v0.1 пишет только в наблюдаемую
+# зону). Совпадает по духу с .githooks/commit-msg CRITICAL_PREFIXES.
+ACTION_CRITICAL_PREFIXES = ("scripts/", "schemas/", "policies/", "templates/",
+                            "corrections/")
 
 # --- словари допустимых значений (enum дословно из ТЗ §3) -------------------
 SCOPES = {"system", "global", "sitka-office", "astro", "aida-voice", "crypto"}
@@ -60,6 +83,7 @@ ID_RE = {
     "decisions": re.compile(r"^D-[0-9]{8}-[0-9]{3}$"),
     "contradictions": re.compile(r"^C-[0-9]{8}-[0-9]{3}$"),
     "inbox": re.compile(r"^I-[0-9]{8}-[0-9]{3}$"),
+    "actions": re.compile(r"^A-[0-9]{8}-[0-9]{3}$"),
 }
 DATE_RE = re.compile(r"^[0-9]{4}-[0-9]{2}-[0-9]{2}$")
 EXPIRES_RE = re.compile(r"^(?:[0-9]{4}-[0-9]{2}-[0-9]{2}|event:.+)$")
@@ -602,6 +626,169 @@ def cmd_contradict(args):
     return 0
 
 
+# --- ворота дел v0.1: защищённый адаптер записи (D-20260614-006) ------------
+# ИДЕЯ. Модель не пишет в цель напрямую этим путём. Она ЗАЯВЛЯЕТ действие (цель +
+# ожидаемое изменение), а ядро исполняет РОВНО заявленное и журналирует обе фазы:
+# requested (до исполнения) и executed (после, тем же id). Так «сказать А —
+# записать Б» невозможно ВНУТРИ этого пути: что записано в журнал заявкой, то и
+# исполнено кодом, одно поле change. Обход (прямая запись в наблюдаемую зону мимо
+# адаптера или подмена содержимого после executed) ловится постфактум сверкой-с-
+# миром в run_check.
+#
+# ЧЕСТНЫЙ ПРЕДЕЛ v0.1 (см. дизайн §«ГЛАВНАЯ ЧЕСТНАЯ ПРАВДА»): это НЕ клетка прав.
+# У процесса с правами на запись остаётся возможность тронуть файлы мимо ядра;
+# v0.1 такой обход не блокирует физически, а ЛОВИТ постфактум (recon → инцидент).
+# Полная клетка (урезанная учётка, физически нельзя писать мимо) — поздний слой.
+
+def observed_dir():
+    """Каталог наблюдаемой зоны (мир, который сверяем с журналом)."""
+    return os.path.join(LEDGER_DIR, OBSERVED_SUBDIR)
+
+
+def _validate_marker_target(target):
+    """Цель адаптера marker.write должна быть простым именем маркера, не путём.
+
+    Без '/', без '..', без ведущей точки-обхода — чтобы заявкой нельзя было
+    выписать запись за пределы наблюдаемой зоны (path traversal). Это и есть
+    «ядро исполняет РОВНО заявленное, и не больше»: цель ограничена зоной.
+    """
+    require(
+        bool(target and target.strip()),
+        "пустая цель действия (--target). Укажи имя маркера в наблюдаемой зоне.",
+    )
+    t = target.strip()
+    require(
+        "/" not in t and "\\" not in t and ".." not in t and not t.startswith("."),
+        "недопустимая цель '{}': имя маркера без '/', '\\', '..' и ведущей точки "
+        "(адаптер marker.write пишет только в наблюдаемую зону ledger/{}/, "
+        "выход за неё запрещён).".format(target, OBSERVED_SUBDIR),
+    )
+    return t
+
+
+def _refuse_critical_target(target):
+    """Отказ на запись в критпуть БЕЗ права (v0.1: этому адаптеру — всегда).
+
+    Цель в зоне scripts/**, schemas/**, policies/** … защищённому адаптеру
+    записи запрещена в v0.1 (он пишет только в наблюдаемую зону). Это явный
+    отказ «запись в критпуть без заявки/права», а не молчаливый промах.
+    """
+    t = (target or "").strip()
+    for prefix in ACTION_CRITICAL_PREFIXES:
+        if t == prefix.rstrip("/") or t.startswith(prefix):
+            raise AidaError(
+                "цель '{}' в критпути ({}): защищённый адаптер записи v0.1 в "
+                "критпуть НЕ пишет (денежный/системный контур — поздний слой). "
+                "Критпуть меняется людьми через git с подписью Approved-by "
+                "(.githooks/commit-msg), не этим путём.".format(t, prefix))
+
+
+def _apply_marker_write(target, change):
+    """Исполнить РОВНО заявку marker.write: записать change в маркер цели.
+
+    Возвращает абсолютный путь записанного маркера. Запись атомарна на уровне
+    содержимого (полная перезапись файла маркера). Маркер — наблюдаемое
+    состояние мира; его содержимое потом сверяется с journal-полем change.
+    """
+    name = _validate_marker_target(target)
+    odir = observed_dir()
+    os.makedirs(odir, exist_ok=True)
+    path = os.path.join(odir, name)
+    # change=None трактуем как пустую строку (заявка «обнулить маркер»).
+    payload = "" if change is None else str(change)
+    with open(path, "w", encoding="utf-8") as fh:
+        fh.write(payload)
+    return path
+
+
+def cmd_action(args):
+    """Защищённый адаптер записи: заявить → исполнить РОВНО заявку → закрыть.
+
+    Один проход = одно действие: пишем requested (цель+изменение объявлены ДО
+    исполнения), исполняем РОВНО заявленное через выбранный адаптер, затем
+    дозаписываем executed (тем же id, И-14) либо failed при ошибке исполнения.
+    Заявка и исполнение оперируют ОДНИМИ полями (target/change) — внутри пути
+    «сказать А — записать Б» невозможно.
+    """
+    kind = args.kind
+    require(
+        kind in ACTION_KINDS,
+        "неизвестный адаптер действия '{}'. Белый список (анти-ведро): {}.".format(
+            kind, " ".join(sorted(ACTION_KINDS))),
+    )
+    # Отказ на критпуть — ДО открытия заявки (нечего журналировать, если цель
+    # запрещена). Это «отказ на запись в критпуть без заявки/права» из ТЗ.
+    _refuse_critical_target(args.target)
+    target = _validate_marker_target(args.target)
+    change = args.change
+
+    # 1) ЗАЯВКА (requested): открываем действие ДО исполнения. allocate_and_append
+    #    выдаёт A-id и дописывает строку под общим замком реестра — не свой движок.
+    def build_requested(rid):
+        return {
+            "id": rid,
+            "phase": "requested",
+            "kind": kind,
+            "target": target,
+            "change": change,
+            "recorded_by": args.by,
+            "recorded_at": now_iso(),
+        }
+
+    aid = allocate_and_append("actions", build_requested)
+    print("OK: заявка действия {} открыта (requested)".format(aid))
+    print("  адаптер: {}  цель: {}".format(kind, target))
+
+    # 2) ИСПОЛНЕНИЕ РОВНО ЗАЯВКИ + закрытие строкой executed|failed (тот же id).
+    try:
+        if kind == "marker.write":
+            path = _apply_marker_write(target, change)
+        else:  # недостижимо (kind проверен выше), но без молчаливого провала
+            raise AidaError("адаптер '{}' без исполнителя".format(kind))
+    except (OSError, AidaError) as exc:
+        append_record("actions", {
+            "id": aid,
+            "phase": "failed",
+            "kind": kind,
+            "target": target,
+            "change": change,
+            "reason": str(exc),
+            "recorded_by": args.by,
+            "recorded_at": now_iso(),
+        })
+        sys.stderr.write("ОТКАЗ: действие {} не исполнено: {}\n".format(aid, exc))
+        return 2
+
+    append_record("actions", {
+        "id": aid,
+        "phase": "executed",
+        "kind": kind,
+        "target": target,
+        "change": change,
+        "recorded_by": args.by,
+        "recorded_at": now_iso(),
+    })
+    print("OK: действие {} исполнено РОВНО заявкой (executed)".format(aid))
+    print("  маркер: {}".format(path))
+    return 0
+
+
+def show_actions(scope, status):
+    # У действий нет scope; фильтр scope игнорируем, status трактуем как phase.
+    rows = read_records("actions")
+    # Свернём по id, оставив последнюю фазу как актуальное состояние.
+    rows = _latest_by_id(rows)
+    rows = [r for r in rows if (not status or r.get("phase") == status)]
+    if not rows:
+        print("  (действий нет)")
+        return
+    for r in rows:
+        rsn = "" if not r.get("reason") else "  причина: {}".format(r["reason"])
+        print("{}  [{}/{}]  цель: {}{}".format(
+            r["id"], r.get("kind"), r.get("phase"), r.get("target"), rsn))
+        print("    изменение: {}".format(r.get("change")))
+
+
 # --- show (человекочитаемо) ------------------------------------------------
 def _latest_by_id(records):
     """Свернуть историю: оставить последнюю запись на каждый id (актуальное
@@ -729,6 +916,7 @@ SHOW = {
     "decisions": show_decisions,
     "inbox": show_inbox,
     "contradictions": show_contradictions,
+    "actions": show_actions,
 }
 
 
@@ -966,6 +1154,94 @@ def run_check():
             info.append("открытое противоречие {}: работаем по {} (разрешит: {})".format(
                 rec.get("id"), rec.get("working"), rec.get("resolves_when")))
 
+    # ---- ворота дел: журнал действий (форма строк) -----------------------
+    # Те же общие проверки (id-шаблон, recorded_*), плюс enum phase/kind и
+    # обязательные поля действия. id ПОВТОРЯЕТСЯ между фазами (как inbox) —
+    # дубль id не считаем ошибкой (передаём отдельный ids_seen, как inbox).
+    ids_seen = {}
+    for lineno, rec in raw["actions"]:
+        rid = rec.get("id")
+        if not isinstance(rid, str) or not ID_RE["actions"].match(rid or ""):
+            errors.append("{}:{}: id '{}' не соответствует шаблону {}".format(
+                FILES["actions"], lineno, rid, ID_RE["actions"].pattern))
+        for field in ("recorded_by", "recorded_at"):
+            if not rec.get(field):
+                errors.append("{}:{}: пустое обязательное поле '{}'".format(
+                    FILES["actions"], lineno, field))
+        for field in ("phase", "kind", "target", "change"):
+            _required("actions", rec, lineno, field, errors)
+        _enum("actions", rec, lineno, "phase", ACTION_PHASES, errors)
+        _enum("actions", rec, lineno, "kind", ACTION_KINDS, errors)
+        # failed-строка обязана нести непустую причину; requested/executed — нет.
+        if rec.get("phase") == "failed":
+            rsn = rec.get("reason")
+            if not (isinstance(rsn, str) and rsn.strip()):
+                errors.append("{}:{}: phase=failed без непустого reason".format(
+                    FILES["actions"], lineno))
+
+    # ---- СВЕРКА-С-МИРОМ (ядро ворот дел): ловля «сказал А — сделал Б» -----
+    # НЕ журнал-с-собой, а МИР (содержимое маркеров наблюдаемой зоны) ПРОТИВ
+    # журнала исполненных действий. Инцидент (ОШИБКА, exit≠0), если:
+    #   1) маркер в зоне есть, но его содержимое НЕ совпадает ни с одной
+    #      executed-заявкой на эту цель — «заявлено А, в мире Б» ИЛИ подмена
+    #      содержимого после исполнения;
+    #   2) маркер в зоне есть, а executed-заявки на эту цель нет вовсе —
+    #      прямая запись мимо ядра (обход журнала).
+    # Симметрично: executed-заявка есть, а маркера в мире нет — тоже инцидент
+    # (заявили исполнение, мир пуст).
+    # Маркеры читаем из ФАЙЛОВ зоны (мир), а ожидания — из журнала.
+    executed_by_target = {}   # target -> set нормализованных ожидаемых change
+    executed_ids_by_target = {}
+    for _, rec in raw["actions"]:
+        if rec.get("phase") != "executed":
+            continue
+        if rec.get("kind") != "marker.write":
+            continue
+        tgt = rec.get("target")
+        if not isinstance(tgt, str) or not tgt.strip():
+            continue
+        exp = "" if rec.get("change") is None else str(rec.get("change"))
+        executed_by_target.setdefault(tgt, set()).add(exp)
+        executed_ids_by_target.setdefault(tgt, []).append(rec.get("id"))
+
+    odir = observed_dir()
+    observed = {}   # target -> фактическое содержимое маркера (мир)
+    if os.path.isdir(odir):
+        for entry in sorted(os.listdir(odir)):
+            fp = os.path.join(odir, entry)
+            if not os.path.isfile(fp):
+                continue
+            try:
+                with open(fp, "r", encoding="utf-8") as fh:
+                    observed[entry] = fh.read()
+            except OSError as exc:
+                errors.append("ИНЦИДЕНТ (ворота дел): не прочесть маркер мира "
+                              "'{}' ({})".format(entry, exc))
+
+    # (1)+(2): каждый маркер мира должен подтверждаться executed-заявкой.
+    for tgt, actual in sorted(observed.items()):
+        if tgt not in executed_by_target:
+            errors.append(
+                "ИНЦИДЕНТ (ворота дел): маркер мира '{}' изменён БЕЗ заявки "
+                "(нет executed-действия на эту цель в actions.jsonl). Прямая "
+                "запись мимо ядра — обход журнала.".format(tgt))
+            continue
+        if actual not in executed_by_target[tgt]:
+            decl = "; ".join(sorted(repr(v) for v in executed_by_target[tgt]))
+            errors.append(
+                "ИНЦИДЕНТ (ворота дел): «сказал А — сделал Б» по цели '{}': в "
+                "мире {!r}, а журнал (executed {}) заявлял {}. Расхождение "
+                "заявки и факта.".format(
+                    tgt, actual, ", ".join(executed_ids_by_target[tgt]), decl))
+
+    # симметрично: заявили исполнение, но маркера в мире нет.
+    for tgt, ids in sorted(executed_ids_by_target.items()):
+        if tgt not in observed:
+            errors.append(
+                "ИНЦИДЕНТ (ворота дел): executed-действие ({}) по цели '{}' "
+                "есть в журнале, а маркера в мире нет — заявлено исполнение, "
+                "мир пуст.".format(", ".join(ids), tgt))
+
     return errors, warnings, info
 
 
@@ -1063,9 +1339,24 @@ def build_parser():
     s.add_argument("--resolves-when", dest="resolves_when", required=True)
     s.set_defaults(func=cmd_contradict)
 
+    # Ворота дел v0.1: защищённый адаптер записи. Модель ЗАЯВЛЯЕТ цель+изменение,
+    # ядро исполняет РОВНО заявку и журналирует requested+executed (или failed).
+    s = sub.add_parser("action",
+                       help="защищённое действие: заявить цель+изменение, "
+                            "ядро исполнит ровно заявку и запишет в журнал")
+    s.add_argument("--kind", required=True,
+                   help="адаптер записи из белого списка (v0.1: marker.write)")
+    s.add_argument("--target", required=True,
+                   help="цель: имя маркера в наблюдаемой зоне ledger/observed/ "
+                        "(критпуть запрещён)")
+    s.add_argument("--change", default=None,
+                   help="ожидаемое изменение: новое содержимое маркера")
+    s.set_defaults(func=cmd_action)
+
     s = sub.add_parser("show", help="человекочитаемая выдача")
     s.add_argument("what", nargs="?", default="facts",
-                   choices=["facts", "decisions", "inbox", "contradictions"])
+                   choices=["facts", "decisions", "inbox", "contradictions",
+                            "actions"])
     s.add_argument("--scope", default=None)
     s.add_argument("--status", default=None)
     s.set_defaults(func=cmd_show)

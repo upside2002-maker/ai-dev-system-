@@ -1,0 +1,59 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://aida.local/schemas/action.schema.json",
+  "title": "action",
+  "description": "Запись ДЕЙСТВИЯ (ворота дел v0.1, второй столб строгого ядра, D-20260614-006). Лежит в ledger/actions.jsonl, пишется ТОЛЬКО через защищённый адаптер (aida action ...). Один A-id живёт двумя-тремя строками: requested (модель ЗАЯВИЛА цель+изменение) → executed (ядро исполнило РОВНО заявку) ИЛИ failed (исполнить не вышло). Строки только дописываются (И-14): закрытие requested — это НОВАЯ строка с тем же id и фазой executed|failed, старую не трогаем. Смысл: модель не пишет в цель напрямую этим путём — она заявляет, ядро исполняет ровно заявленное; расхождение «заявлено А — в мире Б» ловит сверка-с-миром в aida check.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "id",
+    "phase",
+    "kind",
+    "target",
+    "change",
+    "recorded_by",
+    "recorded_at"
+  ],
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^A-[0-9]{8}-[0-9]{3}$",
+      "description": "A-YYYYMMDD-NNN; NNN — порядковый за день, ПОВТОРЯЕТСЯ между фазами одного действия (requested и закрывающая executed|failed несут один id — как inbox raw→promoted)."
+    },
+    "phase": {
+      "type": "string",
+      "enum": ["requested", "executed", "failed"],
+      "description": "requested — заявка открыта (цель+изменение объявлены ДО исполнения); executed — ядро исполнило РОВНО заявку; failed — исполнить не удалось (причина в reason). На один id ровно одна requested-строка и не более одной закрывающей (executed|failed)."
+    },
+    "kind": {
+      "type": "string",
+      "enum": ["marker.write"],
+      "description": "Имя адаптера записи из БЕЛОГО СПИСКА (анти-ведро: модель выбирает адаптер, не подаёт произвольную команду). v0.1: только marker.write — запись значения в файл-маркер наблюдаемой зоны (ledger/observed/**). Денежный/внешний контур — поздний слой."
+    },
+    "target": {
+      "type": "string",
+      "minLength": 1,
+      "description": "ЦЕЛЬ изменения — что именно меняем. Для marker.write: имя маркера (без путей-обходов '/', '..'); ядро кладёт его в наблюдаемую зону ledger/observed/<target>. Цель в КРИТПУТИ (scripts/**, schemas/**, policies/**) этому адаптеру запрещена — на неё отказ."
+    },
+    "change": {
+      "type": "string",
+      "description": "ОЖИДАЕМОЕ изменение — что станет в цели после исполнения (для marker.write: точное новое содержимое маркера). Сверка-с-миром в aida check сравнивает фактическое содержимое маркера с этим полем executed-строки: расхождение = ИНЦИДЕНТ («сказал А — записал Б»)."
+    },
+    "reason": {
+      "description": "Причина для phase=failed (почему не исполнилось), либо null/отсутствует для requested|executed.",
+      "oneOf": [
+        { "type": "string", "minLength": 1 },
+        { "type": "null" }
+      ]
+    },
+    "recorded_by": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Кто инициировал действие (recorded_by)."
+    },
+    "recorded_at": {
+      "type": "string",
+      "description": "Момент записи строки (ISO-8601)."
+    }
+  }
+}
