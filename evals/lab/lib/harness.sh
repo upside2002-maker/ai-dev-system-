@@ -265,6 +265,24 @@ run_aida_check() {
   AIDA_LEDGER_DIR="${dir}" bash "${REPO_ROOT}/scripts/aida" check 2>&1
 }
 
+# run_aida_action <ledger-dir> [args...] — прогнать ЖИВОЙ защищённый адаптер
+# записи (scripts/aida action) против временного каталога реестра. args — флаги
+# --kind/--target/--change (и при нужде глобальный --by ПЕРЕД 'action'). Печатает
+# stdout+stderr; код выхода у caller'а через $?. Живой ledger/ не задействован.
+# Так тест доказывает: ядро исполняет РОВНО заявку и пишет requested+executed во
+# ВРЕМЕННЫЙ журнал/наблюдаемую зону, а не в живой репозиторий.
+run_aida_action() {
+  local dir="$1"; shift
+  AIDA_LEDGER_DIR="${dir}" bash "${REPO_ROOT}/scripts/aida" "$@" 2>&1
+}
+
+# observed_marker <ledger-dir> <target> — путь к маркеру наблюдаемой зоны (мир),
+# куда адаптер marker.write кладёт содержимое. Тесты сверки-с-миром правят этот
+# файл напрямую, имитируя обход ядра («сказал А — сделал Б» / прямая запись).
+observed_marker() {
+  printf '%s' "$1/observed/$2"
+}
+
 # run_aida_brief <ledger-dir> [args...] — прогнать ЖИВОЙ scripts/aida-brief в
 # ОФЛАЙН-режиме (AIDA_BRIEF_NO_PROJECTS=1): реестр-ядро читается из переданного
 # каталога (AIDA_LEDGER_DIR на фикстуру), а живой обход проектов (git-снимки

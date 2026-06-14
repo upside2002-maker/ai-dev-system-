@@ -90,11 +90,13 @@ intra	schemas/fact.schema.json	scripts/aida_ledger.py
 intra	schemas/decision.schema.json	scripts/aida_ledger.py
 intra	schemas/contradiction.schema.json	scripts/aida_ledger.py
 intra	schemas/inbox.schema.json	scripts/aida_ledger.py
+intra	schemas/action.schema.json	scripts/aida_ledger.py
 
 # --- Документы методологии (docs/**) ----------------------------------------
 intra	docs/AIDA_LEDGER_TZ.md	scripts/aida_ledger.py
 intra	docs/AIDA_LOCKS_TZ.md	policies/SHIFTS.md
 intra	docs/ONBOARDING_LEAD_DEVELOPER.md	START_HERE.md
+intra	docs/AIDA_ACTION_KERNEL_DESIGN_2026-06-14.md	scripts/aida_ledger.py
 
 # --- Overlay README (упоминаются в методологии оверлеев) ---------------------
 intra	project-overlays/sitka-office/README.md	scripts/check-overlay-consistency.sh
