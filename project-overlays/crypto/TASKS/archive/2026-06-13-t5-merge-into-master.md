@@ -1,6 +1,6 @@
 # TASK: t5-merge-into-master
 
-- Status: open
+- Status: done
 - Ready: yes
 - Date: 2026-06-13
 - Project: crypto
@@ -11,7 +11,7 @@
 - Worker model: Claude Code (Opus)
 - Mode: normal
 - Critical approved by: (нет)
-- Reviewer: (обязателен — независимая сессия)
+- Reviewer: верификация Admin (механический merge): 2 родителя (eb319ae+605f11e), diff модулей обеих сторон = 0 строк, make check зелёный (276 тестов Т-1..Т-6), 7 подкоманд парсятся
 
 ## Problem
 
