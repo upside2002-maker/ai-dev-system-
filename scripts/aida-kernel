@@ -1,0 +1,43 @@
+#!/usr/bin/env bash
+# aida-kernel — ядро правды v0.1: вердикт перехода «мысль → опору».
+#
+# Тонкая обёртка: вся логика — в scripts/aida_kernel.py (только стандартная
+# библиотека python3, без pip/jq). Вердикт выносит ДЕТЕРМИНИРОВАННЫЙ КОД против
+# доверенного источника, НИКОГДА не модель-судья. Модель ВЫБИРАЕТ источник из
+# белого списка адаптеров (анти-ведро), произвольную команду подать не может.
+#
+# Подкоманды:
+#   aida-kernel eval [--file claim.json|-] [--json]   вынести вердикт по claim
+#   aida-kernel adapters                              печать белого списка адаптеров
+#
+# Коды выхода (вердикт кодируется машинно):
+#   0 — passed (проверено / гейт не применяется);
+#   3 — unverified (не проверено — асимметрия);
+#   4 — stop (стоп — противоречие/временная опора/внешний костыль при встроенном);
+#   2 — отказ операции.
+#
+# Usage:
+#   bash scripts/aida-kernel eval --file claim.json
+#   echo '{"type":"reasoning","text":"..."}' | ./scripts/aida-kernel eval
+
+set -euo pipefail
+
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+PY="${ROOT_DIR}/scripts/aida_kernel.py"
+
+if ! command -v python3 >/dev/null 2>&1; then
+  echo "ОШИБКА: не найден python3 — ядро на нём." >&2
+  exit 127
+fi
+
+if [[ ! -f "${PY}" ]]; then
+  echo "ОШИБКА: не найден ${PY}" >&2
+  exit 66
+fi
+
+if [[ $# -eq 0 ]]; then
+  echo "ОШИБКА: нужна подкоманда (eval | adapters)." >&2
+  exit 64
+fi
+
+exec python3 "${PY}" "$@"

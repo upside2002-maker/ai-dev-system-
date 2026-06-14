@@ -1,0 +1,52 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://aida.local/schemas/model_error.schema.json",
+  "title": "model_error",
+  "description": "Автозапись пойманной лжи/непроверенного (ядро правды v0.1, ворота выхода). Append-only журнал corrections/model_errors.jsonl: ядро дописывает строку, когда вердикт по claim — стоп или не проверено (противоречит источнику/памяти / без источника / устарело / внешний костыль при встроенном). Пишет КОД, не модель. Дописываемый (И-14): строки не правятся.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "recorded_at",
+    "verdict",
+    "reason_code",
+    "reason",
+    "claim_type"
+  ],
+  "properties": {
+    "recorded_at": {
+      "type": "string",
+      "description": "Момент записи (ISO-8601)."
+    },
+    "verdict": {
+      "type": "string",
+      "enum": ["unverified", "stop"],
+      "description": "Вердикт ядра. passed в журнал ошибок не пишется."
+    },
+    "reason_code": {
+      "type": "string",
+      "description": "Машинный код причины (REASONS в scripts/aida_kernel.py)."
+    },
+    "reason": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Человеческая расшифровка кода причины."
+    },
+    "detail": {
+      "type": "string",
+      "description": "Подробность вердикта (что именно противоречит / чего нет)."
+    },
+    "claim_type": {
+      "type": "string",
+      "enum": ["reasoning", "fact", "recommendation", "action"],
+      "description": "Тип claim, по которому вынесен вердикт."
+    },
+    "claim_text": {
+      "type": "string",
+      "description": "Текст черновика модели (что собиралось наружу)."
+    },
+    "evidence": {
+      "type": "object",
+      "description": "Машинные опоры вердикта (адаптер/arg/значения источника и т.п.)."
+    }
+  }
+}
