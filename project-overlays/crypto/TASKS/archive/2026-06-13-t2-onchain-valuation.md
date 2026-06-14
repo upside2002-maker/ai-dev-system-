@@ -1,6 +1,6 @@
 # TASK: t2-onchain-valuation
 
-- Status: review
+- Status: done
 - Ready: yes
 - Date: 2026-06-13
 - Project: crypto
