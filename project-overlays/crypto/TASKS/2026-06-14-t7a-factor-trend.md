@@ -1,6 +1,6 @@
 # TASK: t7a-factor-trend
 
-- Status: open
+- Status: review
 - Ready: yes
 - Date: 2026-06-14
 - Project: crypto
