@@ -1,6 +1,6 @@
 # TASK: t2-onchain-valuation
 
-- Status: review
+- Status: in-progress
 - Ready: yes
 - Date: 2026-06-13
 - Project: crypto
@@ -12,7 +12,7 @@
 - Worker branch: feat/t-2-onchain (изолировано от Т-4a по решению Owner: развести)
 - Mode: normal
 - Critical approved by: (нет)
-- Reviewer: (обязателен — независимая сессия)
+- Reviewer: 5-линзовое — REJECT (`HANDOFFS/2026-06-13-t2-onchain-valuation-review.md`); доработка Б1-Б3 (граница детектора, наблюдаемость = рецидив Т-1, документирование)
 
 ## Problem
 
