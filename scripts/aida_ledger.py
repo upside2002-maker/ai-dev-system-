@@ -18,7 +18,9 @@
 """
 
 import argparse
+import contextlib
 import datetime
+import fcntl
 import json
 import os
 import re
@@ -103,11 +105,73 @@ def append_record(name, record):
     """ЕДИНСТВЕННЫЙ путь записи (И-14): дописать строку, ничего не трогая.
 
     Открытие в режиме 'a' физически не даёт переписать существующие строки.
+
+    ВНИМАНИЕ про гонку: сама по себе эта функция атомарна на уровне одной
+    строки, но связка «прочитать max id → +1 → дописать» (next_id+append) —
+    НЕТ. Два процесса (голос+телефон+чаты пишут в ОДИН реестр, D-20260613-006)
+    могут одновременно прочитать один и тот же max и выдать ОДИН id. Поэтому
+    выдача id и дозапись делаются под файловым замком — см. ledger_lock() и
+    allocate_and_append(). Прямой вызов append_record (например, дозапись
+    inbox-строки со статусом promoted, где id берётся из уже существующей
+    записи, а не генерируется) безопасен и под замком не нуждается.
     """
     os.makedirs(LEDGER_DIR, exist_ok=True)
     line = json.dumps(record, ensure_ascii=False, sort_keys=True)
     with open(path_for(name), "a", encoding="utf-8") as fh:
         fh.write(line + "\n")
+
+
+# --- файловый замок против гонки выдачи id (D-20260613-006) -----------------
+# Имя замка на каталог реестра: один писатель за раз по ВСЕМУ реестру. Замок
+# общий для всех файлов (facts/decisions/inbox/contradictions) — этого достаточно
+# и проще, чем замок на файл; запись редкая, конкуренция за разные файлы не
+# критична, а простота важнее. Lock-файл живёт рядом с *.jsonl и сам в реестр
+# не входит (не *.jsonl, валидатор его не видит).
+LOCK_FILENAME = ".aida.lock"
+
+
+@contextlib.contextmanager
+def ledger_lock():
+    """Эксклюзивный файловый замок (fcntl.flock) на весь каталог реестра.
+
+    Сериализует пишущих: пока один держит замок, остальные ждут на flock и
+    входят только после release. Замок берётся ДО чтения max id и держится ДО
+    конца дозаписи — выдача id и append неделимы, дублей id и потери строк нет.
+
+    Замок освобождается всегда (в т.ч. при исключении): flock снимается при
+    закрытии дескриптора, а 'with open(...)' закрывает его на выходе из блока
+    по любой причине. Lock-файл не удаляем — гонка на unlink сама по себе
+    источник проблем, а пустой служебный файл безвреден.
+    """
+    os.makedirs(LEDGER_DIR, exist_ok=True)
+    lock_path = os.path.join(LEDGER_DIR, LOCK_FILENAME)
+    # 'a' — создаёт файл при отсутствии, существующий не трогает (содержимое
+    # нам не нужно, важен только дескриптор для flock).
+    with open(lock_path, "a", encoding="utf-8") as lock_fh:
+        fcntl.flock(lock_fh.fileno(), fcntl.LOCK_EX)
+        try:
+            yield
+        finally:
+            # Явно снимаем замок до закрытия (close его тоже снял бы, но так
+            # намерение видно и окно между release и close минимально).
+            fcntl.flock(lock_fh.fileno(), fcntl.LOCK_UN)
+
+
+def allocate_and_append(name, build_record, day=None):
+    """Атомарно выдать id и дозаписать строку ПОД ОДНИМ замком (анти-гонка).
+
+    build_record(rid) -> dict: получает свежевыданный id и возвращает готовую
+    запись. Чтение max id, +1 и append идут внутри одного ledger_lock(), поэтому
+    параллельные писатели не получат одинаковый id и не затрут строки друг друга.
+    Сохраняется человекочитаемый id формата X-YYYYMMDD-NNN (НЕ UUID).
+
+    Возвращает выданный id.
+    """
+    with ledger_lock():
+        rid = next_id(name, day=day)
+        record = build_record(rid)
+        append_record(name, record)
+    return rid
 
 
 def now_iso():
@@ -161,18 +225,20 @@ def require(cond, message):
 
 # --- команды записи --------------------------------------------------------
 def cmd_inbox(args):
-    rid = next_id("inbox")
-    rec = {
-        "id": rid,
-        "note": args.note,
-        "status": "raw",
-        "promoted_to": None,
-        "recorded_by": args.by,
-        "recorded_at": now_iso(),
-    }
-    if args.context:
-        rec["context"] = args.context
-    append_record("inbox", rec)
+    def build(rid):
+        rec = {
+            "id": rid,
+            "note": args.note,
+            "status": "raw",
+            "promoted_to": None,
+            "recorded_by": args.by,
+            "recorded_at": now_iso(),
+        }
+        if args.context:
+            rec["context"] = args.context
+        return rec
+
+    rid = allocate_and_append("inbox", build)
     print("OK: в карантин записано {}".format(rid))
     print("  заметка: {}".format(args.note))
     return 0
@@ -235,34 +301,39 @@ def _write_fact(args, statement, origin=None):
         "--statement \"одно предложение\", если сырой заметки недостаточно.",
     )
 
-    if args.supersedes is not None:
-        require(
-            find("facts", args.supersedes) is not None,
-            "--supersedes {}: такого факта нет в facts.jsonl.\n"
-            "Как исправить: проверь id через `aida show facts`.".format(args.supersedes),
-        )
-    if origin is not None:
-        require(
-            find("inbox", origin) is not None,
-            "--origin {}: такой записи нет в inbox.jsonl.".format(origin),
-        )
+    # Замок берём ДО проверок ссылок (supersedes/origin), чтения max id и
+    # дозаписи — весь критический участок записи факта сериализован. Это
+    # исключает гонку выдачи id и заодно держит проверки ссылок согласованными
+    # с моментом записи.
+    with ledger_lock():
+        if args.supersedes is not None:
+            require(
+                find("facts", args.supersedes) is not None,
+                "--supersedes {}: такого факта нет в facts.jsonl.\n"
+                "Как исправить: проверь id через `aida show facts`.".format(args.supersedes),
+            )
+        if origin is not None:
+            require(
+                find("inbox", origin) is not None,
+                "--origin {}: такой записи нет в inbox.jsonl.".format(origin),
+            )
 
-    rid = next_id("facts")
-    rec = {
-        "id": rid,
-        "statement": statement,
-        "scope": args.scope,
-        "status": "verified",
-        "confidence": args.confidence,
-        "source": source,
-        "checked_at": args.checked_at or today(),
-        "expires": args.expires,  # None — норма (бессрочный)
-        "supersedes": args.supersedes,
-        "origin": origin,
-        "recorded_by": args.by,
-        "recorded_at": now_iso(),
-    }
-    append_record("facts", rec)
+        rid = next_id("facts")
+        rec = {
+            "id": rid,
+            "statement": statement,
+            "scope": args.scope,
+            "status": "verified",
+            "confidence": args.confidence,
+            "source": source,
+            "checked_at": args.checked_at or today(),
+            "expires": args.expires,  # None — норма (бессрочный)
+            "supersedes": args.supersedes,
+            "origin": origin,
+            "recorded_by": args.by,
+            "recorded_at": now_iso(),
+        }
+        append_record("facts", rec)
     return rid
 
 
@@ -310,30 +381,36 @@ def cmd_promote(args):
 
 
 def _copy_fact_with_status(args, new_status, reason=None):
-    """Повышение/пометка факта = НОВАЯ запись-копия со supersedes старого id."""
-    src = find("facts", args.fact_id)
-    require(
-        src is not None,
-        "{}: такого факта нет в facts.jsonl.\n"
-        "Как исправить: посмотри `aida show facts`.".format(args.fact_id),
-    )
-    require(
-        not is_superseded("facts", args.fact_id),
-        "{}: на этот факт уже ссылается более новая запись (он не «голова» "
-        "истории). Переходи от актуальной версии — найди её через "
-        "`aida show facts` (стрелка ← показывает, что чем заменено).".format(args.fact_id),
-    )
-    rid = next_id("facts")
-    rec = dict(src)  # копия всех полей источника
-    rec["id"] = rid
-    rec["status"] = new_status
-    rec["supersedes"] = src["id"]
-    rec["recorded_by"] = args.by
-    rec["recorded_at"] = now_iso()
-    rec["checked_at"] = today()
-    if reason is not None:
-        rec["reason"] = reason
-    append_record("facts", rec)
+    """Повышение/пометка факта = НОВАЯ запись-копия со supersedes старого id.
+
+    Замок держим вокруг проверки «голова истории» (is_superseded) + выдачи id +
+    дозаписи: иначе два параллельных перехода от одной головы оба прошли бы
+    is_superseded и создали бы развилку (против И-14) и/или одинаковый id.
+    """
+    with ledger_lock():
+        src = find("facts", args.fact_id)
+        require(
+            src is not None,
+            "{}: такого факта нет в facts.jsonl.\n"
+            "Как исправить: посмотри `aida show facts`.".format(args.fact_id),
+        )
+        require(
+            not is_superseded("facts", args.fact_id),
+            "{}: на этот факт уже ссылается более новая запись (он не «голова» "
+            "истории). Переходи от актуальной версии — найди её через "
+            "`aida show facts` (стрелка ← показывает, что чем заменено).".format(args.fact_id),
+        )
+        rid = next_id("facts")
+        rec = dict(src)  # копия всех полей источника
+        rec["id"] = rid
+        rec["status"] = new_status
+        rec["supersedes"] = src["id"]
+        rec["recorded_by"] = args.by
+        rec["recorded_at"] = now_iso()
+        rec["checked_at"] = today()
+        if reason is not None:
+            rec["reason"] = reason
+        append_record("facts", rec)
     return src["id"], rid
 
 
@@ -377,26 +454,28 @@ def cmd_decision(args):
         "недопустимый --decided-at '{}'. Формат YYYY-MM-DD; дату бери из "
         "DISPATCHER/журнала, не выдумывай.".format(args.decided_at),
     )
-    if args.supersedes is not None:
-        require(
-            find("decisions", args.supersedes) is not None,
-            "--supersedes {}: такого решения нет в decisions.jsonl.".format(args.supersedes),
-        )
-    rid = next_id("decisions")
-    rec = {
-        "id": rid,
-        "decision": args.decision,
-        "decided_by": args.by,
-        "decided_at": args.decided_at,
-        "scope": args.scope,
-        "basis": list(args.basis or []),
-        "review_when": args.review_when,
-        "status": "active",
-        "supersedes": args.supersedes,
-        "recorded_by": args.recorded_by or args.by,
-        "recorded_at": now_iso(),
-    }
-    append_record("decisions", rec)
+    # Проверка ссылки supersedes + выдача id + дозапись — под одним замком.
+    with ledger_lock():
+        if args.supersedes is not None:
+            require(
+                find("decisions", args.supersedes) is not None,
+                "--supersedes {}: такого решения нет в decisions.jsonl.".format(args.supersedes),
+            )
+        rid = next_id("decisions")
+        rec = {
+            "id": rid,
+            "decision": args.decision,
+            "decided_by": args.by,
+            "decided_at": args.decided_at,
+            "scope": args.scope,
+            "basis": list(args.basis or []),
+            "review_when": args.review_when,
+            "status": "active",
+            "supersedes": args.supersedes,
+            "recorded_by": args.recorded_by or args.by,
+            "recorded_at": now_iso(),
+        }
+        append_record("decisions", rec)
     print("OK: решение записано {} (status: active)".format(rid))
     print("  решено ({}, {}): {}".format(args.by, args.decided_at, args.decision))
     return 0
@@ -410,37 +489,39 @@ def cmd_contradict(args):
         "Как исправить: укажи две разные стороны — `aida show facts` для их "
         "id.".format(args.a),
     )
-    fa = find("facts", args.a)
-    fb = find("facts", args.b)
-    require(
-        fa is not None,
-        "contradict: факт-сторона A '{}' не существует в facts.jsonl.\n"
-        "Как исправить: оба конфликтующих факта должны быть заведены заранее "
-        "(`aida fact ...`), затем `aida show facts` для их id.".format(args.a),
-    )
-    require(
-        fb is not None,
-        "contradict: факт-сторона B '{}' не существует в facts.jsonl.".format(args.b),
-    )
     require(
         args.working in (args.a, args.b),
         "contradict: --working '{}' должен совпадать с a ('{}') или b ('{}').".format(
             args.working, args.a, args.b
         ),
     )
-    rid = next_id("contradictions")
-    rec = {
-        "id": rid,
-        "a": args.a,
-        "b": args.b,
-        "working": args.working,
-        "resolves_when": args.resolves_when,
-        "status": "open",
-        "resolved_by": None,
-        "recorded_by": args.by,
-        "recorded_at": now_iso(),
-    }
-    append_record("contradictions", rec)
+    # Проверка существования сторон + выдача id + дозапись — под одним замком.
+    with ledger_lock():
+        fa = find("facts", args.a)
+        fb = find("facts", args.b)
+        require(
+            fa is not None,
+            "contradict: факт-сторона A '{}' не существует в facts.jsonl.\n"
+            "Как исправить: оба конфликтующих факта должны быть заведены заранее "
+            "(`aida fact ...`), затем `aida show facts` для их id.".format(args.a),
+        )
+        require(
+            fb is not None,
+            "contradict: факт-сторона B '{}' не существует в facts.jsonl.".format(args.b),
+        )
+        rid = next_id("contradictions")
+        rec = {
+            "id": rid,
+            "a": args.a,
+            "b": args.b,
+            "working": args.working,
+            "resolves_when": args.resolves_when,
+            "status": "open",
+            "resolved_by": None,
+            "recorded_by": args.by,
+            "recorded_at": now_iso(),
+        }
+        append_record("contradictions", rec)
     print("OK: противоречие записано {} (status: open)".format(rid))
     print("  A={} B={} рабочая версия={}".format(args.a, args.b, args.working))
     return 0
