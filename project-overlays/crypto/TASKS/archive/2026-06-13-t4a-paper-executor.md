@@ -1,6 +1,6 @@
 # TASK: t4a-paper-executor
 
-- Status: review
+- Status: done
 - Ready: yes
 - Date: 2026-06-13
 - Project: crypto
@@ -11,7 +11,7 @@
 - Worker model: Claude Code (Opus)
 - Mode: strict
 - Critical approved by: (нет)
-- Reviewer: (обязателен — независимая сессия, tier A)
+- Reviewer: исходное 4-линзовое REJECT → доработка → контрольное 3-линзовое ACCEPT (feat/t-4a-fix); Reviewer-HANDOFF closed
 - Rework: ревью 13.06 — REJECT, КРИТИЧЕСКАЯ (`HANDOFFS/2026-06-13-t4a-paper-executor-review.md`): дыра в КОНТРАКТЕ (position_pct опционален у денежных атомов → исполнитель падает на схемно-валидном входе). Чиним в корне: периметр расширен (схема + ядро-перепроверка + исполнитель), риск поднят B→A strict. См. блок «Доработка по ревью» ниже.
 
 ## Problem
