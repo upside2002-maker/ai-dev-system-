@@ -12,7 +12,7 @@
 - Worker branch: feat/t-5-backtest (от master; параллельно с Т-6)
 - Mode: normal
 - Critical approved by: (нет)
-- Reviewer: (обязателен — независимая сессия)
+- Reviewer: 4-линзовое с sanity-gate — ACCEPT, 0 находок (point-in-time и walk-forward по конструкции, метрики честны)
 
 ## Problem
 
