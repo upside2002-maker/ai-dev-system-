@@ -1,6 +1,6 @@
 # HANDOFF: admin → tl/любая активная крипто-сессия — слияние Контур-2 «Аналитика 24/7»
 
-- Status: open (ждёт тихого окна репозитория)
+- Status: closed (влито в master 7b25258, 2026-06-13)
 - Date: 2026-06-13 19:45
 - Project: crypto
 - From: admin
