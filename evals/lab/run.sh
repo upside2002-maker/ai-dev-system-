@@ -34,15 +34,102 @@ declare -a CONTRACT_N=(0 0)
 SKIP_N=0
 declare -a FAILED_TESTS=()
 declare -a SKIPPED_TESTS=()
+declare -a TIMEOUT_TESTS=()
+
+# Бюджет на ОДИН тест. Зависший тест должен ПАДАТЬ с явным [TIMEOUT], а не
+# вешать весь прогон. Переопределяется через LAB_TEST_TIMEOUT (секунды).
+TEST_TIMEOUT="${LAB_TEST_TIMEOUT:-30}"
+# Особый код выхода, которым помечаем именно превышение бюджета (отличаем от
+# обычного FAIL=1). 124 — тот же код, что отдаёт coreutils `timeout`.
+TIMEOUT_RC=124
+
+# kill_tree <signal> <pid> — послать сигнал процессу И ВСЕМ его потомкам
+# (рекурсивно, вглубь). Зависший тест — это bash-субшелл, под ним python/git;
+# kill по одному pid оставил бы детей-сирот (на macOS нет process-group-kill без
+# setsid). Дерево обходим через `ps -o pid=,ppid=` — только bash + ps.
+kill_tree() {
+  local sig="$1" pid="$2" child
+  # сначала дети (чтобы не потерять связь после смерти родителя), потом сам pid
+  for child in $(ps -o pid=,ppid= 2>/dev/null | awk -v p="${pid}" '$2==p{print $1}'); do
+    kill_tree "${sig}" "${child}"
+  done
+  kill "-${sig}" "${pid}" 2>/dev/null || true
+}
+
+# run_with_timeout <secs> <out-file> <cmd...>
+# Запускает команду с жёстким бюджетом времени, перенаправляя stdout+stderr в
+# <out-file>. Возвращает код выхода команды; при превышении бюджета убивает её
+# вместе с детьми (TERM, затем KILL) и возвращает TIMEOUT_RC (124). Переносимо:
+# не зависит от coreutils `timeout`/`gtimeout` (на macOS их обычно нет) — чистый
+# bash-сторож на фоновых процессах. Только bash + ps, без сторонних утилит.
+run_with_timeout() {
+  local secs="$1" outf="$2"; shift 2
+
+  # Команда — в фоне; её stdout+stderr в файл. Детей при убийстве добиваем
+  # рекурсивно (kill_tree), т.к. отдельного process group у фонового job нет.
+  "$@" >"${outf}" 2>&1 &
+  local cmd_pid=$!
+
+  # Сторож: спит бюджет, затем валит дерево команды. Сторож тих — его вывод
+  # не используется. Свой stderr глушим, чтобы job-control-уведомления о смерти
+  # дочернего sleep не попали в лог прогона.
+  (
+    exec 2>/dev/null
+    sleep "${secs}"
+    if kill -0 "${cmd_pid}" 2>/dev/null; then
+      kill_tree TERM "${cmd_pid}"   # мягко всему дереву
+      sleep 2
+      kill_tree KILL "${cmd_pid}"   # добить выжившее
+    fi
+  ) &
+  local guard_pid=$!
+
+  # Ждём команду. Если сторож её убил — wait вернёт код >128 (сигнал).
+  local rc=0
+  wait "${cmd_pid}" 2>/dev/null || rc=$?
+
+  if (( rc > 128 )); then
+    # Превышение бюджета: команду прибил сторож. НЕ гасим сторож сразу — даём ему
+    # доиграть эскалацию TERM→KILL по всему дереву (иначе осиротевший внук, напр.
+    # `sleep`, мог бы пережить только TERM). wait — со стёртым stderr (без шума
+    # job-control про прибитый фоновый процесс).
+    wait "${guard_pid}" 2>/dev/null || true
+    return "${TIMEOUT_RC}"
+  fi
+
+  # Команда завершилась сама в срок — гасим сторож (и его sleep) вместе с детьми,
+  # чтобы не ждать впустую. Гашение и wait — со стёртым stderr: иначе bash
+  # печатает «Terminated: 15» про прибитый фоновый job в лог.
+  { kill_tree TERM "${guard_pid}"; wait "${guard_pid}"; } 2>/dev/null || true
+  return "${rc}"
+}
 
 # run_one_test <test-file>
-# Исполняет тест в субшелле, разбирает первую строку `TEST <id> <COLOR> <name>`,
-# код выхода (0 ok / 1 fail / 77 skip), печатает строку результата, обновляет
-# счётчики выбранной категории.
+# Исполняет тест в субшелле под per-test бюджетом времени, разбирает первую
+# строку `TEST <id> <COLOR> <name>`, код выхода (0 ok / 1 fail / 77 skip / 124
+# timeout), печатает строку результата, обновляет счётчики выбранной категории.
 run_one_test() {
   local tf="$1"
   local raw rc header id color name body
-  raw="$(bash "${tf}" 2>&1)"; rc=$?
+  local outf
+  outf="$(mktemp)"
+
+  # Анонс ДО запуска: видно, на каком тесте прогон стоит, если он зависнет.
+  echo "${C_DIM}[RUN]${C_RST} ${tf##*/}"
+
+  run_with_timeout "${TEST_TIMEOUT}" "${outf}" bash "${tf}"; rc=$?
+  raw="$(cat "${outf}")"
+  rm -f "${outf}"
+
+  # Превышение бюджета: тест зависший — явный [TIMEOUT], НЕ виснем дальше.
+  if [[ "${rc}" == "${TIMEOUT_RC}" ]]; then
+    echo "${C_RED}[TIMEOUT]${C_RST} ${tf##*/} — тест не уложился в ${TEST_TIMEOUT}с, прибит"
+    TIMEOUT_TESTS+=("${tf##*/}")
+    FAILED_TESTS+=("${tf##*/} (TIMEOUT ${TEST_TIMEOUT}с)")
+    # частичный вывод теста печатаем для диагностики
+    [[ -n "${raw}" ]] && printf '%s\n' "${raw}" | head -20 | sed 's/^/       /'
+    return
+  fi
 
   header="$(printf '%s\n' "${raw}" | head -1)"
   body="$(printf '%s\n' "${raw}" | tail -n +2)"
@@ -118,8 +205,12 @@ done
 red_pass="${RED_N[0]}";      red_fail="${RED_N[1]}"
 pass_pass="${PASS_N[0]}";    pass_fail="${PASS_N[1]}"
 con_pass="${CONTRACT_N[0]}"; con_fail="${CONTRACT_N[1]}"
+timeout_n="${#TIMEOUT_TESTS[@]}"
 total_pass=$((red_pass + pass_pass + con_pass))
-total_fail=$((red_fail + pass_fail + con_fail))
+# Тесты-таймауты не попадают в счётчики категорий (падают до разбора цвета),
+# поэтому добавляем их в общий fail явно — иначе зависший тест выглядел бы
+# «потерянным» из итога.
+total_fail=$((red_fail + pass_fail + con_fail + timeout_n))
 
 echo ""
 echo "=== Лаборатория проверок: сводка ==="
@@ -130,10 +221,16 @@ printf '  ИТОГО: %d pass / %d fail' "${total_pass}" "${total_fail}"
 if (( SKIP_N > 0 )); then
   printf ' / %d skip' "${SKIP_N}"
 fi
+if (( timeout_n > 0 )); then
+  printf ' (из них %d по таймауту)' "${timeout_n}"
+fi
 printf '\n'
 
 if (( SKIP_N > 0 )); then
   echo "  пропущено (SKIP): ${SKIPPED_TESTS[*]}"
+fi
+if (( timeout_n > 0 )); then
+  echo "  таймаут (>${TEST_TIMEOUT}с): ${TIMEOUT_TESTS[*]}"
 fi
 
 # --- honor_system: что лаборатория ЧЕСТНО НЕ покрывает -----------------------
