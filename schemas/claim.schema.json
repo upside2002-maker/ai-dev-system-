@@ -1,0 +1,155 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://aida.local/schemas/claim.schema.json",
+  "title": "claim",
+  "description": "Структурная ЗАЯВКА (конверт) — фронт поверх влитых ядер (D-20260614-007). Модель выставляет конверт САМА в момент, когда текст становится ОПОРОЙ (утверждаю факт / советую / прошу изменить мир / предлагаю инструмент / рапортую «сделано»). До выставления речь свободна — диспетчер срабатывает ТОЛЬКО на поданный конверт, текст модели в него НЕ передаётся (нет парсера свободного текста, нет модели-судьи). Диспетчер (scripts/aida_claim.py) НЕ проверяет сам — он переименовывает поля и зовёт УЖЕ ВЛИТОЙ верификатор: fact_claim/advice_basis/capability_check → aida_kernel.gate; action_request → aida_ledger.cmd_action (ворота дел); done_report → run_check (сверка журнал↔мир целиком) либо gate(fact) через file/git/test. Невалидный/неполный конверт → unverified (асимметрия): ничто не штампуется «проверено» по желанию модели.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["kind"],
+  "properties": {
+    "kind": {
+      "type": "string",
+      "enum": [
+        "fact_claim",
+        "advice_basis",
+        "capability_check",
+        "action_request",
+        "done_report"
+      ],
+      "description": "Тип заявки. Неподдержанный тип (или отсутствие) → конверт отклонён (unverified): диспетчер маршрутизирует только пять известных типов в влитые ядра."
+    },
+    "text": {
+      "type": "string",
+      "description": "Черновик наружу (текст модели). НЕ парсится и НЕ интерпретируется — переносится в ответ верификатора как есть для плашки статуса."
+    },
+    "by": {
+      "type": "string",
+      "description": "Кто выставил заявку (recorded_by). По умолчанию worker."
+    }
+  },
+  "oneOf": [
+    {
+      "title": "fact_claim — утверждаю факт",
+      "description": "Маршрут: aida_kernel.gate (type=fact). Опора — доверенный источник из 7 адаптеров белого списка (anti-bucket) + противоречие структурной памяти по key. Без adapter факт наружу как «не проверено», в память не пишется.",
+      "additionalProperties": false,
+      "required": ["kind"],
+      "properties": {
+        "kind": { "const": "fact_claim" },
+        "text": { "type": "string" },
+        "by": { "type": "string" },
+        "adapter": {
+          "type": "string",
+          "description": "Имя адаптера из БЕЛОГО СПИСКА ядра (ledger.fact / project.status / git.snapshot / capability.exists / billing.manual_record / file.exists / test.result). Неизвестный → unverified (anti-bucket: модель не подаёт произвольную команду-проверку)."
+        },
+        "arg": {
+          "type": "string",
+          "description": "Ключ/имя/путь для адаптера (что искать в доверенном источнике), НЕ команда."
+        },
+        "expected": {
+          "description": "Ожидаемое значение, которое КОД сверит с источником. Нет expected → нечего сверять → unverified.",
+          "type": ["string", "number", "boolean", "null"]
+        },
+        "key": {
+          "type": "string",
+          "description": "Структурный ключ памяти, на который претендует факт (claim_key для проверки противоречия памяти)."
+        },
+        "value": {
+          "description": "Значение, заявляемое по key (claim_value). Расхождение с памятью по тому же key → stop.",
+          "type": ["string", "number", "boolean", "null"]
+        }
+      }
+    },
+    {
+      "title": "advice_basis — совет + опоры/горизонт",
+      "description": "Маршрут: aida_kernel.gate (type=recommendation). Контекст-ворота: если хотя бы одна опора (ключ памяти) ВРЕМЕННАЯ (несёт valid_until), а горизонт совета permanent — stop «временное как постоянная основа без пометки».",
+      "additionalProperties": false,
+      "required": ["kind", "supports"],
+      "properties": {
+        "kind": { "const": "advice_basis" },
+        "text": { "type": "string" },
+        "by": { "type": "string" },
+        "supports": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Список структурных ключей памяти, на которые опирается совет. Пустой список допустим (нет временной опоры — нет стопа), но советы-опоры обычно их несут."
+        },
+        "horizon": {
+          "enum": ["permanent", "temporary", null],
+          "description": "Горизонт совета. permanent при временной опоре → stop."
+        }
+      }
+    },
+    {
+      "title": "capability_check — предлагаю инструмент",
+      "description": "Маршрут: aida_kernel.gate (type=recommendation). Capability-ворота: если предложен ВНЕШНИЙ инструмент под потребность need, а в реестре есть ВСТРОЕННОЕ под тот же need — stop «сначала встроенное».",
+      "additionalProperties": false,
+      "required": ["kind", "tool", "need"],
+      "properties": {
+        "kind": { "const": "capability_check" },
+        "text": { "type": "string" },
+        "by": { "type": "string" },
+        "tool": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Имя предлагаемого инструмента."
+        },
+        "need": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Ярлык потребности, которую инструмент закрывает (сверяется с covers в реестре возможностей)."
+        }
+      }
+    },
+    {
+      "title": "action_request — меняю мир",
+      "description": "Маршрут: aida_ledger.cmd_action (ворота дел). Исполняется ТОЛЬКО через защищённый адаптер записи: requested → исполнение РОВНО заявки → executed|failed. Критпуть этому адаптеру запрещён.",
+      "additionalProperties": false,
+      "required": ["kind", "act_kind", "target"],
+      "properties": {
+        "kind": { "const": "action_request" },
+        "text": { "type": "string" },
+        "by": { "type": "string" },
+        "act_kind": {
+          "type": "string",
+          "description": "Адаптер записи из белого списка ворот дел (v0.1: marker.write). Неизвестный → отказ (anti-bucket)."
+        },
+        "target": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Цель изменения (имя маркера наблюдаемой зоны, без путей-обходов; критпуть запрещён)."
+        },
+        "change": {
+          "description": "Ожидаемое новое содержимое цели после исполнения.",
+          "type": ["string", "null"]
+        }
+      }
+    },
+    {
+      "title": "done_report — «сделано», сверьте с миром",
+      "description": "Маршрут зависит от mode. (а) world: run_check — ГЛОБАЛЬНАЯ сверка журнал↔мир целиком (ловит расхождение/обход/«заявлено-исполнение-мир-пуст»), НЕ пер-рапортная проверка. (б) source: gate(type=fact) через адаптер file/git/test — сверка конкретного маркера готовности с миром. Чисто словесное «готово» без adapter и без mode=world → unverified (честный предел: необъявленная словесная опора вне охвата по конструкции).",
+      "additionalProperties": false,
+      "required": ["kind", "mode"],
+      "properties": {
+        "kind": { "const": "done_report" },
+        "text": { "type": "string" },
+        "by": { "type": "string" },
+        "mode": {
+          "enum": ["world", "source"],
+          "description": "world — ветка (а): run_check сверяет весь журнал действий с наблюдаемой зоной. source — ветка (б): gate(fact) сверяет конкретный признак готовности через file/git/test."
+        },
+        "adapter": {
+          "type": "string",
+          "description": "Только для mode=source: адаптер сверки готовности (file.exists / git.snapshot / test.result). Иной/отсутствует → unverified."
+        },
+        "arg": {
+          "type": "string",
+          "description": "Только для mode=source: ключ/имя/путь для адаптера."
+        },
+        "expected": {
+          "description": "Только для mode=source: ожидаемое значение признака готовности, сверяется КОДОМ с миром.",
+          "type": ["string", "number", "boolean", "null"]
+        }
+      }
+    }
+  ]
+}

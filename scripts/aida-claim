@@ -1,0 +1,46 @@
+#!/usr/bin/env bash
+# aida-claim — диспетчер СТРУКТУРНЫХ ЗАЯВОК (фронт поверх влитых ядер).
+#
+# Тонкая обёртка: вся логика — в scripts/aida_claim.py (только стандартная
+# библиотека python3, без pip/jq). Диспетчер НЕ проверяет сам: он валидирует
+# КОНВЕРТ (не речь), по таблице из пяти строк переименовывает поля и зовёт УЖЕ
+# ВЛИТОЙ верификатор (aida_kernel.gate / aida_ledger.cmd_action / run_check).
+# НЕТ парсинга свободного текста, НЕТ модели-судьи — вердикт выносит влитой код.
+#
+# Подкоманды:
+#   aida-claim eval [--file claim.json|-] [--json]   вердикт по конверту
+#   aida-claim gate [--file claim.json|-] [--json]   полные ворота + побочные эффекты
+#   aida-claim kinds                                 печать пяти поддержанных типов
+#
+# Коды выхода (вердикт кодируется машинно, как у ядра правды):
+#   0 — passed (проверено / гейт не применяется / действие исполнено);
+#   3 — unverified (не проверено — асимметрия: невалидный конверт/нет способа сверки);
+#   4 — stop (стоп — противоречие/временная опора/внешний костыль/отказ ворот дел);
+#   2 — отказ операции.
+#
+# Usage:
+#   bash scripts/aida-claim eval --file claim.json
+#   echo '{"kind":"fact_claim","adapter":"ledger.fact","arg":"x","expected":"1"}' \
+#     | ./scripts/aida-claim gate --json
+
+set -euo pipefail
+
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+PY="${ROOT_DIR}/scripts/aida_claim.py"
+
+if ! command -v python3 >/dev/null 2>&1; then
+  echo "ОШИБКА: не найден python3 — диспетчер на нём." >&2
+  exit 127
+fi
+
+if [[ ! -f "${PY}" ]]; then
+  echo "ОШИБКА: не найден ${PY}" >&2
+  exit 66
+fi
+
+if [[ $# -eq 0 ]]; then
+  echo "ОШИБКА: нужна подкоманда (eval | gate | kinds)." >&2
+  exit 64
+fi
+
+exec python3 "${PY}" "$@"

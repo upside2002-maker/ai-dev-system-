@@ -19,6 +19,10 @@
 #   aida contradict F-a F-b --working F-a --resolves-when "..."   (И-14)
 #   aida show [facts|decisions|inbox|contradictions] [--scope X] [--status S]
 #   aida check                                   валидатор реестра (§5)
+#   aida claim eval|gate [--file -|claim.json] [--json]
+#                                                структурная заявка (5 типов) →
+#                                                влитой верификатор (диспетчер,
+#                                                scripts/aida_claim.py)
 #
 # Глобальный флаг: --by <кто> (recorded_by; по умолчанию worker). У decision
 # свой обязательный --by из словаря owner|admin|tl-sitka|tl-astro|tl-crypto.
@@ -37,7 +41,7 @@ PY="${ROOT_DIR}/scripts/aida_ledger.py"
 
 usage() {
   # Печатаем шапку этого файла (строки-комментарии после shebang) как справку.
-  sed -n '2,38p' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//' >&2
+  sed -n '2,35p' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//' >&2
 }
 
 # python3 обязателен — другого рантайма у ядра нет.
@@ -59,6 +63,20 @@ if [[ $# -eq 0 ]]; then
   echo >&2
   usage
   exit 64  # EX_USAGE
+fi
+
+# Подкоманда `claim` — структурные заявки (фронт поверх влитых ядер). Это НЕ
+# ledger-команда: маршрутизатор живёт в scripts/aida_claim.py (диспетчер 5 типов
+# → влитой верификатор). Снимаем токен `claim` и отдаём остаток (eval|gate|kinds)
+# диспетчеру. Сам он проверку не делает — зовёт влитые gate / cmd_action / run_check.
+if [[ "${1:-}" == "claim" ]]; then
+  shift
+  CLAIM_PY="${ROOT_DIR}/scripts/aida_claim.py"
+  if [[ ! -f "${CLAIM_PY}" ]]; then
+    echo "ОШИБКА: не найден ${CLAIM_PY}" >&2
+    exit 66  # EX_NOINPUT
+  fi
+  exec python3 "${CLAIM_PY}" "$@"
 fi
 
 # Прокидываем всё как есть: разбор аргументов и осмысленные русские отказы —
