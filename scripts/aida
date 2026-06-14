@@ -21,7 +21,7 @@
 #   aida check                                   валидатор реестра (§5)
 #
 # Глобальный флаг: --by <кто> (recorded_by; по умолчанию worker). У decision
-# свой обязательный --by из словаря owner|admin|tl-sitka|tl-astro.
+# свой обязательный --by из словаря owner|admin|tl-sitka|tl-astro|tl-crypto.
 #
 # Exit codes: 0 — успех/реестр валиден; 1 — реестр невалиден (check);
 #             2 — отказ операции (нет источника, битый id, ссылка в никуда …).
