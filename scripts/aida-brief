@@ -53,23 +53,34 @@ set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 AIDA="${ROOT_DIR}/scripts/aida"
+REGISTRY="${ROOT_DIR}/scripts/aida_registry.py"
 SNAPSHOT="${ROOT_DIR}/scripts/snapshot.sh"
 STATUS="${ROOT_DIR}/scripts/status.sh"
 MAILBOX_DIR="${ROOT_DIR}/MAILBOX"
 
-# Slug → путь продукт-репо. По умолчанию snapshot.sh ищет $HOME/Projects/<slug>,
-# но crypto живёт в crypto-platform, а aida-voice — в aida-voice-bridge и БЕЗ git.
-# Пустое значение = «git-снимок для этого slug не берём» (репо вне git).
-repo_path_for() {
-  case "$1" in
-    crypto)     printf '%s' "${HOME}/Projects/crypto-platform" ;;
-    aida-voice) printf '%s' "" ;;  # продукт-репо не под git (ТЗ §2)
-    *)          printf '%s' "${HOME}/Projects/$1" ;;
-  esac
+# --- ЕДИНЫЙ реестр проектов (PROJECTS/projects.json) -------------------------
+# Список проектов, их пути, человеческие имена и признак git-снимка живут НЕ
+# здесь, а в ОДНОМ реестре — единственном источнике правды (П2 аудита,
+# D-20260613-008). Этот слой только ЧИТАЕТ реестр через scripts/aida_registry.py
+# (python3 stdlib, без jq). Захардкоженного списка слагов/путей в этом файле нет:
+# завёл/закрыл проект — поправил реестр, и больше нигде.
+registry() {
+  python3 "${REGISTRY}" "$@"
 }
 
-# Все проекты хозяйства (порядок фиксирован для читаемого экрана).
-ALL_SLUGS=(sitka-office astro crypto aida-voice)
+# Slug → путь продукт-репо ИЗ РЕЕСТРА (поле repo; ${HOME} уже раскрыт читателем).
+# Пустая строка = «git-снимок для этого slug не берём» (репо вне git, поле
+# snapshot=false). Раньше путь был захардкожен здесь; теперь — в реестре.
+repo_path_for() {
+  registry field "$1" repo 2>/dev/null || true
+}
+
+# Все проекты хозяйства ИЗ РЕЕСТРА (порядок строк реестра = порядок на экране).
+# read -a с разделителем по строкам: один slug на строку из `registry slugs`.
+ALL_SLUGS=()
+while IFS= read -r _slug; do
+  [[ -n "${_slug}" ]] && ALL_SLUGS+=("${_slug}")
+done < <(registry slugs 2>/dev/null || true)
 
 FORMAT="agent"
 SCOPE=""
@@ -340,14 +351,21 @@ emit_ledger_owner() {
 # Операторская подача решений: БЕЗ сырого тела решения (там рабочий язык/техника
 # — в голос не идёт). Только ориентир: проект на простом русском, кто и когда
 # решил. Программа через -c — stdin остаётся под данные `aida show decisions`.
+#
+# Имена ПРОЕКТНЫХ scope (slug → имя по-русски) берём ИЗ РЕЕСТРА (не хардкодим
+# здесь): собираем их в JSON и передаём в python через окружение AIDA_SCOPE_RU.
+# Не-проектные scope (system/global) — не проекты, их имена остаются здесь.
 owner_decisions() {
-  python3 -c '
-import re, sys
-ru = {"sitka-office": "Ситка (склад)", "astro": "Астро (Марина)",
-      "crypto": "Крипта", "aida-voice": "Голос", "system": "система",
-      "global": "общее"}
+  AIDA_SCOPE_RU="$(registry_scope_ru_json)" python3 -c '
+import json, os, re, sys
+# Проектные scope → имя по-русски из реестра (единый источник).
+ru = json.loads(os.environ.get("AIDA_SCOPE_RU", "{}"))
+# Не-проектные области (это не проекты, в реестре их нет).
+ru.setdefault("system", "система")
+ru.setdefault("global", "общее")
 who = {"owner": "хозяин", "admin": "помощник",
-       "tl-sitka": "ведущий Ситки", "tl-astro": "ведущий Астро"}
+       "tl-sitka": "ведущий Ситки", "tl-astro": "ведущий Астро",
+       "tl-crypto": "ведущий Крипты"}
 head = re.compile(r"^D-\S+\s+\[([^/]+)/[^]]+\]\s+(\S+),\s+(\S+)")
 for line in sys.stdin:
     m = head.match(line.rstrip("\n"))
@@ -361,6 +379,30 @@ for line in sys.stdin:
     by_ru = who.get(by, "кто-то из команды")
     print("  • {}: решил {}, {}".format(scope_ru, by_ru, date))
 '
+}
+
+# JSON-словарь slug → имя по-русски для ВСЕХ проектов реестра. Используется
+# операторской подачей решений, чтобы имена проектов шли из единого реестра, а
+# не из второй захардкоженной копии. Сбой реестра → пустой объект {} (python
+# тогда отдаст безопасную заглушку «проект»), а не падение слоя.
+registry_scope_ru_json() {
+  local slug name first=1
+  printf '{'
+  while IFS= read -r slug; do
+    [[ -n "${slug}" ]] || continue
+    name="$(registry field "${slug}" name_ru 2>/dev/null)" || continue
+    [[ "${first}" -eq 1 ]] || printf ','
+    first=0
+    # slug/name — данные реестра (латиница + простое имя); кладём как JSON-строки
+    # через python, чтобы не споткнуться о кавычки/спецсимволы.
+    SLUG="${slug}" NAME="${name}" python3 -c '
+import json, os, sys
+sys.stdout.write(json.dumps(os.environ["SLUG"], ensure_ascii=False))
+sys.stdout.write(":")
+sys.stdout.write(json.dumps(os.environ["NAME"], ensure_ascii=False))
+'
+  done < <(registry slugs 2>/dev/null || true)
+  printf '}'
 }
 
 # --- (б) live-снимок git ----------------------------------------------------
@@ -397,15 +439,13 @@ emit_snapshot_owner() {
   fi
 }
 
-# Простое имя проекта для оператора.
+# Простое имя проекта для оператора — ИЗ РЕЕСТРА (поле name_ru). Если slug в
+# реестре не найден (читатель вернул код ≠0) — отдаём сам slug как безопасную
+# заглушку, чтобы экран не падал. Имена больше не хардкодятся здесь.
 owner_project_name() {
-  case "$1" in
-    sitka-office) printf '%s' "Ситка (склад)" ;;
-    astro)        printf '%s' "Астро (Марина)" ;;
-    crypto)       printf '%s' "Крипта" ;;
-    aida-voice)   printf '%s' "Голос" ;;
-    *)            printf '%s' "$1" ;;
-  esac
+  local name
+  name="$(registry field "$1" name_ru 2>/dev/null)" || { printf '%s' "$1"; return; }
+  [[ -n "${name}" ]] && printf '%s' "${name}" || printf '%s' "$1"
 }
 
 # Перевод канонической строки снимка в операторскую: «<проект>: версия abc1234,

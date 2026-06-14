@@ -1,0 +1,64 @@
+{
+  "_comment": [
+    "ЕДИНЫЙ реестр проектов хозяйства — ЕДИНСТВЕННЫЙ источник правды о том,",
+    "какие проекты есть и где они лежат (П2 аудита, решение D-20260613-008).",
+    "Раньше этот список был захардкожен в scripts/aida-brief (ALL_SLUGS + case",
+    "с путями + человеческие имена) и мог разойтись с реальностью. Теперь любой",
+    "слой (сводка aida-brief и далее) читает ЭТОТ файл, а не свою копию списка.",
+    "",
+    "Поля на проект:",
+    "  slug      — машинный идентификатор проекта (латиница, как в overlay/mailbox);",
+    "  name_ru   — человеческое имя по-русски (для оператора/голоса);",
+    "  repo      — путь к продуктовому репозиторию; ${HOME} раскрывается читателем;",
+    "              пустая строка = продукт-репо вне нашего контроля версий;",
+    "  tl_role   — роль техлида проекта (tl-...), как в schemas/decision.schema.json,",
+    "              либо пустая строка, если у проекта пока нет отдельной роли техлида;",
+    "  overlay   — путь к overlay проекта внутри ai-dev-system (от корня репо);",
+    "  mailbox   — путь к ящику техлида проекта (от корня репо) или пустая строка,",
+    "              если у проекта пока нет отдельного ящика;",
+    "  snapshot  — берём ли живой git-снимок для этого проекта (false = репо вне git).",
+    "",
+    "Порядок в массиве projects ФИКСИРОВАН — он задаёт порядок строк на экране сводки.",
+    "Только данные: ни логики, ни путей с логикой. Меняется при заведении/закрытии",
+    "проекта — и больше нигде список проектов править не нужно.",
+    "Поле _comment читателями игнорируется (это человеческая шапка)."
+  ],
+  "projects": [
+    {
+      "slug": "sitka-office",
+      "name_ru": "Ситка (склад)",
+      "repo": "${HOME}/Projects/sitka-office",
+      "tl_role": "tl-sitka",
+      "overlay": "project-overlays/sitka-office",
+      "mailbox": "MAILBOX/to-tl-sitka.md",
+      "snapshot": true
+    },
+    {
+      "slug": "astro",
+      "name_ru": "Астро (Марина)",
+      "repo": "${HOME}/Projects/astro",
+      "tl_role": "tl-astro",
+      "overlay": "project-overlays/astro",
+      "mailbox": "MAILBOX/to-tl-astro.md",
+      "snapshot": true
+    },
+    {
+      "slug": "crypto",
+      "name_ru": "Крипта",
+      "repo": "${HOME}/Projects/crypto-platform",
+      "tl_role": "tl-crypto",
+      "overlay": "project-overlays/crypto",
+      "mailbox": "",
+      "snapshot": true
+    },
+    {
+      "slug": "aida-voice",
+      "name_ru": "Голос",
+      "repo": "",
+      "tl_role": "",
+      "overlay": "project-overlays/aida-voice",
+      "mailbox": "",
+      "snapshot": false
+    }
+  ]
+}

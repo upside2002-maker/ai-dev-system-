@@ -50,7 +50,7 @@ SCOPES = {"system", "global", "sitka-office", "astro", "aida-voice", "crypto"}
 FACT_STATUSES = {"verified", "accepted", "stale", "superseded"}
 CONFIDENCES = {"low", "medium", "high"}
 SOURCE_KINDS = {"command", "file", "git", "url", "human", "handoff"}
-DECISION_BY = {"owner", "admin", "tl-sitka", "tl-astro"}
+DECISION_BY = {"owner", "admin", "tl-sitka", "tl-astro", "tl-crypto"}
 DECISION_STATUSES = {"active", "superseded", "revoked"}
 INBOX_STATUSES = {"raw", "promoted", "dropped"}
 CONTRADICTION_STATUSES = {"open", "resolved"}
@@ -923,7 +923,7 @@ def build_parser():
     s = sub.add_parser("decision", help="новое решение")
     s.add_argument("decision")
     s.add_argument("--by", dest="by", required=True,
-                   help="owner|admin|tl-sitka|tl-astro")
+                   help="owner|admin|tl-sitka|tl-astro|tl-crypto")
     s.add_argument("--scope", required=True)
     s.add_argument("--decided-at", dest="decided_at", required=True,
                    help="YYYY-MM-DD из DISPATCHER/журнала")

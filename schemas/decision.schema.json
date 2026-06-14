@@ -31,7 +31,7 @@
     },
     "decided_by": {
       "type": "string",
-      "enum": ["owner", "admin", "tl-sitka", "tl-astro"]
+      "enum": ["owner", "admin", "tl-sitka", "tl-astro", "tl-crypto"]
     },
     "decided_at": {
       "type": "string",
