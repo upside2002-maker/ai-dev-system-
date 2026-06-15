@@ -399,6 +399,28 @@ seed_memory_fact() {
   fi
 }
 
+# --- структурные заявки aida_claim.py ---------------------------------------
+# Диспетчер заявок (фронт поверх влитых ядер): валидирует КОНВЕРТ (не речь), по
+# таблице из пяти строк kind переименовывает поля и зовёт УЖЕ ВЛИТОЙ верификатор
+# (aida_kernel.gate / aida_ledger.cmd_action / run_check). Сам не проверяет, нет
+# парсинга свободного текста, нет модели-судьи. Тесты гоняют ЖИВОЙ scripts/
+# aida-claim, но источники подменяют временными через env (как у ядра правды) —
+# живой ledger/, реестр возможностей и журнал ошибок не трогаются. Код выхода
+# кодирует вердикт машинно: 0 passed, 3 unverified, 4 stop.
+
+# run_aida_claim <subcmd> <ledger-dir> <errors-file> [args...] — прогнать ЖИВОЙ
+# scripts/aida-claim с временными источниками. Конверт подаётся caller'ом на
+# stdin. subcmd ∈ {eval, gate, kinds}. Реестр возможностей — ЖИВОЙ из репо (часть
+# поставки, только чтение). AIDA_TEST_RESULTS_FILE прокидывается из окружения
+# caller'а (для done_report mode=source через test.result), если задан.
+run_aida_claim() {
+  local subcmd="$1" led="$2" errf="$3"; shift 3
+  AIDA_LEDGER_DIR="${led}" \
+  AIDA_CAPABILITIES_FILE="$(kernel_caps_file)" \
+  AIDA_MODEL_ERRORS_FILE="${errf}" \
+    bash "${REPO_ROOT}/scripts/aida-claim" "${subcmd}" --json "$@" 2>&1
+}
+
 # Захват вывода и кода выхода в тестах делается inline, без хелпера:
 #   OUT="$(bash some.sh arg 2>&1)"; RC=$?
 # (через $() протащить и stdout, и rc одним хелпером нельзя — subshell.)

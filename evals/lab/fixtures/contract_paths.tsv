@@ -56,6 +56,8 @@ intra	scripts/take-shift.sh	Makefile
 intra	scripts/aida	Makefile
 intra	scripts/aida_ledger.py	scripts/aida
 intra	scripts/_push_helper.sh	scripts/take-shift.sh
+intra	scripts/aida-claim	scripts/aida
+intra	scripts/aida_claim.py	scripts/aida-claim
 
 # --- Замки (git-хуки) -------------------------------------------------------
 intra	.githooks/commit-msg	Makefile
@@ -91,6 +93,7 @@ intra	schemas/decision.schema.json	scripts/aida_ledger.py
 intra	schemas/contradiction.schema.json	scripts/aida_ledger.py
 intra	schemas/inbox.schema.json	scripts/aida_ledger.py
 intra	schemas/action.schema.json	scripts/aida_ledger.py
+intra	schemas/claim.schema.json	scripts/aida_claim.py
 
 # --- Документы методологии (docs/**) ----------------------------------------
 intra	docs/AIDA_LEDGER_TZ.md	scripts/aida_ledger.py
